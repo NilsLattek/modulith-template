@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+        <PackageReference Include="EFCore.NamingConventions" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Data/Migrations/" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="../ModulithTemplate.FeatureCore/ModulithTemplate.FeatureCore.csproj" />
+    </ItemGroup>
+</Project>

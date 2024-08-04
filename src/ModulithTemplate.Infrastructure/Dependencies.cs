@@ -10,7 +10,10 @@ public static class Dependencies
     {
         services.AddDbContext<CatalogContext>(options =>
             options
-                .UseNpgsql(configuration.GetConnectionString("PostgresConnection"))
+                .UseNpgsql(
+                    configuration.GetConnectionString("PostgresConnection"),
+                    pgConfig => pgConfig.MigrationsHistoryTable(tableName: "__EFMigrationsHistory", schema: "catalog")
+                )
                 .UseSnakeCaseNamingConvention()
         );
     }

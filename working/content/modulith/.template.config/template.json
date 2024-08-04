@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Nils",
+  "classifications": [
+    "Modular Monolith",
+    "Clean Architecture"
+  ],
+  "identity": "ModularMonolith.Template",
+  "name": "Modular Monolith Solution",
+  "shortName": "modulith",
+  "sourceName": "ModulithTemplate",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  }
+}

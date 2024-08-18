@@ -1,0 +1,24 @@
+name: Release to nuget.org
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  #release:
+    #types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Build
+      run: dotnet build working/content/modulith/ModulithTemplate.sln --configuration Release
+    - name: Pack
+      run: dotnet pack working/ModularMonolith.Template.csproj
+    - name: Publish
+      run: dotnet nuget push "working/bin/Release/Modulith.*.nupkg" --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json

@@ -21,4 +21,4 @@ jobs:
     - name: Pack
       run: dotnet pack working/ModularMonolith.Template.csproj
     - name: Publish
-      run: dotnet nuget push "working/bin/Release/Modulith.*.nupkg" --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push "working/bin/Release/Modulith.*.nupkg" --api-key ${{secrets.NUGET_APIKEY}} --source https://api.nuget.org/v3/index.json

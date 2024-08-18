@@ -1,10 +1,8 @@
 name: Release to nuget.org
 
 on:
-  pull_request:
-    branches: [ "main" ]
-  #release:
-    #types: [published]
+  release:
+    types: [published]
 
 jobs:
   build:

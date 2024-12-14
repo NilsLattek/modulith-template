@@ -372,6 +372,8 @@ dotnet_diagnostic.CA1711.severity = none # Identifiers should not have incorrect
 dotnet_diagnostic.CS1591.severity = none # Missing XML comment for publicly visible type or member
 dotnet_diagnostic.S125.severity = none # Remove this commented out code.
 dotnet_diagnostic.S1135.severity = none # Complete the task associated to this 'TODO' comment.
+dotnet_diagnostic.IDE0008.severity = none # Use explicit type instead of var
+dotnet_diagnostic.CA1805.severity = none # Do not initialize unnecessarily
 
 # disable unused warnings for Wolverine handlers
 [*Handler.cs]

@@ -2,7 +2,7 @@ using ArchUnitNET.Domain;
 using ArchUnitNET.Loader;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.Fluent.Slices;
-using ArchUnitNET.xUnit;
+using ArchUnitNET.xUnitV3;
 
 using Assembly = System.Reflection.Assembly;
 
@@ -13,7 +13,7 @@ public class FeatureModuleTests
     private static String GetSolutionDirectory()
     {
         var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (directory != null && directory.GetFiles("*.sln").Length == 0)
+        while (directory != null && directory.GetFiles("*.slnx").Length == 0)
         {
             directory = directory.Parent;
         }
@@ -32,7 +32,7 @@ public class FeatureModuleTests
         try
         {
             assemblies = Directory.GetFiles(GetSolutionDirectory(), "*.dll", SearchOption.AllDirectories)
-                        .Where(f => f.Contains(modulesKeyword))
+                        .Where(f => f.Contains(modulesKeyword, StringComparison.InvariantCulture))
                         .DistinctBy(Path.GetFileName)
                         .Select(Assembly.LoadFile)
                         .ToList();

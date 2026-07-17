@@ -3,7 +3,6 @@
     <ItemGroup>
         <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
         <PackageReference Include="EFCore.NamingConventions" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" />
         <PackageReference Include="Microsoft.Extensions.Configuration" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />

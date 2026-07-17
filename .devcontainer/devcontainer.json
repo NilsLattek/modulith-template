@@ -5,17 +5,20 @@
     "dockerComposeFile": "docker-compose.yml",
     "service": "app",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    "features": {
+      "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+    },
     "customizations": {
       "vscode": {
         "extensions": [
-          "ms-dotnettools.csdevkit",
-          "ms-ossdata.vscode-pgsql"
+          "ms-dotnettools.csdevkit"
         ]
+      },
+      "settings": {
+        "editor.formatOnSave": true
       }
     }
-
-  // Features to add to the dev container. More info: https://containers.dev/features.
-  // "features": {},
 
   // Configure tool-specific properties.
   // "customizations": {},

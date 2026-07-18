@@ -1,0 +1,8 @@
+{
+  "$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
+  "diagnosticMessages": true,
+  "internalDiagnosticMessages": false,
+  "showLiveOutput": true, // can be used with `--output Detailed` flag to show success logs
+  "methodDisplay": "classAndMethod",
+  "methodDisplayOptions": "all"
+}

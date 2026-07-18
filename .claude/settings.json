@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet restore *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet ef *)"
+    ],
+    "deny": [
+      "Bash(dotnet user-secrets:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "mslearn"
+  ],
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "dotnet-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "dotnet/skills"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "dotnet@dotnet-agent-skills": true,
+    "dotnet-aspnet@dotnet-agent-skills": true,
+    "dotnet-blazor@dotnet-agent-skills": true,
+    "dotnet-data@dotnet-agent-skills": true,
+    "dotnet-diag@dotnet-agent-skills": true,
+    "dotnet-msbuild@dotnet-agent-skills": true,
+    "dotnet-nuget@dotnet-agent-skills": true,
+    "dotnet-test@dotnet-agent-skills": true
+  }
+}

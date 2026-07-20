@@ -8,6 +8,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+    <!-- Reference every feature layer project (any feature, any layer) so the architecture
+         tests always build and analyze them, and new features are picked up automatically
+         with no edits here. Without this, the feature projects are orphans in the reference
+         graph and only a full-solution build produces their assemblies. -->
+    <ProjectReference Include="../../src/Features/**/*.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
     <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />

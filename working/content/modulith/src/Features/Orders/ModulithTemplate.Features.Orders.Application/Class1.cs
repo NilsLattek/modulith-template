@@ -1,4 +1,4 @@
-﻿namespace ModulithTemplate.Features.Orders.Application;
+namespace ModulithTemplate.Features.Orders.Application;
 
 #pragma warning disable S2094 // Classes should not be empty
 public class Class1

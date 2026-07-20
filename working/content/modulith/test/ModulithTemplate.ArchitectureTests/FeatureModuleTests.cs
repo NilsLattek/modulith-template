@@ -1,50 +1,23 @@
 using ArchUnitNET.Domain;
-using ArchUnitNET.Loader;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.Fluent.Slices;
 using ArchUnitNET.xUnitV3;
-
-using Assembly = System.Reflection.Assembly;
 
 namespace ModulithTemplate.ArchitectureTests;
 
 public class FeatureModuleTests
 {
-    private static String GetSolutionDirectory()
-    {
-        var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (directory != null && directory.GetFiles("*.slnx").Length == 0)
-        {
-            directory = directory.Parent;
-        }
-        return directory!.FullName;
-    }
-
     [Fact]
     public void ModulesCannotDependOnEachOther()
     {
         const string modulesKeyword = ".Features.";
         const string integrationEventsKeyword = ".IntegrationEvents";
 
-        // load assemblies from DLL
-        List<Assembly> assemblies = [];
+        // Guard: fail loudly if no feature assemblies were discovered, so the cross-feature
+        // rule cannot pass vacuously on an empty architecture.
+        Assert.NotEmpty(SolutionAssemblies.FeatureAssemblies);
 
-        try
-        {
-            assemblies = Directory.GetFiles(GetSolutionDirectory(), "*.dll", SearchOption.AllDirectories)
-                        .Where(f => f.Contains(modulesKeyword, StringComparison.InvariantCulture))
-                        .DistinctBy(Path.GetFileName)
-                        .Select(Assembly.LoadFile)
-                        .ToList();
-        }
-        catch (System.BadImageFormatException)
-        {
-            // ignore
-        }
-
-        Architecture architecture = new ArchLoader()
-            .LoadAssemblies(assemblies.ToArray())
-            .Build();
+        Architecture architecture = SolutionAssemblies.Architecture;
 
         var moduleSlice = new SliceAssignment(t =>
         {

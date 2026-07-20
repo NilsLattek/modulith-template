@@ -26,8 +26,38 @@
 - `working/content/modulith/test/ModulithTemplate.ArchitectureTests/SolutionAssemblies.cs` — **new.** Internal static helper: locate the solution dir, discover+load the `.Features.` layer assemblies, expose them and a lazily-built `Architecture`. Single responsibility: assembly/architecture loading, shared by all architecture tests.
 - `working/content/modulith/test/ModulithTemplate.ArchitectureTests/FeatureModuleTests.cs` — **modify.** Remove inline `GetSolutionDirectory` + assembly loading; consume `SolutionAssemblies.Architecture`. Behavior unchanged; this is the regression check for the extraction.
 - `working/content/modulith/test/ModulithTemplate.ArchitectureTests/FeatureLayerTests.cs` — **new.** The four layer-rule `[Fact]`s driven by one data table.
+- `working/content/modulith/test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj` — **modify.** Add a globbed `ProjectReference` to every feature project so the analysed assemblies are always built (see "Post-implementation correction" below).
 
-No package or csproj changes are required.
+No package changes are required.
+
+### Post-implementation correction: feature project references
+
+Discovered during execution: the disk-scan discovery only finds assemblies that are actually
+built, but the feature projects are **orphans in the reference graph** (nothing references
+them — the host `ModulithTemplate.Web` references only `Web.Common`). So building/running the
+ArchitectureTests project on its own built no feature assemblies, and the presence guard failed
+for whichever layers had no leftover DLL on disk (`Application`/`Web` in the observed case).
+
+Fix — add to `ModulithTemplate.ArchitectureTests.csproj`:
+
+```xml
+<ItemGroup>
+  <!-- Reference every feature layer project (any feature, any layer) so the architecture
+       tests always build and analyze them, and new features are picked up automatically. -->
+  <ProjectReference Include="../../src/Features/**/*.csproj" />
+</ItemGroup>
+```
+
+Verify the isolation scenario the guard caught: delete the feature `bin`/`obj`, build ONLY the
+test project, and confirm all four `ModulithTemplate.Features.Orders.*.dll` land in the test
+output and all four facts pass:
+
+```bash
+cd working/content/modulith
+find src/Features -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
+dotnet build test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj -warnaserror
+dotnet test  test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj
+```
 
 ---
 

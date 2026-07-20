@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ModulithTemplate.Web.Shared.Extensions;
+namespace ModulithTemplate.Web.Common.Extensions;
 
 /// <summary>
 /// Helpers for running a piece of work inside a fresh dependency injection scope.

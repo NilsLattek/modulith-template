@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ModulithTemplate.Web.Shared/ModulithTemplate.Web.Shared.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Web.Common/ModulithTemplate.Web.Common.csproj" />
   </ItemGroup>
 
 </Project>

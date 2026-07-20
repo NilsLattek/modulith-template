@@ -2,7 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/ModulithTemplate.FeatureCore/ModulithTemplate.FeatureCore.csproj" />
     <Project Path="src/ModulithTemplate.Infrastructure/ModulithTemplate.Infrastructure.csproj" />
-    <Project Path="src/ModulithTemplate.Web.Shared/ModulithTemplate.Web.Shared.csproj" />
+    <Project Path="src/ModulithTemplate.Web.Common/ModulithTemplate.Web.Common.csproj" />
     <Project Path="src/ModulithTemplate.Web/ModulithTemplate.Web.csproj" />
   </Folder>
   <Folder Name="/src/Features/" />

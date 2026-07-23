@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Nils",
+  "classifications": [
+    "Modular Monolith",
+    "Clean Architecture"
+  ],
+  "identity": "ModularMonolith.Template.Feature",
+  "name": "Modular Monolith Feature",
+  "shortName": "modulith-feature",
+  "sourceName": "FeatureName",
+  "preferNameDirectory": false,
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  },
+  "symbols": {
+    "appName": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "ModulithApp",
+      "fileRename": "ModulithApp"
+    }
+  },
+  "primaryOutputs": [
+    { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" },
+    { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Application/ModulithApp.Features.FeatureName.Application.csproj" },
+    { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Infrastructure/ModulithApp.Features.FeatureName.Infrastructure.csproj" },
+    { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Web/ModulithApp.Features.FeatureName.Web.csproj" }
+  ],
+  "postActions": [
+    {
+      "id": "addProjectsToSolution",
+      "description": "Add projects to solution",
+      "manualInstructions": [
+        { "text": "Add the generated .csproj files to the solution manually with `dotnet sln add`" }
+      ],
+      "actionId": "D396686C-DE0E-4DE6-906D-291CD29FC5DE",
+      "continueOnError": true,
+      "args": {
+        "primaryOutputIndexes": "0;1;2;3"
+      }
+    }
+  ]
+}

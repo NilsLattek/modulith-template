@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../../ModulithApp.Web.Common/ModulithApp.Web.Common.csproj" />
+    <ProjectReference Include="../ModulithApp.Features.FeatureName.Application/ModulithApp.Features.FeatureName.Application.csproj" />
+  </ItemGroup>
+
+</Project>

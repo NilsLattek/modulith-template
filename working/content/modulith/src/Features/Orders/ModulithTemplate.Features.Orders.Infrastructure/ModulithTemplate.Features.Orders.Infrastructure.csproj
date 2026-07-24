@@ -1,7 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../ModulithTemplate.Features.Orders.Domain/ModulithTemplate.Features.Orders.Domain.csproj" />
+    <ProjectReference Include="../../../ModulithTemplate.FeatureCore/ModulithTemplate.FeatureCore.csproj" />
+    <ProjectReference Include="../../../ModulithTemplate.Infrastructure.Common/ModulithTemplate.Infrastructure.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data/Migrations/" />
   </ItemGroup>
 
 </Project>

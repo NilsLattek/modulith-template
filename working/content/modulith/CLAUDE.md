@@ -108,6 +108,23 @@ Stateless, non-DB services may stay directly injected.
 
 Design spec and implementation plan live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
+## Adding a feature
+
+Scaffold a new feature's four layer projects and register them in the solution:
+
+```bash
+dotnet new modulith-feature --appName ModulithTemplate -n Payments
+```
+
+Run this from the solution root (the directory containing the `.slnx`). It creates
+`src/Features/Payments/ModulithTemplate.Features.Payments.{Domain,Application,Infrastructure,Web}`
+and adds all four to the solution under a `/src/Features/Payments/` folder.
+
+> **TODO:** the command does not wire the new feature's services into `Program.cs` /
+> `Infrastructure` — there is no host module-registration convention yet. Follow the
+> "Dependency injection" section above and register the feature's `Configuration.cs`
+> manually until that convention exists.
+
 ## Model Context Protocol (MCP) Servers
 
 ### mslearn

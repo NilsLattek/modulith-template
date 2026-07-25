@@ -1,6 +1,9 @@
+using ModulithTemplate.Features.Orders.Web;
 using ModulithTemplate.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.ConfigureOrdersFeature();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

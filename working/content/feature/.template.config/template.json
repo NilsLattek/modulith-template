@@ -21,6 +21,12 @@
       "isRequired": true,
       "replaces": "ModulithApp",
       "fileRename": "ModulithApp"
+    },
+    "schemaName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "lowerCase",
+      "replaces": "featureschema"
     }
   },
   "primaryOutputs": [

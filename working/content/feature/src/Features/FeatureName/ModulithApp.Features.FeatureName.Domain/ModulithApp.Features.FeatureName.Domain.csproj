@@ -1,2 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../../ModulithApp.FeatureCore/ModulithApp.FeatureCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities/" />
+  </ItemGroup>
+
 </Project>

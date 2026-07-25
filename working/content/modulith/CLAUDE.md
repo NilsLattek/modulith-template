@@ -29,17 +29,17 @@ dotnet test --no-restore --filter-method "*AddAsync_creates_entity*"      # one 
 
 ### EF Core migrations
 
-Startup project is always `ModulithTemplate.Web`; migrations live in `ModulithTemplate.Infrastructure`.
+Each feature owns its own `DbContext`, schema, and migrations in its `*.Infrastructure` project. Startup project is always `ModulithTemplate.Web`. Because the host registers more than one `DbContext`, **`--context` is required** — without it `dotnet ef` fails with "More than one DbContext was found".
 
 ```bash
-# Create a new migration
-dotnet ef migrations add "Name" -o Data/Migrations \
-  --project src/ModulithTemplate.Infrastructure/ModulithTemplate.Infrastructure.csproj \
+# Create a new migration for a feature (Orders shown; repeat per feature)
+dotnet ef migrations add "Name" -o Data/Migrations --context OrdersContext \
+  --project src/Features/Orders/ModulithTemplate.Features.Orders.Infrastructure/ModulithTemplate.Features.Orders.Infrastructure.csproj \
   -s src/ModulithTemplate.Web/ModulithTemplate.Web.csproj
 
-# Apply pending migrations
-dotnet ef database update \
-  --project src/ModulithTemplate.Infrastructure/ModulithTemplate.Infrastructure.csproj \
+# Apply a feature's pending migrations
+dotnet ef database update --context OrdersContext \
+  --project src/Features/Orders/ModulithTemplate.Features.Orders.Infrastructure/ModulithTemplate.Features.Orders.Infrastructure.csproj \
   -s src/ModulithTemplate.Web/ModulithTemplate.Web.csproj
 ```
 
@@ -68,24 +68,24 @@ Do not perform any git actions. I will do them myself.
 
 ## Architecture
 
-This solution follows the domain driven design (DDD) architecture principles.
+This solution follows a vertical-slice modular monolith: each feature under `src/Features/<Name>/` owns four layer projects forming a dependency chain Web → Application → Domain ← Infrastructure (Domain has no outbound dependencies). Feature modules must not depend on each other (enforced by `ModulithTemplate.ArchitectureTests`). This follows the domain driven design (DDD) architecture principles.
 
-Four projects forming a dependency chain Web → Application → Domain ← Infrastructure (Domain has no outbound dependencies):
+- **`<Name>.Domain`** — entities, domain services, and abstractions only. Use rich entities: private setters, `internal` constructors, a private parameterless ctor for EF, and invariants enforced in the ctor and mutator methods. Cross-entity rules that need data access live in domain services (`*DomainService`). Data access is abstracted behind a **feature-owned** `I<Name>Repository<T>` (e.g. `IOrdersRepository<T>`) that extends the shared `IRepository<T>` from `ModulithTemplate.FeatureCore`, which in turn extends Ardalis.Specification's `IRepositoryBase<T>`. The per-feature interface is what app services inject — never `IRepository<T>` directly, because the open-generic DI registration is keyed on the interface type, so several features registering `IRepository<>` would leave the last one registered serving every feature's entities from the wrong `DbContext`. Query logic lives in `Specifications/` as `*Spec` classes.
+- **`<Name>.Application`** — orchestration layer. App services (`I*AppService`, `internal` impls) load entities via repositories, invoke domain services, persist, and map to DTOs. They return **FluentResults** `Result`/`Result<T>` — exceptions (except `OperationCanceledException`) are caught and turned into `Result.Fail`; callers branch on `IsFailed`/`Errors`. Entity↔DTO mapping uses **Mapperly** source generators (`Mapper/*Mapper.cs`, `[Mapper]` partial classes).
+- **`<Name>.Infrastructure`** — EF Core + Npgsql implementation, owned entirely by the feature: a concrete `DbContext` (schema set via `HasDefaultSchema` in `OnModelCreating`), a context-bound `<Name>Repository<T> : RepositoryBase<T>, I<Name>Repository<T>`, and its own `Data/Migrations/`. DB naming is snake_case via `EFCore.NamingConventions`, applied uniformly through the shared `ModulithTemplate.Infrastructure.Common` project's `AddModuleDbContext<TContext>(configuration, schema)` extension — that shared project defines EF conventions only and never a concrete `DbContext`.
+- **`<Name>.Web`** — the feature's composition root, the only layer allowed to reference both `Application` and `Infrastructure`. Exposes a `ConfigureXxxFeature(this WebApplicationBuilder)` extension (e.g. `OrdersModule.ConfigureOrdersFeature`) that calls the feature's `ConfigureXxxInfrastructure`/`ConfigureXxxApplication` and registers its endpoints/Razor components.
 
-- **ModulithTemplate.Domain** — entities, domain services, and abstractions only. Use rich entities: private setters, `internal` constructors, a private parameterless ctor for EF, and invariants enforced in the ctor and mutator methods. Cross-entity rules that need data access live in domain services (`*DomainService`). Data access is abstracted behind `IRepository<T>` (extends Ardalis.Specification's `IRepositoryBase<T>`) and `IUnitOfWork`; query logic lives in `Specifications/` as `*Spec` classes.
-- **ModulithTemplate.Application** — orchestration layer. App services (`I*AppService`, `internal` impls) load entities via repositories, invoke domain services, persist, and map to DTOs. They return **FluentResults** `Result`/`Result<T>` — exceptions (except `OperationCanceledException`) are caught and turned into `Result.Fail`; callers branch on `IsFailed`/`Errors`. Entity↔DTO mapping uses **Mapperly** source generators (`Mapper/*Mapper.cs`, `[Mapper]` partial classes).
-- **ModulithTemplate.Infrastructure** — EF Core + Npgsql implementations: `ModulithTemplateDbContext`, `EfRepository<T>` (over Ardalis.Specification), `EfUnitOfWork` (wraps work in a transaction). Schema and relationships are configured in `ModulithTemplateDbContext.OnModelCreating`; DB naming is snake_case via `EFCore.NamingConventions`.
-- **ModulithTemplate.Web** — Blazor Server (interactive server render mode). Presentation layer.
+`ModulithTemplate.Web` is the host / composition root: `Program.cs` calls each feature's `ConfigureXxxFeature()` once — see "Adding a feature" below.
 
 ### Where business rules live
 
 Business rules and invariants belong in the entity (or a domain service when they span entities), never in app services, components, or DTO mapping. An app service orchestrates — load, call domain methods, persist, map — it does not *decide* what a valid entity looks like. If the same rule can be violated through more than one call path (e.g. create and update), that is the signal it belongs in the entity, where it is enforced once for all callers.
 
-When adding or changing an invariant, cover it with a `ModulithTemplate.DomainTest` test on the entity, not only via the app-service test — the domain is where the guarantee now lives.
+When adding or changing an invariant, cover it with a `<Name>.DomainTest` test on the entity, not only via the app-service test — the domain is where the guarantee now lives.
 
 ### Dependency injection
 
-Each non-domain project exposes a `Configuration.cs` with a `ConfigureXxx(this IServiceCollection, IConfiguration)` extension method. `Program.cs` calls `ConfigureInfrastructure` / `ConfigureDomain` / `ConfigureApplication` in order. When adding a service, register it in the owning project's `Configuration.cs`, not in `Program.cs`.
+Each feature layer exposes a `Configuration.cs` with a `ConfigureXxxYyy(this IServiceCollection[, IConfiguration]) : IServiceCollection` extension method (e.g. `ConfigureOrdersInfrastructure`, `ConfigureOrdersApplication`). The feature's `Web` project's `ConfigureXxxFeature` calls its own layers' `Configuration.cs` methods; `Program.cs` calls each feature's `ConfigureXxxFeature` once. When adding a service, register it in the owning layer's `Configuration.cs`, not in `Program.cs` or another feature's composition root.
 
 ### Database access from Blazor components
 
@@ -120,10 +120,21 @@ Run this from the solution root (the directory containing the `.slnx`). It creat
 `src/Features/Payments/ModulithTemplate.Features.Payments.{Domain,Application,Infrastructure,Web}`
 and adds all four to the solution under a `/src/Features/Payments/` folder.
 
-> **TODO:** the command does not wire the new feature's services into `Program.cs` /
-> `Infrastructure` — there is no host module-registration convention yet. Follow the
-> "Dependency injection" section above and register the feature's `Configuration.cs`
-> manually until that convention exists.
+The scaffold already contains the full persistence and DI wiring, mirroring `Orders`:
+
+- `Payments.Domain` — `IPaymentsRepository<T> : IRepository<T>`, the feature's repository abstraction.
+- `Payments.Infrastructure` — `Data/PaymentsContext.cs` (schema `payments`), `Data/PaymentsRepository.cs`, an empty `Data/Migrations/`, and a `Configuration.cs` whose `ConfigurePaymentsInfrastructure` calls `AddModuleDbContext<PaymentsContext>(configuration, schema: "payments")` and registers `IPaymentsRepository<>`.
+- `Payments.Application` — a `Configuration.cs` with an empty `ConfigurePaymentsApplication` to register app services into.
+- `Payments.Web` — `PaymentsModule.ConfigurePaymentsFeature(this WebApplicationBuilder)`, calling both of the above.
+
+**The one manual step** is registering the feature with the host: in `ModulithTemplate.Web`, add a `ProjectReference` to `Payments.Web` and call `builder.ConfigurePaymentsFeature();` in `Program.cs`.
+
+```bash
+dotnet add src/ModulithTemplate.Web/ModulithTemplate.Web.csproj reference \
+  src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj
+```
+
+Then add the feature's entities under `Payments.Domain/Entities/` and create its first migration (see "EF Core migrations" above — pass `--context PaymentsContext`).
 
 ## Model Context Protocol (MCP) Servers
 

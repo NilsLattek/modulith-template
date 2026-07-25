@@ -1,0 +1,56 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 10.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore -warnaserror
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Install EF Core tools
+      run: |
+        # Keep the tool in step with the Microsoft.EntityFrameworkCore.Design version the solution pins.
+        ef_version=$(sed -n 's/.*"Microsoft.EntityFrameworkCore.Design" Version="\([^"]*\)".*/\1/p' Directory.Packages.props)
+        test -n "$ef_version" || { echo "Could not read the EF Core version from Directory.Packages.props" >&2; exit 1; }
+        dotnet tool install --global dotnet-ef --version "$ef_version"
+    - name: Check for model changes without migrations
+      run: |
+        # Every feature owns its own DbContext, so discover them from the host's DI
+        # container instead of hard-coding a list that new features would fall out of.
+        contexts=$(dotnet ef dbcontext list --no-build --json \
+          --project src/ModulithTemplate.Web \
+          --startup-project src/ModulithTemplate.Web | jq -r '.[].name')
+        test -n "$contexts" || { echo "No DbContext was discovered in the host" >&2; exit 1; }
+        status=0
+        for ctx in $contexts; do
+          echo "::group::$ctx"
+          # Each context's migrations live in its own feature assembly; EF resolves them
+          # from the context type, so the host works as --project for every one of them.
+          dotnet ef migrations has-pending-model-changes --no-build \
+            --context "$ctx" \
+            --project src/ModulithTemplate.Web \
+            --startup-project src/ModulithTemplate.Web || status=1
+          echo "::endgroup::"
+        done
+        exit $status

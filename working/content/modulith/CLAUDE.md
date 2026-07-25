@@ -53,6 +53,11 @@ dotnet ef database update --context OrdersContext \
 
 The devcontainer provides Postgres 18 (`localhost:5432`, user/pass/db all `postgres`); the app container shares the db container's network.
 
+Both CI workflows discover the contexts from the host's DI container rather than a hard-coded list, so a new feature is picked up as soon as `Program.cs` calls its `ConfigureXxxFeature()`:
+
+- `build.yml` runs `dotnet ef migrations has-pending-model-changes` per context, so a model change that lands without its migration fails the build. No database is needed — it compares the current model against the last migration's snapshot.
+- `release-migrations.yml` runs `dotnet ef migrations script --idempotent` per context on a published release and attaches one `<Context>.sql` per schema to the release. Each script only touches its own schema and `__EFMigrationsHistory` table, so they can be applied in any order.
+
 ## Code Style
 
 - General:

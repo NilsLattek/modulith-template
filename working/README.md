@@ -4,8 +4,9 @@
 
 - `dotnet new modulith` — scaffolds a new modular-monolith solution.
 - `dotnet new modulith-feature --appName <App> -n <Name>` — run from a scaffolded solution's
-  root to add one feature's four layer projects (`Domain`/`Application`/`Infrastructure`/`Web`),
-  registered in the solution automatically.
+  root to add one feature's four layer projects (`Domain`/`Application`/`Infrastructure`/`Web`)
+  plus their four matching test projects, eight projects in all, registered in the solution
+  automatically.
 
 ## DB Migrations
 

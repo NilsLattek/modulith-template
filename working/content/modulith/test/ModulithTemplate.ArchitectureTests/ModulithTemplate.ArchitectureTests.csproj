@@ -1,13 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-      <OutputType>Exe</OutputType>
+  <PropertyGroup>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
 
-      <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
-      <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    </PropertyGroup>
-
-    <ItemGroup>
+  <ItemGroup>
     <!-- Reference every feature layer project (any feature, any layer) so the architecture
          tests always build and analyze them, and new features are picked up automatically
          with no edits here. Without this, the feature projects are orphans in the reference
@@ -16,19 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
     <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
-    <PackageReference Include="xunit.v3" />
-    <PackageReference Include="xunit.analyzers" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="../xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Xunit" />
   </ItemGroup>
 
 </Project>

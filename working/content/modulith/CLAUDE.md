@@ -21,10 +21,18 @@ dotnet build --no-restore -warnaserror
 cd src/ModulithTemplate.Web && dotnet run
 
 # Test — runner is Microsoft.Testing.Platform (configured in global.json), not VSTest
-dotnet test --no-restore                                                  # all tests
-dotnet test --no-restore tests/ModulithTemplate.ApplicationTests          # one project
-dotnet test --no-restore --filter-class "*SomwAppServiceTests*"           # one class
-dotnet test --no-restore --filter-method "*AddAsync_creates_entity*"      # one method
+
+# all tests
+dotnet test --no-restore
+
+# one project
+dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.ApplicationTests
+
+# one class
+dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.ApplicationTests --filter-class "*OrdersApplicationSmokeTests*"
+
+# one method
+dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.InfrastructureTests --filter-method "*OrdersContext_model_defaults_to_the_orders_schema*"
 ```
 
 ### EF Core migrations
@@ -68,7 +76,7 @@ Do not perform any git actions. I will do them myself.
 
 ## Architecture
 
-This solution follows a vertical-slice modular monolith: each feature under `src/Features/<Name>/` owns four layer projects forming a dependency chain Web → Application → Domain ← Infrastructure (Domain has no outbound dependencies). Feature modules must not depend on each other (enforced by `ModulithTemplate.ArchitectureTests`). This follows the domain driven design (DDD) architecture principles.
+This solution follows a vertical-slice modular monolith: each feature under `src/Features/<Name>/` owns four layer projects forming a dependency chain Web → Application → Domain ← Infrastructure (Domain has no outbound dependencies). Feature modules must not depend on each other (enforced by `ModulithTemplate.ArchitectureTests`). This follows the domain driven design (DDD) architecture principles. Each feature's four layer projects are mirrored by four test projects under `test/Features/<Name>/`, one per layer. `src/` holds production code only.
 
 - **`<Name>.Domain`** — entities, domain services, and abstractions only. Use rich entities: private setters, `internal` constructors, a private parameterless ctor for EF, and invariants enforced in the ctor and mutator methods. Cross-entity rules that need data access live in domain services (`*DomainService`). Data access is abstracted behind a **feature-owned** `I<Name>Repository<T>` (e.g. `IOrdersRepository<T>`) that extends the shared `IRepository<T>` from `ModulithTemplate.FeatureCore`, which in turn extends Ardalis.Specification's `IRepositoryBase<T>`. The per-feature interface is what app services inject — never `IRepository<T>` directly, because the open-generic DI registration is keyed on the interface type, so several features registering `IRepository<>` would leave the last one registered serving every feature's entities from the wrong `DbContext`. Query logic lives in `Specifications/` as `*Spec` classes.
 - **`<Name>.Application`** — orchestration layer. App services (`I*AppService`, `internal` impls) load entities via repositories, invoke domain services, persist, and map to DTOs. They return **FluentResults** `Result`/`Result<T>` — exceptions (except `OperationCanceledException`) are caught and turned into `Result.Fail`; callers branch on `IsFailed`/`Errors`. Entity↔DTO mapping uses **Mapperly** source generators (`Mapper/*Mapper.cs`, `[Mapper]` partial classes).
@@ -81,7 +89,7 @@ This solution follows a vertical-slice modular monolith: each feature under `src
 
 Business rules and invariants belong in the entity (or a domain service when they span entities), never in app services, components, or DTO mapping. An app service orchestrates — load, call domain methods, persist, map — it does not *decide* what a valid entity looks like. If the same rule can be violated through more than one call path (e.g. create and update), that is the signal it belongs in the entity, where it is enforced once for all callers.
 
-When adding or changing an invariant, cover it with a `<Name>.DomainTest` test on the entity, not only via the app-service test — the domain is where the guarantee now lives.
+When adding or changing an invariant, cover it with a `<Name>.DomainTests` test on the entity, not only via the app-service test — the domain is where the guarantee now lives.
 
 ### Dependency injection
 
@@ -102,7 +110,7 @@ Stateless, non-DB services may stay directly injected.
 
 - **Central management**: target framework, nullable, analyzers, and `<TargetFramework>net10.0</TargetFramework>` come from `Directory.Build.props`; all package versions are pinned in `Directory.Packages.props` (central package management — add new deps there, version-less `PackageReference` in the csproj).
 - **Analyzers as gatekeepers**: Meziantou, SonarAnalyzer, and Roslynator run on build with `EnforceCodeStyleInBuild`. CI builds with `-warnaserror`. Suppress narrowly with `#pragma warning disable <id>` + matching restore when a rule genuinely doesn't apply (see existing EF-ctor and static-method suppressions), rather than disabling globally.
-- **Tests**: xUnit v3, **bUnit** for Blazor component tests (`ModulithTemplate.WebTest`), **NSubstitute** for substitutes. Test method names are snake_case describing behavior. `ModulithTemplate.ApplicationTest` uses substitutes — see `TestFactory.CreateUnitOfWorkSubstitute` for the unit-of-work pattern in tests.
+- **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for Blazor component tests. Each feature owns four test projects mirroring its layers at `test/Features/<Name>/<App>.Features.<Name>.{Domain,Application,Infrastructure,Web}Tests`, scaffolded together with the feature by `dotnet new modulith-feature`. Shared settings and the common test packages (xUnit, NSubstitute, coverage) come from `test/Directory.Build.props`, so an individual test `.csproj` normally holds nothing but a `ProjectReference`. Test method names are snake_case describing behavior.
 
 ## Docs
 
@@ -118,7 +126,8 @@ dotnet new modulith-feature --appName ModulithTemplate -n Payments
 
 Run this from the solution root (the directory containing the `.slnx`). It creates
 `src/Features/Payments/ModulithTemplate.Features.Payments.{Domain,Application,Infrastructure,Web}`
-and adds all four to the solution under a `/src/Features/Payments/` folder.
+plus the matching `test/Features/Payments/ModulithTemplate.Features.Payments.{Domain,Application,Infrastructure,Web}Tests`,
+and adds all eight to the solution under `/src/Features/Payments/` and `/test/Features/Payments/` folders.
 
 The scaffold already contains the full persistence and DI wiring, mirroring `Orders`:
 
@@ -126,6 +135,7 @@ The scaffold already contains the full persistence and DI wiring, mirroring `Ord
 - `Payments.Infrastructure` — `Data/PaymentsContext.cs` (schema `payments`), `Data/PaymentsRepository.cs`, an empty `Data/Migrations/`, and a `Configuration.cs` whose `ConfigurePaymentsInfrastructure` calls `AddModuleDbContext<PaymentsContext>(configuration, schema: "payments")` and registers `IPaymentsRepository<>`.
 - `Payments.Application` — a `Configuration.cs` with an empty `ConfigurePaymentsApplication` to register app services into.
 - `Payments.Web` — `PaymentsModule.ConfigurePaymentsFeature(this WebApplicationBuilder)`, calling both of the above.
+- `test/Features/Payments/…{Domain,Application,Infrastructure,Web}Tests` — one test project per layer, each with a single smoke test to replace with real ones.
 
 **The one manual step** is registering the feature with the host: in `ModulithTemplate.Web`, add a `ProjectReference` to `Payments.Web` and call `builder.ConfigurePaymentsFeature();` in `Program.cs`.
 

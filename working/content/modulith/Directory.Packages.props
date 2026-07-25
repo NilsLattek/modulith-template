@@ -1,8 +1,15 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
+    <!-- AngleSharp is a transitive dependency of bunit. Pinned above the version bunit resolves
+         (1.4.0) to clear NU1902 (GHSA-pgww-w46g-26qg), which -warnaserror turns into a build
+         error. CentralPackageTransitivePinningEnabled makes this solution-wide: every
+         PackageVersion below now governs transitive resolution too, not just this one, so a
+         pin here set below a package's own transitive requirement surfaces as NU1109. -->
+    <PackageVersion Include="AngleSharp" Version="1.5.2" />
     <PackageVersion Include="Ardalis.Specification.EntityFrameworkCore" Version="9.3.1" />
     <PackageVersion Include="Ardalis.Specification" Version="9.3.1" />
     <PackageVersion Include="bunit" Version="2.7.2" />
@@ -25,7 +32,6 @@
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.29.0.143774" />
     <PackageVersion Include="TngTech.ArchUnitNET.xUnitV3" Version="0.13.3" />
     <PackageVersion Include="xunit.analyzers" Version="1.27.0" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
   </ItemGroup>
 </Project>

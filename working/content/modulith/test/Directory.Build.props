@@ -1,0 +1,41 @@
+<Project>
+
+  <!-- MSBuild stops at the FIRST Directory.Build.props it finds walking up from a project,
+       so this file must import the solution-root one explicitly. Without it every test
+       project silently loses TargetFramework, Nullable, ImplicitUsings and the
+       Meziantou/Sonar/Roslynator analyzers. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.analyzers" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="NSubstitute.Analyzers.CSharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Resolved from this file's own directory, not a relative '../' prefix: the
+       architecture tests sit at test/<Project>/ but the feature tests sit at
+       test/Features/<Name>/<Project>/, so no single relative prefix works for both.
+       Link forces it to land at the output root as plain 'xunit.runner.json'. -->
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)xunit.runner.json"
+             Link="xunit.runner.json"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

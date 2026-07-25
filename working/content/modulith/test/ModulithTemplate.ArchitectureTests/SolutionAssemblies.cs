@@ -7,8 +7,9 @@ namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
 /// Shared discovery and loading of the compiled feature-layer assemblies used by the
-/// architecture tests. Assemblies are matched by the <c>.Features.</c> path segment, which
-/// corresponds to the per-feature layer projects.
+/// architecture tests. Assemblies are matched by file name containing the <c>.Features.</c>
+/// segment, excluding any whose name ends in <c>Tests</c>, which corresponds to the
+/// per-feature layer projects while excluding their test projects.
 /// </summary>
 internal static class SolutionAssemblies
 {
@@ -39,7 +40,12 @@ internal static class SolutionAssemblies
         try
         {
             return Directory.GetFiles(GetSolutionDirectory(), "*.dll", SearchOption.AllDirectories)
-                .Where(f => f.Contains(FeaturesKeyword, StringComparison.InvariantCulture))
+                // Match the assembly's own file name, not the full path: a test project
+                // directory such as ModulithTemplate.Features.Orders.WebTests would otherwise
+                // pull its entire output (xunit, bUnit, AngleSharp, NSubstitute, ...) into the
+                // architecture. Assemblies ending in "Tests" are excluded for the same reason.
+                .Where(f => Path.GetFileName(f).Contains(FeaturesKeyword, StringComparison.Ordinal)
+                    && !Path.GetFileNameWithoutExtension(f).EndsWith("Tests", StringComparison.Ordinal))
                 .DistinctBy(Path.GetFileName)
                 .Select(Assembly.LoadFile)
                 .ToArray();

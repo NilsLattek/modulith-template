@@ -1,0 +1,70 @@
+# Generates an idempotent EF Core SQL script per feature schema and attaches them to the
+# published GitHub Release, so ops has ready-to-run scripts for the deployment.
+
+name: Release migration scripts
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write # required to attach the scripts to the release
+
+jobs:
+  ef-migration-scripts:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 10.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Install EF Core tools
+      run: |
+        # Keep the tool in step with the Microsoft.EntityFrameworkCore.Design version the solution pins.
+        ef_version=$(sed -n 's/.*"Microsoft.EntityFrameworkCore.Design" Version="\([^"]*\)".*/\1/p' Directory.Packages.props)
+        test -n "$ef_version" || { echo "Could not read the EF Core version from Directory.Packages.props" >&2; exit 1; }
+        dotnet tool install --global dotnet-ef --version "$ef_version"
+    - name: Generate idempotent SQL scripts
+      run: |
+        # Every feature owns its own DbContext, schema and migrations history table, so
+        # discover the contexts from the host's DI container instead of hard-coding a list
+        # that new features would fall out of. One script per context; they touch disjoint
+        # schemas, so they can be applied in any order.
+        contexts=$(dotnet ef dbcontext list --no-build --json \
+          --project src/ModulithTemplate.Web \
+          --startup-project src/ModulithTemplate.Web | jq -r '.[].name')
+        test -n "$contexts" || { echo "No DbContext was discovered in the host" >&2; exit 1; }
+        mkdir -p migrations
+        for ctx in $contexts; do
+          echo "::group::$ctx"
+          # EF resolves each context's migrations from the context type, so the host
+          # works as --project for every one of them.
+          dotnet ef migrations script --idempotent --no-build \
+            --context "$ctx" \
+            --project src/ModulithTemplate.Web \
+            --startup-project src/ModulithTemplate.Web \
+            -o "migrations/$ctx.sql"
+          echo "::endgroup::"
+        done
+        ls -l migrations
+    - name: Upload scripts as a build artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: migration-scripts
+        path: migrations/*.sql
+    - name: Attach scripts to release
+      if: github.event_name == 'release'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release upload "${{ github.event.release.tag_name }}" \
+          migrations/*.sql \
+          --clobber

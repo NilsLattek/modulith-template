@@ -33,8 +33,11 @@ The repo root also carries its own `.devcontainer`, `.claude`, `.github`, and `.
 # Build the template content exactly as CI does (must be warning-clean)
 dotnet build working/content/modulith/ModulithTemplate.slnx -warnaserror
 
-# Test the template content
-dotnet test working/content/modulith/ModulithTemplate.slnx
+# Test the template content (must run from the content dir — global.json opts into
+# Microsoft.Testing.Platform and is resolved from the current directory; passing the
+# .slnx as a path argument from the repo root gets forwarded to the test app instead
+# of being treated as a target, and silently runs zero tests)
+cd working/content/modulith && dotnet test
 
 # Try the solution template locally: install from source, scaffold into a temp dir, then uninstall
 dotnet new install working/content/modulith
@@ -60,7 +63,7 @@ dotnet new install working/bin/Release/Modulith.*.nupkg
 - **`sourceName` is `ModulithTemplate`** (`template.json`). The template engine replaces that string in **both file contents and file/folder paths** at scaffold time. So every namespace, project name, and directory in `working/content/modulith/` must keep the `ModulithTemplate` prefix — if you introduce an identifier that should be renamed per-project but omit the prefix, it will leak the template's name into generated projects. After any structural change, scaffold into a temp dir (see commands above) and confirm nothing named `ModulithTemplate` survives.
 - **`shortName` is `modulith`** — the `dotnet new modulith` invocation name.
 - The package project packs `content/**` (excluding `bin`/`obj`) and does not compile anything itself (`IncludeBuildOutput=false`, `Compile Remove="**\*"`).
-- **A second template, `modulith-feature`**, lives alongside it at `working/content/feature/` (`sourceName: "FeatureName"`, a required `appName` parameter replacing the `ModulithApp` token). It scaffolds one feature's four layer projects (`Domain`/`Application`/`Infrastructure`/`Web`) into an *already-generated* solution and registers them in its `.slnx` via a post-action. Both templates pack into the single `Modulith` NuGet package — no extra install step is needed once a developer has installed `Modulith` to get `dotnet new modulith`. Verify changes to it the same way: scaffold a solution, scaffold a feature into it, build `-warnaserror`, and confirm nothing named `FeatureName` or `ModulithApp` survives.
+- **A second template, `modulith-feature`**, lives alongside it at `working/content/feature/` (`sourceName: "FeatureName"`, a required `appName` parameter replacing the `ModulithApp` token). It scaffolds one feature's four layer projects (`Domain`/`Application`/`Infrastructure`/`Web`) plus their four matching test projects under `test/Features/<Name>/` — **eight projects** — into an *already-generated* solution and registers them in its `.slnx` via a post-action. Both templates pack into the single `Modulith` NuGet package — no extra install step is needed once a developer has installed `Modulith` to get `dotnet new modulith`. Verify changes to it the same way: scaffold a solution, scaffold a feature into it, build `-warnaserror`, and confirm nothing named `FeatureName` or `ModulithApp` survives.
 
 ## Releasing
 

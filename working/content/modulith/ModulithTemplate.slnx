@@ -15,4 +15,11 @@
   <Folder Name="/test/">
     <Project Path="test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj" />
   </Folder>
+  <Folder Name="/test/Features/" />
+  <Folder Name="/test/Features/Orders/">
+    <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.ApplicationTests/ModulithTemplate.Features.Orders.ApplicationTests.csproj" />
+    <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests/ModulithTemplate.Features.Orders.DomainTests.csproj" />
+    <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.InfrastructureTests/ModulithTemplate.Features.Orders.InfrastructureTests.csproj" />
+    <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.WebTests/ModulithTemplate.Features.Orders.WebTests.csproj" />
+  </Folder>
 </Solution>

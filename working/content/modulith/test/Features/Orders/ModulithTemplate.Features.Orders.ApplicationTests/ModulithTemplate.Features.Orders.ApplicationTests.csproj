@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Features/Orders/ModulithTemplate.Features.Orders.Application/ModulithTemplate.Features.Orders.Application.csproj" />
+  </ItemGroup>
+
+</Project>

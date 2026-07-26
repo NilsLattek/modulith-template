@@ -74,3 +74,8 @@ dotnet new install working/bin/Release/Modulith.*.nupkg
 ## Versioning
 
 Do not perform any git actions unless explicitly asked — the maintainer handles commits, branches, and releases.
+
+## Additional Tools
+
+@.claude/RTK.md
+

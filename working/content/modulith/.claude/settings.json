@@ -33,7 +33,7 @@
     "csharp-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "dotnet@dotnet-agent-skills": true,
-    "dotnet-aspnet@dotnet-agent-skills": true,
+    "dotnet-aspnetcore@dotnet-agent-skills": true,
     "dotnet-blazor@dotnet-agent-skills": true,
     "dotnet-data@dotnet-agent-skills": true,
     "dotnet-diag@dotnet-agent-skills": true,

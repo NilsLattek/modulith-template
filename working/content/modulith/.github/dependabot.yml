@@ -6,7 +6,30 @@
 
 version: 2
 updates:
- - package-ecosystem: "devcontainers"
-   directory: "/"
-   schedule:
-     interval: weekly
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  # Package versions are centrally managed in Directory.Packages.props at the
+  # solution root, so a single "/" entry covers every project.
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      nuget-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      nuget-majors:
+        patterns: ["*"]
+        update-types: ["major"]
+      nuget-security:
+        applies-to: security-updates
+        patterns: ["*"]

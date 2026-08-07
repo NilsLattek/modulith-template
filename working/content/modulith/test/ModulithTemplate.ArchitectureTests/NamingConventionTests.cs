@@ -23,7 +23,9 @@ namespace ModulithTemplate.ArchitectureTests;
 /// that requires — a rule whose predicate ("That()") matches zero types throws rather than
 /// passing, so each helper below opts out via <c>WithoutRequiringPositiveResults()</c>; this
 /// is unrelated to the presence-guard question above, since it still fails on any real
-/// violation among the types that do match.
+/// violation among the types that do match. The <c>AreNotNested()</c> filter is not
+/// load-bearing — ArchUnitNET already excludes compiler-generated nested types on its own —
+/// it is retained purely as insurance against a hand-written nested type slipping through.
 /// </remarks>
 public class NamingConventionTests
 {
@@ -77,7 +79,7 @@ public class NamingConventionTests
         IArchRule rule = Types().That()
             .ResideInNamespaceMatching(FeatureNamespacePattern(convention.NamespaceSuffix))
             .And().AreNotNested()
-            .Should().HaveNameEndingWith(convention.TypeSuffix)
+            .Should().HaveNameMatching(TypeNamePattern(convention.TypeSuffix))
             .Because($"every type in a feature's {convention.NamespaceSuffix} namespace is a {convention.Name} and must be named *{convention.TypeSuffix}.")
             .WithoutRequiringPositiveResults();
 
@@ -89,7 +91,7 @@ public class NamingConventionTests
         var convention = Find(conventionName);
 
         IArchRule rule = Types().That()
-            .HaveNameEndingWith(convention.TypeSuffix)
+            .HaveNameMatching(TypeNamePattern(convention.TypeSuffix))
             .And().AreNotNested()
             .Should().ResideInNamespaceMatching(FeatureNamespacePattern(convention.NamespaceSuffix))
             .Because($"a {convention.Name} must live in its feature's {convention.NamespaceSuffix} namespace.")
@@ -110,4 +112,16 @@ public class NamingConventionTests
     /// </summary>
     private static string FeatureNamespacePattern(string namespaceSuffix) =>
         @".*\.Features\..*\." + Regex.Escape(namespaceSuffix) + @"(\..*)?$";
+
+    /// <summary>
+    /// Builds a type-name regex matching a suffix while tolerating the CLR arity suffix that
+    /// generic types carry, e.g. a generic <c>ByIdSpec&lt;T&gt;</c> reports its
+    /// <see cref="ArchUnitNET.Domain.IType.Name"/> as <c>ByIdSpec`1</c>, not <c>ByIdSpec</c>.
+    /// A plain <c>HaveNameEndingWith</c> check on either side of these rules would therefore
+    /// wrongly fail a correctly-named generic specification, and would silently fail to select
+    /// a misplaced one at all — the optional trailing <c>(`\d+)?</c> group admits that suffix
+    /// without weakening the match for ordinary, non-generic types.
+    /// </summary>
+    private static string TypeNamePattern(string typeSuffix) =>
+        ".*" + Regex.Escape(typeSuffix) + @"(`\d+)?$";
 }

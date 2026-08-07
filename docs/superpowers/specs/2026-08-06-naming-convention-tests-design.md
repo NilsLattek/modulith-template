@@ -58,9 +58,24 @@ direction is the more likely mistake and is not implied by the folder layout alo
 None of these four concepts exists in the scaffolded `Orders` sample feature. Its complete
 source is `SomeEntity`, `IOrdersRepository`, `OrdersContext`, `OrdersRepository`,
 `OrdersModule`, and two `Configuration.cs` files. All eight rules therefore match zero
-types in a freshly generated solution and pass vacuously.
+types in a freshly generated solution.
 
-This is deliberate and is **not** treated as a defect, unlike in `FeatureLayerTests` and
+**This does not pass by itself.** ArchUnitNET 0.13.3 treats a rule whose predicate matches
+nothing as a failure, not a pass, and throws:
+
+```
+The rule requires positive evaluation, not just absence of violations.
+Use WithoutRequiringPositiveResults() or improve your rule's predicates.
+```
+
+So both helpers must append `.WithoutRequiringPositiveResults()`. Without it every freshly
+scaffolded solution would fail its own architecture tests on day one — the opposite of the
+intent here. The call suppresses **only** the zero-match case; a rule that matches types and
+finds a real violation still fails normally. That was verified in both directions during
+implementation, and again against a freshly scaffolded project, where all eight facts pass
+with zero matches.
+
+Accepting vacuity is deliberate and is **not** treated as a defect, unlike in `FeatureLayerTests` and
 `FeatureModuleTests`, where explicit `Assert` guards exist precisely to prevent vacuous
 passes. The distinction:
 
@@ -113,11 +128,18 @@ Each delegates to one of two helpers, `AssertNaming(string conventionName)` and
 // naming
 Types().That().ResideInNamespaceMatching(pattern).And().AreNotNested()
     .Should().HaveNameEndingWith(convention.TypeSuffix)
+    .Because(...)
+    .WithoutRequiringPositiveResults()
 
 // placement
 Types().That().HaveNameEndingWith(convention.TypeSuffix).And().AreNotNested()
     .Should().ResideInNamespaceMatching(pattern)
+    .Because(...)
+    .WithoutRequiringPositiveResults()
 ```
+
+`.WithoutRequiringPositiveResults()` is required rather than stylistic — see "accept
+vacuity" above.
 
 `ResideInNamespaceMatching`, `HaveNameEndingWith`, `AreNotNested` and the `Should()`-side
 inverses were verified present in the packaged `ArchUnitNET.dll` 0.13.3.
@@ -142,18 +164,57 @@ Feature-generality comes from the `.*\.Features\..*` portion: a new feature is c
 zero test edits, and no `ModulithTemplate` token appears, so the file survives the scaffold
 rename.
 
+### Type-name pattern: generic arity
+
+The suffix checks cannot use `HaveNameEndingWith(suffix)`. ArchUnitNET's `IType.Name` carries
+the CLR **arity suffix** for generic types — a generic `ByIdSpec<T>` reports its name as
+`` ByIdSpec`1 ``, not `ByIdSpec`. Verified against this solution's own assemblies:
+`` OrdersRepository`1 ``, `` IOrdersRepository`1 ``.
+
+Left unhandled this breaks both directions, in opposite and equally bad ways:
+
+- **Naming** — a correctly-named `ActiveOrdersSpec<T>` in `Domain/Specifications/` *fails* the
+  rule, with a message that reads like a tooling bug. Generic specifications are an ordinary
+  Ardalis.Specification pattern, and this template's own `IOrdersRepository<T>` shows generics
+  are idiomatic here.
+- **Placement** — `That().HaveNameEndingWith("Spec")` never selects a generic `` *Spec`1 `` at
+  all, so a *misplaced* generic specification is not caught. Combined with
+  `.WithoutRequiringPositiveResults()`, that zero selection is indistinguishable from a pass.
+  This is the one case where the vacuous-tripwire design's guarantee genuinely fails, which is
+  why it is fixed in code rather than documented as a limitation.
+
+Both sides therefore use a second pattern helper:
+
+```csharp
+private static string TypeNamePattern(string typeSuffix) =>
+    ".*" + Regex.Escape(typeSuffix) + @"(`\d+)?$";
+```
+
+The optional trailing group admits the arity suffix without weakening the match for ordinary
+non-generic types.
+
 ### `Types()` rather than `Classes()`
 
 Interfaces participate in these conventions — `IOrdersAppService` should live in
 `Application.Services` alongside its implementation — so the rules use `Types()`.
 
-### `.AreNotNested()` is load-bearing
+### `.AreNotNested()` is insurance, not load-bearing
 
-Lambda closures (`<>c`) and async state machines are nested compiler-generated types that
-report the *enclosing* namespace. Without the filter, the naming direction would fail the
-first time a user writes a LINQ expression or an `async` method inside a `*Spec` class:
-the generated nested type sits in `Domain.Specifications` and does not end with `Spec`.
-`AreNotNested()` is confirmed available on the `Types().That()` predicate chain in 0.13.3.
+The original rationale for this filter was that lambda closures (`<>c__DisplayClass`) and
+async state machines are nested compiler-generated types reporting the *enclosing*
+namespace, so the naming direction would fail the first time a user wrote a LINQ expression
+inside a `*Spec` class.
+
+**That rationale was tested during implementation and does not hold on 0.13.3.** A `*Spec`
+fixture containing a closure was compiled, reflection confirmed
+`SomeEntityByIdSpec+<>c__DisplayClass0_0` genuinely exists in the emitted assembly in the
+`Domain.Specifications` namespace, and the naming rule passed *with the filter removed*.
+ArchUnitNET excludes compiler-generated nested types from its type universe itself.
+
+The filter is retained anyway, as insurance against **hand-written** nested types — a public
+nested helper inside a `*Spec` class would otherwise trip the naming rule for no useful
+reason. It is cheap and harmless, but it is not what makes these rules work, and removing it
+would not break them.
 
 Mapperly needs no special handling: its source generator emits into the same `partial`
 class it was applied to, producing no additional top-level type.

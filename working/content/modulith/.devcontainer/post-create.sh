@@ -7,9 +7,14 @@ set -euo pipefail
 # when the tool is already installed.
 dotnet tool install --global dotnet-ef || true
 
-# Install external-repo Claude Code plugins that project settings enable but cannot fetch.
-# `.claude/settings.json` only *enables* plugins; external-URL plugins (e.g. superpowers,
-# which lives in github.com/obra/superpowers) still need a per-machine clone, and a fresh
-# container starts with an empty ~/.claude plugin state. `|| true` keeps container creation
-# from failing if the marketplace/network isn't ready yet.
+# Install Claude Code plugins that project settings enable but a fresh container cannot fetch.
+# `.claude/settings.json` only *enables* plugins; the actual bits are cloned per machine, and a
+# fresh container starts with an empty ~/.claude plugin state.
+#
+# `claude-plugins-official` is a *default* marketplace name, but its local clone is only fetched
+# lazily when an interactive session starts. postCreateCommand runs before any session exists, so
+# `plugin install <name>@claude-plugins-official` here fails with "Plugin not found in marketplace"
+# unless the marketplace is materialised first. `marketplace add` is idempotent.
+# `|| true` keeps container creation from failing if the network isn't ready yet.
+claude plugin marketplace add anthropics/claude-plugins-official || true
 claude plugin install superpowers@claude-plugins-official || true

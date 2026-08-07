@@ -1,0 +1,45 @@
+# Dependabot configuration for developing *this* repository (the template package).
+# The parallel file under working/content/modulith/.github/ ships to generated projects.
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# https://containers.dev/guide/dependabot
+
+version: 2
+updates:
+  # This repo's own devcontainer, plus the one that ships inside the template content.
+  - package-ecosystem: "devcontainers"
+    directories:
+      - "/"
+      - "/working/content/modulith"
+    schedule:
+      interval: weekly
+
+  # Workflow actions for both layers. Dependabot appends /.github/workflows to each
+  # directory, so these resolve to /.github/workflows and
+  # working/content/modulith/.github/workflows.
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+      - "/working/content/modulith"
+    schedule:
+      interval: weekly
+
+  # All NuGet versions live in the template content's Directory.Packages.props
+  # (central package management). Scoped there deliberately: the feature sub-template
+  # under working/content/feature/ has token-named .csproj files with unresolvable
+  # ProjectReferences and no Directory.Packages.props of its own, so a repo-wide scan
+  # would fail on it.
+  - package-ecosystem: nuget
+    directory: "/working/content/modulith"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      nuget-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      nuget-majors:
+        patterns: ["*"]
+        update-types: ["major"]
+      nuget-security:
+        applies-to: security-updates
+        patterns: ["*"]

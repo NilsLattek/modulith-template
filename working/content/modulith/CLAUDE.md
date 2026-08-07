@@ -39,6 +39,15 @@ dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Feature
 
 Each feature owns its own `DbContext`, schema, and migrations in its `*.Infrastructure` project. Startup project is always `ModulithTemplate.Web`. Because the host registers more than one `DbContext`, **`--context` is required** — without it `dotnet ef` fails with "More than one DbContext was found".
 
+Two scripts at the solution root wrap this for local development — prefer them over the raw commands:
+
+```bash
+bash add-migration.sh Orders InitialOrders  # <FeatureName> <MigrationName>, writes to the feature's Data/Migrations
+bash update-database.sh                     # applies every discovered context's pending migrations
+```
+
+The raw equivalents:
+
 ```bash
 # Create a new migration for a feature (Orders shown; repeat per feature)
 dotnet ef migrations add "Name" -o Data/Migrations --context OrdersContext \

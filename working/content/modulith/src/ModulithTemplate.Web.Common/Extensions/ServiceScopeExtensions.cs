@@ -49,4 +49,47 @@ public static class ServiceScopeExtensions
         await using var scope = scopeFactory.CreateAsyncScope();
         return await action(scope.ServiceProvider);
     }
+
+    /// <summary>
+    /// Creates a new dependency injection scope, runs <paramref name="action"/> against the
+    /// scope's <see cref="IServiceProvider"/>, and disposes the scope afterwards.
+    /// </summary>
+    /// <param name="scopeFactory">The factory used to create the scope.</param>
+    /// <param name="action">The work to run with the scoped service provider.</param>
+    /// <returns>A task that completes when the work and scope disposal have finished.</returns>
+    /// <remarks>
+    /// The <see cref="ValueTask"/> overloads exist so that a call returning a
+    /// <see cref="ValueTask"/> — such as <c>IMediator.Send</c> — can be passed directly without
+    /// a trailing <c>AsTask()</c> at every call site. The lambda's return type selects the
+    /// overload, so these never compete with the <see cref="Task"/> ones.
+    /// </remarks>
+    public static async ValueTask WithNewScopeAsync(
+        this IServiceScopeFactory scopeFactory,
+        Func<IServiceProvider, ValueTask> action)
+    {
+        ArgumentNullException.ThrowIfNull(scopeFactory);
+        ArgumentNullException.ThrowIfNull(action);
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        await action(scope.ServiceProvider);
+    }
+
+    /// <summary>
+    /// Creates a new dependency injection scope, runs <paramref name="action"/> against the
+    /// scope's <see cref="IServiceProvider"/>, and disposes the scope afterwards.
+    /// </summary>
+    /// <typeparam name="TResult">The type of value produced by <paramref name="action"/>.</typeparam>
+    /// <param name="scopeFactory">The factory used to create the scope.</param>
+    /// <param name="action">The work to run with the scoped service provider.</param>
+    /// <returns>A task producing the value returned by <paramref name="action"/>.</returns>
+    public static async ValueTask<TResult> WithNewScopeAsync<TResult>(
+        this IServiceScopeFactory scopeFactory,
+        Func<IServiceProvider, ValueTask<TResult>> action)
+    {
+        ArgumentNullException.ThrowIfNull(scopeFactory);
+        ArgumentNullException.ThrowIfNull(action);
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        return await action(scope.ServiceProvider);
+    }
 }

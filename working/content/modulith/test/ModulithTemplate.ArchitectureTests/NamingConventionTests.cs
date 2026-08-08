@@ -9,9 +9,9 @@ namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
 /// Enforces the naming and placement conventions for the feature building blocks described in
-/// CLAUDE.md: specifications, mappers, app services and domain services. Each convention is
-/// checked in both directions — every type in the home namespace carries the suffix, and every
-/// type carrying the suffix resides in the home namespace.
+/// CLAUDE.md: specifications, mappers, domain services, commands, queries and DTOs. Each
+/// convention is checked in both directions — every type in the home namespace carries the
+/// suffix, and every type carrying the suffix resides in the home namespace.
 /// </summary>
 /// <remarks>
 /// Unlike <see cref="FeatureLayerTests"/> and <see cref="FeatureModuleTests"/>, these rules
@@ -29,15 +29,17 @@ namespace ModulithTemplate.ArchitectureTests;
 /// </remarks>
 public class NamingConventionTests
 {
-    /// <summary>A building block, the namespace it belongs in, and the type-name suffix it carries.</summary>
-    private sealed record NamingConvention(string Name, string NamespaceSuffix, string TypeSuffix);
+    /// <summary>A building block, the namespace it belongs in, and the type-name suffixes it may carry.</summary>
+    private sealed record NamingConvention(string Name, string NamespaceSuffix, string[] TypeSuffixes);
 
     private static readonly NamingConvention[] Conventions =
     [
-        new("specification", "Domain.Specifications", "Spec"),
-        new("mapper", "Application.Mappers", "Mapper"),
-        new("app service", "Application.Services", "AppService"),
-        new("domain service", "Domain.Services", "DomainService"),
+        new("specification", "Domain.Specifications", ["Spec"]),
+        new("mapper", "Application.Mappers", ["Mapper"]),
+        new("domain service", "Domain.Services", ["DomainService"]),
+        new("command", "Application.Commands", ["Command", "CommandHandler"]),
+        new("query", "Application.Queries", ["Query", "QueryHandler"]),
+        new("dto", "Application.Dtos", ["Dto"]),
     ];
 
     /// <summary>Every type in a feature's Specifications namespace must be named <c>*Spec</c>.</summary>
@@ -56,14 +58,6 @@ public class NamingConventionTests
     [Fact]
     public void Types_named_Mapper_reside_in_Mappers() => AssertPlacement("mapper");
 
-    /// <summary>Every type in a feature's Application Services namespace must be named <c>*AppService</c>.</summary>
-    [Fact]
-    public void Types_in_Application_Services_end_with_AppService() => AssertNaming("app service");
-
-    /// <summary>Every type named <c>*AppService</c> must reside in a feature's Application Services namespace.</summary>
-    [Fact]
-    public void Types_named_AppService_reside_in_Application_Services() => AssertPlacement("app service");
-
     /// <summary>Every type in a feature's Domain Services namespace must be named <c>*DomainService</c>.</summary>
     [Fact]
     public void Types_in_Domain_Services_end_with_DomainService() => AssertNaming("domain service");
@@ -72,6 +66,30 @@ public class NamingConventionTests
     [Fact]
     public void Types_named_DomainService_reside_in_Domain_Services() => AssertPlacement("domain service");
 
+    /// <summary>Every type in a feature's Commands namespace must be named <c>*Command</c> or <c>*CommandHandler</c>.</summary>
+    [Fact]
+    public void Types_in_Commands_end_with_Command_or_CommandHandler() => AssertNaming("command");
+
+    /// <summary>Every type named <c>*Command</c> or <c>*CommandHandler</c> must reside in a feature's Commands namespace.</summary>
+    [Fact]
+    public void Types_named_Command_or_CommandHandler_reside_in_Commands() => AssertPlacement("command");
+
+    /// <summary>Every type in a feature's Queries namespace must be named <c>*Query</c> or <c>*QueryHandler</c>.</summary>
+    [Fact]
+    public void Types_in_Queries_end_with_Query_or_QueryHandler() => AssertNaming("query");
+
+    /// <summary>Every type named <c>*Query</c> or <c>*QueryHandler</c> must reside in a feature's Queries namespace.</summary>
+    [Fact]
+    public void Types_named_Query_or_QueryHandler_reside_in_Queries() => AssertPlacement("query");
+
+    /// <summary>Every type in a feature's Dtos namespace must be named <c>*Dto</c>.</summary>
+    [Fact]
+    public void Types_in_Dtos_end_with_Dto() => AssertNaming("dto");
+
+    /// <summary>Every type named <c>*Dto</c> must reside in a feature's Dtos namespace.</summary>
+    [Fact]
+    public void Types_named_Dto_reside_in_Dtos() => AssertPlacement("dto");
+
     private static void AssertNaming(string conventionName)
     {
         var convention = Find(conventionName);
@@ -79,8 +97,8 @@ public class NamingConventionTests
         IArchRule rule = Types().That()
             .ResideInNamespaceMatching(FeatureNamespacePattern(convention.NamespaceSuffix))
             .And().AreNotNested()
-            .Should().HaveNameMatching(TypeNamePattern(convention.TypeSuffix))
-            .Because($"every type in a feature's {convention.NamespaceSuffix} namespace is a {convention.Name} and must be named *{convention.TypeSuffix}.")
+            .Should().HaveNameMatching(TypeNamePattern(convention.TypeSuffixes))
+            .Because($"every type in a feature's {convention.NamespaceSuffix} namespace is a {convention.Name} and must be named {string.Join(" or ", convention.TypeSuffixes.Select(suffix => "*" + suffix))}.")
             .WithoutRequiringPositiveResults();
 
         rule.Check(SolutionAssemblies.Architecture);
@@ -91,7 +109,7 @@ public class NamingConventionTests
         var convention = Find(conventionName);
 
         IArchRule rule = Types().That()
-            .HaveNameMatching(TypeNamePattern(convention.TypeSuffix))
+            .HaveNameMatching(TypeNamePattern(convention.TypeSuffixes))
             .And().AreNotNested()
             .Should().ResideInNamespaceMatching(FeatureNamespacePattern(convention.NamespaceSuffix))
             .Because($"a {convention.Name} must live in its feature's {convention.NamespaceSuffix} namespace.")
@@ -120,8 +138,10 @@ public class NamingConventionTests
     /// A plain <c>HaveNameEndingWith</c> check on either side of these rules would therefore
     /// wrongly fail a correctly-named generic specification, and would silently fail to select
     /// a misplaced one at all — the optional trailing <c>(`\d+)?</c> group admits that suffix
-    /// without weakening the match for ordinary, non-generic types.
+    /// without weakening the match for ordinary, non-generic types. A convention may carry more
+    /// than one suffix — a <c>Commands</c> namespace legitimately holds both <c>*Command</c> and
+    /// <c>*CommandHandler</c> types — so the suffixes are combined into an alternation.
     /// </summary>
-    private static string TypeNamePattern(string typeSuffix) =>
-        ".*" + Regex.Escape(typeSuffix) + @"(`\d+)?$";
+    private static string TypeNamePattern(string[] typeSuffixes) =>
+        ".*(" + string.Join("|", typeSuffixes.Select(Regex.Escape)) + @")(`\d+)?$";
 }

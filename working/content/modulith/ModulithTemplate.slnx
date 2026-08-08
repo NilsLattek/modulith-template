@@ -14,6 +14,7 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj" />
+    <Project Path="test/ModulithTemplate.WebTests/ModulithTemplate.WebTests.csproj" />
   </Folder>
   <Folder Name="/test/Features/" />
   <Folder Name="/test/Features/Orders/">

@@ -23,7 +23,8 @@ public class FeatureNameApplicationSmokeTests
     /// <summary>
     /// Smoke test for the layer's test toolchain: a substituted <see cref="IFeatureNameRepository{T}"/>
     /// is accepted by the container and <c>ConfigureFeatureNameApplication</c> composes onto it.
-    /// Replace this with a real app-service test once the layer registers one.
+    /// This test only guards the layer's DI composition; handler behaviour belongs in per-handler
+    /// tests alongside this file, added as the feature gains handlers.
     /// </summary>
     [Fact]
     public void ConfigureFeatureNameApplication_with_a_substituted_repository_builds_a_resolvable_provider()

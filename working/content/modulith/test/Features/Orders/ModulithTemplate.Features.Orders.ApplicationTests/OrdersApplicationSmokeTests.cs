@@ -14,7 +14,8 @@ public class OrdersApplicationSmokeTests
     /// <summary>
     /// Smoke test for the layer's test toolchain: a substituted <see cref="IOrdersRepository{T}"/>
     /// is accepted by the container and <c>ConfigureOrdersApplication</c> composes onto it.
-    /// Replace this with a real app-service test once the layer registers one.
+    /// Handler behaviour is covered by the per-handler tests alongside this file; this one only
+    /// guards the layer's DI composition.
     /// </summary>
     [Fact]
     public void ConfigureOrdersApplication_with_a_substituted_repository_builds_a_resolvable_provider()

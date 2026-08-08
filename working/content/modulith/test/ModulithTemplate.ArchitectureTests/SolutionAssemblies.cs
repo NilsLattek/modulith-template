@@ -46,7 +46,7 @@ internal static class SolutionAssemblies
                 // architecture. Assemblies ending in "Tests" are excluded for the same reason.
                 .Where(f => Path.GetFileName(f).Contains(FeaturesKeyword, StringComparison.Ordinal)
                     && !Path.GetFileNameWithoutExtension(f).EndsWith("Tests", StringComparison.Ordinal))
-                .DistinctBy(Path.GetFileName)
+                .DistinctBy(Path.GetFileName, StringComparer.Ordinal)
                 .Select(Assembly.LoadFile)
                 .ToArray();
         }

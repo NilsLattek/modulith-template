@@ -83,6 +83,7 @@ Each feature's four layers are mirrored by four test projects under `test/Featur
 | Several aggregates, or a decision needing a lookup/repository | a **`*DomainService`** in `Domain/Services/` |
 | A reusable query predicate | a **`*Spec`** in `Domain/Specifications/` |
 | Sequencing: load → call domain → persist → map | the **handler** in `Application` |
+| The *shape* of an incoming value — required, length, range, format | a **`*CommandValidator`** beside its command (FluentValidation) |
 | HTTP, Blazor, `DbContext`, JSON, configuration | `Web` / `Infrastructure` |
 
 Signals you have put a rule in the wrong place:
@@ -170,7 +171,7 @@ Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`
 `public sealed` handler, in a folder of its own:
 
 ```
-Application/Commands/AddSomeEntity/{AddSomeEntityCommand,AddSomeEntityCommandHandler}.cs
+Application/Commands/AddSomeEntity/{AddSomeEntityCommand,AddSomeEntityCommandHandler,AddSomeEntityCommandValidator}.cs
 Application/Queries/GetSomeEntityCount/{GetSomeEntityCountQuery,GetSomeEntityCountQueryHandler}.cs
 Application/Dtos/*Dto.cs
 Application/Mappers/*Mapper.cs        // Mapperly [Mapper] partial classes
@@ -189,6 +190,47 @@ Two rules that are easy to get wrong:
   `CS0122`. Do not "tidy" them.
 
 `Web` reaches `Application` only through `IMediator` — never by calling a handler directly.
+
+#### Validating a command or query
+
+A message is validated by the mediator pipeline before its handler runs. Write a
+`public sealed class <Name>CommandValidator : AbstractValidator<<Name>Command>` **in the message's
+own folder**, next to the command and its handler:
+
+```csharp
+public sealed class AddSomeEntityCommandValidator : AbstractValidator<AddSomeEntityCommand>
+{
+    public AddSomeEntityCommandValidator() =>
+        RuleFor(command => command.Name).NotEmpty().MaximumLength(200);
+}
+```
+
+Nothing else is needed: each feature's `ConfigureXxxApplication` scans its own assembly with
+`AddValidatorsFromAssembly`, and `ValidationBehaviour` resolves every `IValidator<TMessage>`
+registered for the message. A message with no validator passes straight through, so validation is
+opt-in per command or query.
+
+**Validators check the shape of incoming values, not business rules.** Required, length, range,
+format, "these two fields must both be set" — that is the whole remit, and it is what the DDD
+application-service boundary owes the domain: an obviously malformed DTO is rejected before a
+handler touches an entity. Everything that depends on domain state — whether an order may still be
+changed, whether a quantity is legal for this product — is a domain invariant and belongs in the
+entity or a domain service, where it holds for every caller rather than for one command. A rule
+duplicated in a validator *and* an entity is a rule in the wrong place; keep it in the entity. A
+validator must never inject a repository to answer a question.
+
+Failures come back as a failed `Result` carrying one `ValidationError` per broken rule
+(`ModulithTemplate.Web.Common/Errors/ValidationError.cs`), each with the `PropertyName` it was
+declared on, so a Blazor form can bind them to the fields they belong to:
+
+```csharp
+var errors = result.Errors.OfType<ValidationError>()
+    .ToLookup(error => error.PropertyName, error => error.Message);
+```
+
+Like `ExceptionBehaviour`, the behaviour is constrained to result responses — a handler returning
+anything else is silently not validated, which is another reason every handler returns
+`Result`/`Result<T>`.
 
 ### Infrastructure
 

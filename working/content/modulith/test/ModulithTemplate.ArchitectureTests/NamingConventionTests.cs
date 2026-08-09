@@ -37,8 +37,8 @@ public class NamingConventionTests
         new("specification", "Domain.Specifications", ["Spec"]),
         new("mapper", "Application.Mappers", ["Mapper"]),
         new("domain service", "Domain.Services", ["DomainService"]),
-        new("command", "Application.Commands", ["Command", "CommandHandler"]),
-        new("query", "Application.Queries", ["Query", "QueryHandler"]),
+        new("command", "Application.Commands", ["Command", "CommandHandler", "CommandValidator"]),
+        new("query", "Application.Queries", ["Query", "QueryHandler", "QueryValidator"]),
         new("dto", "Application.Dtos", ["Dto"]),
     ];
 
@@ -66,21 +66,21 @@ public class NamingConventionTests
     [Fact]
     public void Types_named_DomainService_reside_in_Domain_Services() => AssertPlacement("domain service");
 
-    /// <summary>Every type in a feature's Commands namespace must be named <c>*Command</c> or <c>*CommandHandler</c>.</summary>
+    /// <summary>Every type in a feature's Commands namespace must be named <c>*Command</c>, <c>*CommandHandler</c> or <c>*CommandValidator</c>.</summary>
     [Fact]
-    public void Types_in_Commands_end_with_Command_or_CommandHandler() => AssertNaming("command");
+    public void Types_in_Commands_end_with_Command_CommandHandler_or_CommandValidator() => AssertNaming("command");
 
-    /// <summary>Every type named <c>*Command</c> or <c>*CommandHandler</c> must reside in a feature's Commands namespace.</summary>
+    /// <summary>Every type named <c>*Command</c>, <c>*CommandHandler</c> or <c>*CommandValidator</c> must reside in a feature's Commands namespace.</summary>
     [Fact]
-    public void Types_named_Command_or_CommandHandler_reside_in_Commands() => AssertPlacement("command");
+    public void Types_named_Command_CommandHandler_or_CommandValidator_reside_in_Commands() => AssertPlacement("command");
 
-    /// <summary>Every type in a feature's Queries namespace must be named <c>*Query</c> or <c>*QueryHandler</c>.</summary>
+    /// <summary>Every type in a feature's Queries namespace must be named <c>*Query</c>, <c>*QueryHandler</c> or <c>*QueryValidator</c>.</summary>
     [Fact]
-    public void Types_in_Queries_end_with_Query_or_QueryHandler() => AssertNaming("query");
+    public void Types_in_Queries_end_with_Query_QueryHandler_or_QueryValidator() => AssertNaming("query");
 
-    /// <summary>Every type named <c>*Query</c> or <c>*QueryHandler</c> must reside in a feature's Queries namespace.</summary>
+    /// <summary>Every type named <c>*Query</c>, <c>*QueryHandler</c> or <c>*QueryValidator</c> must reside in a feature's Queries namespace.</summary>
     [Fact]
-    public void Types_named_Query_or_QueryHandler_reside_in_Queries() => AssertPlacement("query");
+    public void Types_named_Query_QueryHandler_or_QueryValidator_reside_in_Queries() => AssertPlacement("query");
 
     /// <summary>Every type in a feature's Dtos namespace must be named <c>*Dto</c>.</summary>
     [Fact]

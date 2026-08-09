@@ -1,6 +1,9 @@
+using FluentValidation;
+
 using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.Features.Orders.Application;
+using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 using ModulithTemplate.Features.Orders.Domain;
 using ModulithTemplate.Features.Orders.Domain.Entities;
 
@@ -29,5 +32,23 @@ public class OrdersApplicationSmokeTests
 
         // Assert
         Assert.NotNull(provider.GetRequiredService<IOrdersRepository<SomeEntity>>());
+    }
+
+    /// <summary>
+    /// Guards the assembly scan in <c>ConfigureOrdersApplication</c>: the host's validation
+    /// behaviour resolves <see cref="IValidator{T}"/>, so a validator that is written but never
+    /// registered would silently never run.
+    /// </summary>
+    [Fact]
+    public void ConfigureOrdersApplication_registers_the_feature_validators()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        using var provider = services.ConfigureOrdersApplication().BuildServiceProvider();
+
+        // Assert
+        Assert.IsType<AddSomeEntityCommandValidator>(provider.GetRequiredService<IValidator<AddSomeEntityCommand>>());
     }
 }

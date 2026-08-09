@@ -16,8 +16,14 @@ builder.Services.AddMediator(options =>
 
     // Ordered outermost-first. LoggingBehaviour therefore observes a uniform Result outcome for
     // handlers returning Result/Result<T>, because ExceptionBehaviour has already converted any
-    // exception below it.
-    options.PipelineBehaviors = [typeof(LoggingBehaviour<,>), typeof(ExceptionBehaviour<,>)];
+    // exception below it. ValidationBehaviour sits innermost, so a handler never runs on invalid
+    // input, and a validator that throws is still converted by ExceptionBehaviour above it.
+    options.PipelineBehaviors =
+    [
+        typeof(LoggingBehaviour<,>),
+        typeof(ExceptionBehaviour<,>),
+        typeof(ValidationBehaviour<,>),
+    ];
 });
 
 // Add services to the container.

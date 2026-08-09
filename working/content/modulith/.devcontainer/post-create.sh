@@ -7,6 +7,15 @@ set -euo pipefail
 # when the tool is already installed.
 dotnet tool install --global dotnet-ef || true
 
+# Install the Claude Code CLI via the official installer. Faster than the
+# devcontainer feature, which pulls in Node.js first and tends to lag behind
+# on the Claude Code version it installs.
+curl -fsSL https://claude.ai/install.sh | bash
+# The installer places the binary in ~/.local/bin and wires PATH into shell
+# rc files, but this script runs non-interactively so those rc files are
+# never sourced here. Add it to PATH now so `claude` below resolves.
+export PATH="$HOME/.local/bin:$PATH"
+
 # Install Claude Code plugins that project settings enable but a fresh container cannot fetch.
 # `.claude/settings.json` only *enables* plugins; the actual bits are cloned per machine, and a
 # fresh container starts with an empty ~/.claude plugin state.

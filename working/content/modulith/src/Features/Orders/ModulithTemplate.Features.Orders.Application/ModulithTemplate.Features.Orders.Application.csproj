@@ -9,6 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../ModulithTemplate.Application.Common/ModulithTemplate.Application.Common.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Features.Orders.Contracts/ModulithTemplate.Features.Orders.Contracts.csproj" />
     <ProjectReference Include="../ModulithTemplate.Features.Orders.Domain/ModulithTemplate.Features.Orders.Domain.csproj" />
   </ItemGroup>
 

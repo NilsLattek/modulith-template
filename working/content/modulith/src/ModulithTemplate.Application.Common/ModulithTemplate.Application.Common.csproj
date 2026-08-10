@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Abstractions every feature's Application layer implements or injects: the two event-handler
+       interfaces, the published-contract marker, and the queue handlers enqueue onto.
+
+       Abstractions only — the implementations live in Infrastructure.Common. -->
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ModulithTemplate.Domain.Common/ModulithTemplate.Domain.Common.csproj" />
+  </ItemGroup>
+
+</Project>

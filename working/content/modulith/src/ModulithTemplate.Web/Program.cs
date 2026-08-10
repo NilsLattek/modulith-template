@@ -1,4 +1,5 @@
 using ModulithTemplate.Features.Orders.Web;
+using ModulithTemplate.Infrastructure.Common.Events;
 using ModulithTemplate.Web.Behaviours;
 using ModulithTemplate.Web.Components;
 
@@ -10,6 +11,10 @@ builder.AddServiceDefaults();
 
 builder.ConfigureOrdersFeature();
 
+// The scoped queue features enqueue integration events onto. Registered before AddMediator only
+// for readability — IntegrationEventBehaviour resolves it per message, not at registration time.
+builder.Services.AddIntegrationEvents();
+
 builder.Services.AddMediator(options =>
 {
     // Scoped, not the library default of Singleton: handlers inject the feature repositories,
@@ -20,13 +25,16 @@ builder.Services.AddMediator(options =>
 
     // Ordered outermost-first. LoggingBehaviour therefore observes a uniform Result outcome for
     // handlers returning Result/Result<T>, because ExceptionBehaviour has already converted any
-    // exception below it. ValidationBehaviour sits innermost, so a handler never runs on invalid
-    // input, and a validator that throws is still converted by ExceptionBehaviour above it.
+    // exception below it. ValidationBehaviour sits above the handler, so a handler never runs on
+    // invalid input, and a validator that throws is still converted by ExceptionBehaviour above it.
+    // IntegrationEventBehaviour is innermost, wrapping the handler alone: it must not publish for a
+    // message that failed validation, and a consumer that throws has to reach ExceptionBehaviour.
     options.PipelineBehaviors =
     [
         typeof(LoggingBehaviour<,>),
         typeof(ExceptionBehaviour<,>),
         typeof(ValidationBehaviour<,>),
+        typeof(IntegrationEventBehaviour<,>),
     ];
 });
 

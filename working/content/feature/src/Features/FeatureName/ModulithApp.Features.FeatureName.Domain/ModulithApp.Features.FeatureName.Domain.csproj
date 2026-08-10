@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="../../../ModulithApp.FeatureCore/ModulithApp.FeatureCore.csproj" />
+    <ProjectReference Include="../../../ModulithApp.Domain.Common/ModulithApp.Domain.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

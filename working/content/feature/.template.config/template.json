@@ -30,6 +30,7 @@
     }
   },
   "primaryOutputs": [
+    { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Contracts/ModulithApp.Features.FeatureName.Contracts.csproj" },
     { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" },
     { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Application/ModulithApp.Features.FeatureName.Application.csproj" },
     { "path": "src/Features/FeatureName/ModulithApp.Features.FeatureName.Infrastructure/ModulithApp.Features.FeatureName.Infrastructure.csproj" },
@@ -49,7 +50,7 @@
       "actionId": "D396686C-DE0E-4DE6-906D-291CD29FC5DE",
       "continueOnError": true,
       "args": {
-        "primaryOutputIndexes": "0;1;2;3;4;5;6;7"
+        "primaryOutputIndexes": "0;1;2;3;4;5;6;7;8"
       }
     }
   ]

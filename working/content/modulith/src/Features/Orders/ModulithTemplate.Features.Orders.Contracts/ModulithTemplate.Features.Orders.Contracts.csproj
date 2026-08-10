@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Orders feature's published contract: the only project of this feature that another
+       feature may reference. It deliberately references nothing but Application.Common — adding a
+       reference to this feature's Domain, Application, Infrastructure or Web would turn the
+       contract into a back door into the module, and ContractIsolationTests fails the build if
+       one appears. -->
+  <ItemGroup>
+    <ProjectReference Include="../../../ModulithTemplate.Application.Common/ModulithTemplate.Application.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Api/" />
+  </ItemGroup>
+
+</Project>

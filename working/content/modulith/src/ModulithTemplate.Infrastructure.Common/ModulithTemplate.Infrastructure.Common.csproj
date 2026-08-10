@@ -1,11 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Technical implementations of the shared abstractions: the EF Core conventions every feature's
+       DbContext is registered with, and the two event dispatch mechanisms. The abstractions they
+       satisfy live in Application.Common and Domain.Common. -->
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="EntityFrameworkCore.Exceptions.PostgreSQL" />
+    <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ModulithTemplate.Application.Common/ModulithTemplate.Application.Common.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Domain.Common/ModulithTemplate.Domain.Common.csproj" />
   </ItemGroup>
 
 </Project>

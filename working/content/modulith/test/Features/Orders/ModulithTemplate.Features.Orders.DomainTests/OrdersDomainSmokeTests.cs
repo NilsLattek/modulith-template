@@ -1,4 +1,4 @@
-using ModulithTemplate.FeatureCore;
+using ModulithTemplate.Domain.Common;
 using ModulithTemplate.Features.Orders.Domain;
 using ModulithTemplate.Features.Orders.Domain.Entities;
 

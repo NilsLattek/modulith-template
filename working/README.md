@@ -1,16 +1,16 @@
 # Modulith
 
-`dotnet new` templates for a .NET modular monolith: a Blazor Server host plus one project
-quartet (`Domain`/`Application`/`Infrastructure`/`Web`) per feature, each feature owning its own
-`DbContext` and its own Postgres schema.
+`dotnet new` templates for a .NET modular monolith: a Blazor Server host plus five layer projects
+(`Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`) per feature, each feature owning its
+own `DbContext` and its own Postgres schema.
 
 ## Templates in this package
 
 - `dotnet new modulith` — scaffolds a new modular-monolith solution.
 - `dotnet new modulith-feature --appName <App> -n <Name>` — run from a scaffolded solution's
-  root to add one feature's four layer projects (`Domain`/`Application`/`Infrastructure`/`Web`)
-  plus their four matching test projects, eight projects in all, registered in the solution
-  automatically.
+  root to add one feature's five layer projects
+  (`Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`) plus their four matching test
+  projects, nine projects in all, registered in the solution automatically.
 
 A scaffolded feature is added to the `.slnx` but not yet wired into the host. Reference its
 `Web` project from `src/<App>.Web/` and call `builder.Configure<Name>Feature();` in `Program.cs`
@@ -21,8 +21,13 @@ A scaffolded feature is added to the `.slnx` but not yet wired into the host. Re
 - A sample `Orders` feature showing the layering, with command/query handlers, a repository, and
   its own `OrdersContext`.
 - EF Core on Npgsql with snake_case naming and a per-feature migrations history table.
-- [Mediator](https://github.com/martinothamar/Mediator) with logging, exception, and validation
-  pipeline behaviours; FluentResults for handler outcomes and FluentValidation for input.
+- [Mediator](https://github.com/martinothamar/Mediator) with logging, exception, validation, and
+  integration-event pipeline behaviours; FluentResults for handler outcomes and FluentValidation
+  for input.
+- Cross-feature communication that keeps the slices isolated: in-process integration events
+  dispatched after commit, a read-only per-feature module API, and in-transaction domain events —
+  all published through a `Contracts` project that is the only part of a feature its neighbours
+  may reference, with architecture tests enforcing it.
 - xUnit v3 test projects per layer, bUnit for components, and ArchUnitNET architecture tests.
 - A devcontainer with .NET, the `dotnet-ef` CLI, and Postgres.
 

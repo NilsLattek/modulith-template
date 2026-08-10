@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" />
-    <ProjectReference Include="../../../ModulithApp.FeatureCore/ModulithApp.FeatureCore.csproj" />
+    <ProjectReference Include="../../../ModulithApp.Domain.Common/ModulithApp.Domain.Common.csproj" />
     <ProjectReference Include="../../../ModulithApp.Infrastructure.Common/ModulithApp.Infrastructure.Common.csproj" />
   </ItemGroup>
 

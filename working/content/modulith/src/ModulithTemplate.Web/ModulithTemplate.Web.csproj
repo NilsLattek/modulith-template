@@ -17,6 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../ModulithTemplate.Application.Common/ModulithTemplate.Application.Common.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Infrastructure.Common/ModulithTemplate.Infrastructure.Common.csproj" />
     <ProjectReference Include="../ModulithTemplate.ServiceDefaults/ModulithTemplate.ServiceDefaults.csproj" />
     <ProjectReference Include="../ModulithTemplate.Web.Common/ModulithTemplate.Web.Common.csproj" />
     <ProjectReference Include="../Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />

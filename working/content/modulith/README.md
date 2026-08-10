@@ -70,3 +70,22 @@ dotnet add src/ModulithTemplate.Web/ModulithTemplate.Web.csproj reference \
 ```
 
 and call `builder.ConfigurePaymentsFeature();` in `src/ModulithTemplate.Web/Program.cs`.
+
+## Observability
+
+`src/ModulithTemplate.ServiceDefaults/` is a near-verbatim copy of .NET Aspire's ServiceDefaults project. `builder.AddServiceDefaults()` in `Program.cs` turns on OpenTelemetry tracing, metrics and logging, instrumenting ASP.NET Core, `HttpClient`, the .NET runtime and Npgsql — so a database query shows up as a child span of the request that issued it.
+
+**Nothing is exported unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set.** With the variable unset, which is the default, telemetry is collected and then discarded. To actually see it, point the app at an OTLP collector:
+
+```bash
+cd src/ModulithTemplate.Web/
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 dotnet run --no-restore
+```
+
+Any OTLP collector works. The standalone [.NET Aspire dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/standalone) is the quickest option for local use.
+
+### Health checks
+
+`app.MapDefaultEndpoints()` maps `/health` (every check must pass) and `/alive` (only checks tagged `live`).
+
+Both are mapped **in the Development environment only**, because they are unauthenticated — so a production deployment has no health endpoint until you add one. To expose them, put authentication in front and relax the `IsDevelopment()` guard in `src/ModulithTemplate.ServiceDefaults/Extensions.cs`.

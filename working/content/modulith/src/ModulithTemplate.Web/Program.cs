@@ -4,6 +4,10 @@ using ModulithTemplate.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Aspire's ServiceDefaults: OpenTelemetry tracing, metrics and logging, health checks, service
+// discovery and HTTP resilience. First, so telemetry is in place before anything else registers.
+builder.AddServiceDefaults();
+
 builder.ConfigureOrdersFeature();
 
 builder.Services.AddMediator(options =>
@@ -47,6 +51,10 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Maps /health and /alive — in the Development environment only, because they are
+// unauthenticated. See the security note in ServiceDefaults/Extensions.cs.
+app.MapDefaultEndpoints();
 
 #pragma warning disable S6966 // Awaitable method should be used
 app.Run();

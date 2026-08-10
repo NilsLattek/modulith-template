@@ -11,7 +11,12 @@ public class FeatureModuleTests
     public void ModulesCannotDependOnEachOther()
     {
         const string modulesKeyword = ".Features.";
-        const string integrationEventsKeyword = ".IntegrationEvents";
+
+        // A feature's published contract is the one part of it other features may depend on, so its
+        // types are excluded from the slice assignment entirely — a dependency on them is not a
+        // cross-feature dependency. ContractIsolationTests is what keeps that exemption honest by
+        // forbidding a Contracts project from reaching back into its own feature's internals.
+        const string contractsKeyword = ".Contracts";
 
         // Guard: fail loudly if no feature assemblies were discovered, so the cross-feature
         // rule cannot pass vacuously on an empty architecture.
@@ -34,7 +39,7 @@ public class FeatureModuleTests
             var nextDotIdx = withoutFeaturePrefix.IndexOf('.');
             var featureName = nextDotIdx < 0 ? withoutFeaturePrefix : withoutFeaturePrefix.Substring(0, nextDotIdx);
 
-            if (withoutFeaturePrefix.StartsWith(featureName + integrationEventsKeyword, StringComparison.Ordinal))
+            if (withoutFeaturePrefix.StartsWith(featureName + contractsKeyword, StringComparison.Ordinal))
             {
                 return SliceIdentifier.Ignore();
             }

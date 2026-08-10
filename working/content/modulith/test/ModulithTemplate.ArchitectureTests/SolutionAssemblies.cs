@@ -24,6 +24,37 @@ internal static class SolutionAssemblies
     /// <summary>The ArchUnitNET architecture built from <see cref="FeatureAssemblies"/>.</summary>
     public static Architecture Architecture => LazyArchitecture.Value;
 
+    /// <summary>
+    /// Builds an assembly-name regex matching a feature layer by its suffix expression.
+    /// </summary>
+    /// <remarks>
+    /// ArchUnitNET matches against the assembly's fully-qualified name (e.g.
+    /// <c>ModulithTemplate.Features.Orders.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c>),
+    /// so the suffix is anchored at the simple-name boundary — end of string or the version comma —
+    /// not at the end of the whole string.
+    /// </remarks>
+    /// <param name="suffixExpression">A layer suffix, or a regex alternation of several.</param>
+    /// <returns>The assembly-name pattern.</returns>
+    public static string FeatureLayerPattern(string suffixExpression) =>
+        @".*\.Features\..*\." + suffixExpression + @"(,.*)?$";
+
+    /// <summary>Combines one or more layer suffixes into a regex alternation.</summary>
+    /// <param name="suffixes">The suffixes to combine.</param>
+    /// <returns>A single suffix expression.</returns>
+    public static string Alternation(params string[] suffixes) =>
+        suffixes.Length == 1 ? suffixes[0] : "(" + string.Join("|", suffixes) + ")";
+
+    /// <summary>Whether any discovered feature assembly is the given layer.</summary>
+    /// <param name="layerSuffix">The layer's assembly-name suffix, e.g. <c>Contracts</c>.</param>
+    /// <returns><see langword="true"/> if at least one such assembly was loaded.</returns>
+    public static bool HasFeatureLayer(string layerSuffix) =>
+        FeatureAssemblies.Any(assembly =>
+        {
+            var name = assembly.GetName().Name!;
+            return name.Contains(FeaturesKeyword, StringComparison.Ordinal)
+                && name.EndsWith("." + layerSuffix, StringComparison.Ordinal);
+        });
+
     /// <summary>Walks up from the current working directory to the folder containing the .slnx.</summary>
     public static string GetSolutionDirectory()
     {

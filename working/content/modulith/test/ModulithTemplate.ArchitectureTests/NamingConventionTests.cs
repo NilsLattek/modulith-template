@@ -9,127 +9,154 @@ namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
 /// Enforces the naming and placement conventions for the feature building blocks described in
-/// CLAUDE.md: specifications, mappers, domain services, commands, queries and DTOs. Each
-/// convention is checked in both directions — every type in the home namespace carries the
-/// suffix, and every type carrying the suffix resides in the home namespace.
+/// CLAUDE.md: specifications, mappers, domain services, commands, queries, DTOs, the module API and
+/// the two kinds of event.
 /// </summary>
 /// <remarks>
-/// Unlike <see cref="FeatureLayerTests"/> and <see cref="FeatureModuleTests"/>, these rules
-/// deliberately carry no "assembly was discovered" presence guard, and none should be added.
-/// A layering rule that matches nothing is a false green over code that exists; a naming rule
-/// that matches nothing simply means the solution has no specifications yet, which is the
-/// normal state of a freshly scaffolded project. These are conditional tripwires armed for
-/// code the user has not written yet. ArchUnitNET's default behavior is the opposite of what
-/// that requires — a rule whose predicate ("That()") matches zero types throws rather than
-/// passing, so each helper below opts out via <c>WithoutRequiringPositiveResults()</c>; this
-/// is unrelated to the presence-guard question above, since it still fails on any real
-/// violation among the types that do match. The <c>AreNotNested()</c> filter is not
-/// load-bearing — ArchUnitNET already excludes compiler-generated nested types on its own —
-/// it is retained purely as insurance against a hand-written nested type slipping through.
+/// Each convention is checked in <b>both</b> directions, and the two directions are driven by two
+/// separate tables because they are not each other's mirror image:
+/// <list type="bullet">
+/// <item><description>
+/// <see cref="Placements"/> answers "where may a type with this suffix live?" — and the answer is
+/// sometimes more than one namespace. A <c>*Dto</c> is legitimate both as a feature's internal read
+/// model and as part of its published contract; a <c>*Api</c> type is legitimate both as the
+/// published interface and as the implementation behind it.
+/// </description></item>
+/// <item><description>
+/// <see cref="Contents"/> answers "what may live in this namespace?" — and the answer is sometimes
+/// more than one suffix. <c>Contracts.Api</c> holds the interface <i>and</i> the DTOs it returns.
+/// </description></item>
+/// </list>
+/// Collapsing the two into one table is what a single-suffix-per-namespace assumption buys, and it
+/// stops being true the moment a namespace holds an interface alongside its read models.
+/// <para>
+/// These rules deliberately carry no "assembly was discovered" presence guard, and none should be
+/// added. A layering rule that matches nothing is a false green over code that exists; a naming rule
+/// that matches nothing simply means the solution has no specifications yet, which is the normal
+/// state of a freshly scaffolded project. These are conditional tripwires armed for code the user
+/// has not written yet. ArchUnitNET's default behavior is the opposite of what that requires — a
+/// rule whose predicate matches zero types throws rather than passing — so each helper opts out via
+/// <c>WithoutRequiringPositiveResults()</c>. That still fails on any real violation among the types
+/// that do match. The <c>AreNotNested()</c> filter is not load-bearing — ArchUnitNET already
+/// excludes compiler-generated nested types — it is insurance against a hand-written nested type.
+/// </para>
+/// <para>
+/// Every rule is scoped to types in a feature assembly. The shared projects define abstractions
+/// whose names deliberately match these suffixes — <c>IIntegrationEvent</c> and
+/// <c>IDomainEventHandler</c> in Application.Common, <c>IntegrationEventLogHandler</c> in the host —
+/// and those are contracts to implement, not misplaced feature code. These conventions govern where a
+/// <i>feature</i> puts its own types.
+/// </para>
 /// </remarks>
 public class NamingConventionTests
 {
-    /// <summary>A building block, the namespace it belongs in, and the type-name suffixes it may carry.</summary>
-    private sealed record NamingConvention(string Name, string NamespaceSuffix, string[] TypeSuffixes);
+    /// <summary>Which namespaces a type carrying one of these suffixes may live in.</summary>
+    private sealed record PlacementRule(string Name, string[] TypeSuffixes, string[] HomeNamespaces);
 
-    private static readonly NamingConvention[] Conventions =
+    /// <summary>Which suffixes a type living in this namespace may carry.</summary>
+    private sealed record ContentRule(string Namespace, string[] AllowedSuffixes);
+
+    private static readonly PlacementRule[] Placements =
     [
-        new("specification", "Domain.Specifications", ["Spec"]),
-        new("mapper", "Application.Mappers", ["Mapper"]),
-        new("domain service", "Domain.Services", ["DomainService"]),
-        new("command", "Application.Commands", ["Command", "CommandHandler", "CommandValidator"]),
-        new("query", "Application.Queries", ["Query", "QueryHandler", "QueryValidator"]),
-        new("dto", "Application.Dtos", ["Dto"]),
+        new("specification", ["Spec"], ["Domain.Specifications"]),
+        new("mapper", ["Mapper"], ["Application.Mappers"]),
+        new("domain service", ["DomainService"], ["Domain.Services"]),
+        new("command", ["Command", "CommandHandler", "CommandValidator"], ["Application.Commands"]),
+        new("query", ["Query", "QueryHandler", "QueryValidator"], ["Application.Queries"]),
+
+        // Two homes, meaning different things. Application.Dtos is the feature's own read model,
+        // free to change with the feature. Contracts.Api is published, and changing it breaks every
+        // consumer compiled against it.
+        new("dto", ["Dto"], ["Application.Dtos", "Contracts.Api"]),
+
+        // Likewise: the interface is published from Contracts.Api, while the implementation stays in
+        // the owning feature's Application.Api, where it can reach the repository.
+        new("module api", ["Api"], ["Contracts.Api", "Application.Api"]),
+
+        new("integration event", ["IntegrationEvent"], ["Contracts.IntegrationEvents"]),
+        new("integration event handler", ["IntegrationEventHandler"], ["Application.IntegrationEventHandlers"]),
+        new("domain event", ["DomainEvent"], ["Domain.Events"]),
+        new("domain event handler", ["DomainEventHandler"], ["Application.DomainEventHandlers"]),
     ];
 
-    /// <summary>Every type in a feature's Specifications namespace must be named <c>*Spec</c>.</summary>
-    [Fact]
-    public void Types_in_Specifications_end_with_Spec() => AssertNaming("specification");
+    private static readonly ContentRule[] Contents =
+    [
+        new("Domain.Specifications", ["Spec"]),
+        new("Application.Mappers", ["Mapper"]),
+        new("Domain.Services", ["DomainService"]),
+        new("Application.Commands", ["Command", "CommandHandler", "CommandValidator"]),
+        new("Application.Queries", ["Query", "QueryHandler", "QueryValidator"]),
+        new("Application.Dtos", ["Dto"]),
 
-    /// <summary>Every type named <c>*Spec</c> must reside in a feature's Specifications namespace.</summary>
-    [Fact]
-    public void Types_named_Spec_reside_in_Specifications() => AssertPlacement("specification");
+        // The published surface: the interface and the read models it returns, side by side.
+        new("Contracts.Api", ["Api", "Dto"]),
 
-    /// <summary>Every type in a feature's Mappers namespace must be named <c>*Mapper</c>.</summary>
-    [Fact]
-    public void Types_in_Mappers_end_with_Mapper() => AssertNaming("mapper");
+        new("Application.Api", ["Api"]),
+        new("Contracts.IntegrationEvents", ["IntegrationEvent"]),
+        new("Application.IntegrationEventHandlers", ["IntegrationEventHandler"]),
+        new("Domain.Events", ["DomainEvent"]),
+        new("Application.DomainEventHandlers", ["DomainEventHandler"]),
+    ];
 
-    /// <summary>Every type named <c>*Mapper</c> must reside in a feature's Mappers namespace.</summary>
-    [Fact]
-    public void Types_named_Mapper_reside_in_Mappers() => AssertPlacement("mapper");
+    /// <summary>Names of every placement rule, for the theory below.</summary>
+    public static TheoryData<string> PlacementNames => new(Placements.Select(rule => rule.Name));
 
-    /// <summary>Every type in a feature's Domain Services namespace must be named <c>*DomainService</c>.</summary>
-    [Fact]
-    public void Types_in_Domain_Services_end_with_DomainService() => AssertNaming("domain service");
+    /// <summary>Every governed namespace, for the theory below.</summary>
+    public static TheoryData<string> ContentNamespaces => new(Contents.Select(rule => rule.Namespace));
 
-    /// <summary>Every type named <c>*DomainService</c> must reside in a feature's Domain Services namespace.</summary>
-    [Fact]
-    public void Types_named_DomainService_reside_in_Domain_Services() => AssertPlacement("domain service");
-
-    /// <summary>Every type in a feature's Commands namespace must be named <c>*Command</c>, <c>*CommandHandler</c> or <c>*CommandValidator</c>.</summary>
-    [Fact]
-    public void Types_in_Commands_end_with_Command_CommandHandler_or_CommandValidator() => AssertNaming("command");
-
-    /// <summary>Every type named <c>*Command</c>, <c>*CommandHandler</c> or <c>*CommandValidator</c> must reside in a feature's Commands namespace.</summary>
-    [Fact]
-    public void Types_named_Command_CommandHandler_or_CommandValidator_reside_in_Commands() => AssertPlacement("command");
-
-    /// <summary>Every type in a feature's Queries namespace must be named <c>*Query</c>, <c>*QueryHandler</c> or <c>*QueryValidator</c>.</summary>
-    [Fact]
-    public void Types_in_Queries_end_with_Query_QueryHandler_or_QueryValidator() => AssertNaming("query");
-
-    /// <summary>Every type named <c>*Query</c>, <c>*QueryHandler</c> or <c>*QueryValidator</c> must reside in a feature's Queries namespace.</summary>
-    [Fact]
-    public void Types_named_Query_QueryHandler_or_QueryValidator_reside_in_Queries() => AssertPlacement("query");
-
-    /// <summary>Every type in a feature's Dtos namespace must be named <c>*Dto</c>.</summary>
-    [Fact]
-    public void Types_in_Dtos_end_with_Dto() => AssertNaming("dto");
-
-    /// <summary>Every type named <c>*Dto</c> must reside in a feature's Dtos namespace.</summary>
-    [Fact]
-    public void Types_named_Dto_reside_in_Dtos() => AssertPlacement("dto");
-
-    private static void AssertNaming(string conventionName)
+    /// <summary>A type carrying a convention's suffix must live in one of that convention's homes.</summary>
+    /// <param name="ruleName">The placement rule to check.</param>
+    [Theory]
+    [MemberData(nameof(PlacementNames))]
+    public void Types_carrying_a_convention_suffix_reside_in_a_home_namespace(string ruleName)
     {
-        var convention = Find(conventionName);
+        var rule = Placements.Single(candidate => string.Equals(candidate.Name, ruleName, StringComparison.Ordinal));
 
-        IArchRule rule = Types().That()
-            .ResideInNamespaceMatching(FeatureNamespacePattern(convention.NamespaceSuffix))
+        IArchRule archRule = Types().That()
+            .ResideInAssemblyMatching(FeatureAssemblyPattern)
+            .And().HaveNameMatching(TypeNamePattern(rule.TypeSuffixes))
             .And().AreNotNested()
-            .Should().HaveNameMatching(TypeNamePattern(convention.TypeSuffixes))
-            .Because($"every type in a feature's {convention.NamespaceSuffix} namespace is a {convention.Name} and must be named {string.Join(" or ", convention.TypeSuffixes.Select(suffix => "*" + suffix))}.")
+            .Should().ResideInNamespaceMatching(FeatureNamespacePattern(rule.HomeNamespaces))
+            .Because($"a {rule.Name} must live in its feature's {string.Join(" or ", rule.HomeNamespaces)} namespace.")
             .WithoutRequiringPositiveResults();
 
-        rule.Check(SolutionAssemblies.Architecture);
+        archRule.Check(SolutionAssemblies.Architecture);
     }
 
-    private static void AssertPlacement(string conventionName)
+    /// <summary>A type in a governed namespace must carry one of the suffixes that namespace allows.</summary>
+    /// <param name="namespaceSuffix">The namespace to check.</param>
+    [Theory]
+    [MemberData(nameof(ContentNamespaces))]
+    public void Types_in_a_convention_namespace_carry_one_of_its_suffixes(string namespaceSuffix)
     {
-        var convention = Find(conventionName);
+        var rule = Contents.Single(candidate => string.Equals(candidate.Namespace, namespaceSuffix, StringComparison.Ordinal));
 
-        IArchRule rule = Types().That()
-            .HaveNameMatching(TypeNamePattern(convention.TypeSuffixes))
+        IArchRule archRule = Types().That()
+            .ResideInAssemblyMatching(FeatureAssemblyPattern)
+            .And().ResideInNamespaceMatching(FeatureNamespacePattern([rule.Namespace]))
             .And().AreNotNested()
-            .Should().ResideInNamespaceMatching(FeatureNamespacePattern(convention.NamespaceSuffix))
-            .Because($"a {convention.Name} must live in its feature's {convention.NamespaceSuffix} namespace.")
+            .Should().HaveNameMatching(TypeNamePattern(rule.AllowedSuffixes))
+            .Because($"every type in a feature's {rule.Namespace} namespace must be named {string.Join(" or ", rule.AllowedSuffixes.Select(suffix => "*" + suffix))}.")
             .WithoutRequiringPositiveResults();
 
-        rule.Check(SolutionAssemblies.Architecture);
+        archRule.Check(SolutionAssemblies.Architecture);
     }
-
-    private static NamingConvention Find(string conventionName) =>
-        Conventions.Single(c => string.Equals(c.Name, conventionName, StringComparison.Ordinal));
 
     /// <summary>
-    /// Builds a namespace regex matching one building block's home namespace in any feature,
-    /// e.g. <c>Domain.Specifications</c> becomes
-    /// <c>.*\.Features\..*\.Domain\.Specifications(\..*)?$</c>. The trailing group admits
-    /// sub-namespaces while still rejecting a sibling whose name merely starts with the same
-    /// text, because after the suffix the pattern requires either end-of-string or a dot.
+    /// Matches any feature-layer assembly, so the shared projects' abstractions are not judged by
+    /// conventions that only govern where a feature puts its own types.
     /// </summary>
-    private static string FeatureNamespacePattern(string namespaceSuffix) =>
-        @".*\.Features\..*\." + Regex.Escape(namespaceSuffix) + @"(\..*)?$";
+    private const string FeatureAssemblyPattern = @".*\.Features\..*";
+
+    /// <summary>
+    /// Builds a namespace regex matching one or more home namespaces in any feature, e.g.
+    /// <c>Domain.Specifications</c> becomes
+    /// <c>.*\.Features\..*\.(Domain\.Specifications)(\..*)?$</c>. The trailing group admits
+    /// sub-namespaces while still rejecting a sibling whose name merely starts with the same text,
+    /// because after the suffix the pattern requires either end-of-string or a dot.
+    /// </summary>
+    private static string FeatureNamespacePattern(string[] namespaceSuffixes) =>
+        @".*\.Features\..*\.(" + string.Join("|", namespaceSuffixes.Select(Regex.Escape)) + @")(\..*)?$";
 
     /// <summary>
     /// Builds a type-name regex matching a suffix while tolerating the CLR arity suffix that
@@ -138,9 +165,7 @@ public class NamingConventionTests
     /// A plain <c>HaveNameEndingWith</c> check on either side of these rules would therefore
     /// wrongly fail a correctly-named generic specification, and would silently fail to select
     /// a misplaced one at all — the optional trailing <c>(`\d+)?</c> group admits that suffix
-    /// without weakening the match for ordinary, non-generic types. A convention may carry more
-    /// than one suffix — a <c>Commands</c> namespace legitimately holds both <c>*Command</c> and
-    /// <c>*CommandHandler</c> types — so the suffixes are combined into an alternation.
+    /// without weakening the match for ordinary, non-generic types.
     /// </summary>
     private static string TypeNamePattern(string[] typeSuffixes) =>
         ".*(" + string.Join("|", typeSuffixes.Select(Regex.Escape)) + @")(`\d+)?$";

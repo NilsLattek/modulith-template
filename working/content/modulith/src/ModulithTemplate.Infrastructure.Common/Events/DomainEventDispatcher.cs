@@ -1,5 +1,7 @@
 using Mediator;
 
+using Microsoft.Extensions.Logging;
+
 using ModulithTemplate.Domain.Common.Entities;
 
 namespace ModulithTemplate.Infrastructure.Common.Events;
@@ -12,7 +14,10 @@ namespace ModulithTemplate.Infrastructure.Common.Events;
 /// asserted without a live database: the interceptor is the EF Core adapter, this is the behaviour.
 /// </remarks>
 /// <param name="publisher">The mediator's notification publisher.</param>
-public sealed class DomainEventDispatcher(IPublisher publisher)
+/// <param name="logger">Records each event as it is dispatched.</param>
+public sealed class DomainEventDispatcher(
+    IPublisher publisher,
+    ILogger<DomainEventDispatcher> logger)
 {
     /// <summary>
     /// How many collect-and-publish rounds are allowed before a handler cycle is assumed.
@@ -67,6 +72,7 @@ public sealed class DomainEventDispatcher(IPublisher publisher)
             {
                 // The object overload dispatches on the runtime type; see IntegrationEventQueue for
                 // why that matters and what happens to a type the host's generator never saw.
+                EventLog.DomainEventDispatched(logger, domainEvent.GetType().Name);
                 await publisher.Publish((object)domainEvent, cancellationToken);
             }
         }

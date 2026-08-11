@@ -20,5 +20,13 @@ namespace ModulithTemplate.Application.Common.Events;
 /// code touches the mediator's notification types; handlers implement
 /// <see cref="IIntegrationEventHandler{TEvent}"/> instead.
 /// </para>
+/// <para>
+/// An integration event with no registered handler is reported by the mediator's source generator as
+/// <c>MSG0005</c> ("message without any registered handler"), which fails the <c>-warnaserror</c>
+/// build. That tripwire is deliberate: a published cross-feature contract that nobody consumes is
+/// usually a missing handler. Add one in the consuming feature's
+/// <c>Application/IntegrationEventHandlers/</c> — the diagnostic is raised in the <b>host</b>
+/// compilation, so it cannot be suppressed with a <c>#pragma</c> on the event; a handler is the fix.
+/// </para>
 /// </remarks>
 public interface IIntegrationEvent : INotification;

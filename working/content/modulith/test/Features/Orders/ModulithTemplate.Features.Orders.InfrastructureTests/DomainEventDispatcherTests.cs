@@ -1,5 +1,9 @@
 using Mediator;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Testing;
+
 using ModulithTemplate.Domain.Common.Entities;
 using ModulithTemplate.Domain.Common.Events;
 using ModulithTemplate.Infrastructure.Common.Events;
@@ -50,12 +54,16 @@ public class DomainEventDispatcherTests
         }
     }
 
+    /// <summary>Builds a dispatcher with a discard logger, for the tests that assert dispatch alone.</summary>
+    private static DomainEventDispatcher Dispatcher(IPublisher publisher) =>
+        new(publisher, NullLogger<DomainEventDispatcher>.Instance);
+
     [Fact]
     public async Task DispatchAsync_publishes_every_buffered_event()
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = new DomainEventDispatcher(publisher);
+        var dispatcher = Dispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         aggregate.DoSomething("second");
@@ -76,7 +84,7 @@ public class DomainEventDispatcherTests
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = new DomainEventDispatcher(publisher);
+        var dispatcher = Dispatcher(publisher);
 
         // Act
         await dispatcher.DispatchAsync(() => [new TestAggregate()], TestContext.Current.CancellationToken);
@@ -92,7 +100,7 @@ public class DomainEventDispatcherTests
         // The ordering that stops a handler which triggers a nested save from seeing — and
         // re-dispatching — the very events currently in flight.
         var publisher = new RecordingPublisher();
-        var dispatcher = new DomainEventDispatcher(publisher);
+        var dispatcher = Dispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         var bufferedDuringPublish = -1;
@@ -112,7 +120,7 @@ public class DomainEventDispatcherTests
         // A handler reacting to "first" raises "second" on the same aggregate; the dispatcher has to
         // re-read the change tracker to notice, rather than working from its first snapshot.
         var publisher = new RecordingPublisher();
-        var dispatcher = new DomainEventDispatcher(publisher);
+        var dispatcher = Dispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         publisher.OnPublish = published =>
@@ -138,7 +146,7 @@ public class DomainEventDispatcherTests
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = new DomainEventDispatcher(publisher);
+        var dispatcher = Dispatcher(publisher);
         var first = new TestAggregate();
         first.DoSomething("first");
         var tracked = new List<AggregateRoot> { first };
@@ -167,7 +175,7 @@ public class DomainEventDispatcherTests
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = new DomainEventDispatcher(publisher);
+        var dispatcher = Dispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         publisher.OnPublish = _ => aggregate.DoSomething("again");
@@ -184,10 +192,30 @@ public class DomainEventDispatcherTests
     public async Task DispatchAsync_rejects_a_null_collector()
     {
         // Arrange
-        var dispatcher = new DomainEventDispatcher(new RecordingPublisher());
+        var dispatcher = Dispatcher(new RecordingPublisher());
 
         // Act / Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
             async () => await dispatcher.DispatchAsync(null!, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_logs_each_dispatched_event_at_debug()
+    {
+        // Arrange
+        // Domain events are published, not sent, so no pipeline behaviour logs them; the dispatcher
+        // is the only place a dispatch is recorded.
+        var logger = new FakeLogger<DomainEventDispatcher>();
+        var dispatcher = new DomainEventDispatcher(new RecordingPublisher(), logger);
+        var aggregate = new TestAggregate();
+        aggregate.DoSomething("first");
+
+        // Act
+        await dispatcher.DispatchAsync(() => [aggregate], TestContext.Current.CancellationToken);
+
+        // Assert
+        var record = Assert.Single(logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Debug, record.Level);
+        Assert.Contains(nameof(ThingHappenedDomainEvent), record.Message, StringComparison.Ordinal);
     }
 }

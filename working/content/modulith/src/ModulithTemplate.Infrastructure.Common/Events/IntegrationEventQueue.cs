@@ -1,5 +1,7 @@
 using Mediator;
 
+using Microsoft.Extensions.Logging;
+
 using ModulithTemplate.Application.Common.Events;
 
 namespace ModulithTemplate.Infrastructure.Common.Events;
@@ -18,7 +20,10 @@ namespace ModulithTemplate.Infrastructure.Common.Events;
 /// </para>
 /// </remarks>
 /// <param name="publisher">The mediator's notification publisher.</param>
-internal sealed class IntegrationEventQueue(IPublisher publisher) : IIntegrationEventQueue
+/// <param name="logger">Records each event as it is dispatched.</param>
+internal sealed class IntegrationEventQueue(
+    IPublisher publisher,
+    ILogger<IntegrationEventQueue> logger) : IIntegrationEventQueue
 {
     /// <summary>
     /// How many times <see cref="FlushAsync"/> will re-drain before assuming a publish cycle.
@@ -62,6 +67,7 @@ internal sealed class IntegrationEventQueue(IPublisher publisher) : IIntegration
             // compilation, and its default branch neither dispatches nor throws. An event whose
             // Contracts project the host does not reference is therefore dropped in silence, which
             // is why registering every feature with the host is not optional.
+            EventLog.IntegrationEventPublished(logger, integrationEvent.GetType().Name);
             await publisher.Publish((object)integrationEvent, cancellationToken);
         }
     }

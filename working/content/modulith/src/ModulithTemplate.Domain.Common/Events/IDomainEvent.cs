@@ -20,5 +20,12 @@ namespace ModulithTemplate.Domain.Common.Events;
 /// Application layer enqueues the corresponding <c>IIntegrationEvent</c>. That translation is
 /// what keeps domain language out of the published contract.
 /// </para>
+/// <para>
+/// A domain event with no registered handler is reported by the mediator's source generator as
+/// <c>MSG0005</c> ("message without any registered handler") and fails the <c>-warnaserror</c> build.
+/// The diagnostic is raised in the <b>host</b> compilation, so a <c>#pragma</c> on the event cannot
+/// silence it: a raised domain event needs at least one handler under
+/// <c>Application/DomainEventHandlers/</c>. If nothing reacts to it yet, it is not yet worth raising.
+/// </para>
 /// </remarks>
 public interface IDomainEvent : INotification;

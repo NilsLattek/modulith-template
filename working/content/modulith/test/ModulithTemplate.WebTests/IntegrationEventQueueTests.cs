@@ -1,6 +1,8 @@
 using Mediator;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 
 using ModulithTemplate.Application.Common.Events;
 using ModulithTemplate.Features.Orders.Contracts.IntegrationEvents;
@@ -80,9 +82,11 @@ public class IntegrationEventQueueTests
     {
         var services = new ServiceCollection();
         services.AddSingleton(recorder);
-        // The host registers an open generic IntegrationEventLogHandler<TEvent> for every event, and
-        // it takes an ILogger — so a container without logging cannot activate any handler at all.
-        services.AddLogging();
+        // IntegrationEventQueue takes an ILogger to record each dispatch, so a container without
+        // logging cannot activate the queue at all. Fake logging so a test can assert what it logged,
+        // at Debug — the level the dispatch is logged at, below the pipeline's Information default.
+        services.AddFakeLogging();
+        services.Configure<LoggerFilterOptions>(options => options.MinLevel = LogLevel.Debug);
         services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
         services.AddIntegrationEvents();
         services.AddScoped<INotificationHandler<SomeEntityAddedIntegrationEvent>, ProbeHandler>();
@@ -211,5 +215,28 @@ public class IntegrationEventQueueTests
 
         // Act / Assert
         Assert.Throws<ArgumentNullException>(() => queue.Enqueue(null!));
+    }
+
+    [Fact]
+    public async Task FlushAsync_logs_each_published_event_at_debug()
+    {
+        // Arrange
+        // Events are published, not sent, so no pipeline behaviour logs them; the queue is the only
+        // place an integration event's dispatch is recorded.
+        var recorder = new Recorder();
+        await using var provider = BuildProvider(recorder);
+        using var scope = provider.CreateScope();
+        var queue = QueueIn(scope);
+        queue.Enqueue(new SomeEntityAddedIntegrationEvent("first"));
+
+        // Act
+        await queue.FlushAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        var collector = provider.GetRequiredService<FakeLogCollector>();
+        Assert.Contains(
+            collector.GetSnapshot(),
+            record => record.Level == LogLevel.Debug
+                && record.Message.Contains(nameof(SomeEntityAddedIntegrationEvent), StringComparison.Ordinal));
     }
 }

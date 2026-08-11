@@ -43,9 +43,8 @@ namespace ModulithTemplate.ArchitectureTests;
 /// <para>
 /// Every rule is scoped to types in a feature assembly. The shared projects define abstractions
 /// whose names deliberately match these suffixes — <c>IIntegrationEvent</c> and
-/// <c>IDomainEventHandler</c> in Application.Common, <c>IntegrationEventLogHandler</c> in the host —
-/// and those are contracts to implement, not misplaced feature code. These conventions govern where a
-/// <i>feature</i> puts its own types.
+/// <c>IDomainEventHandler</c> in Application.Common — and those are contracts to implement, not
+/// misplaced feature code. These conventions govern where a <i>feature</i> puts its own types.
 /// </para>
 /// </remarks>
 public class NamingConventionTests

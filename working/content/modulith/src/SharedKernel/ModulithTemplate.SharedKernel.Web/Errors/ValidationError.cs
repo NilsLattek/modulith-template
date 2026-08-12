@@ -1,6 +1,6 @@
 using FluentResults;
 
-namespace ModulithTemplate.Web.Common.Errors;
+namespace ModulithTemplate.SharedKernel.Web.Errors;
 
 /// <summary>
 /// A failed input validation, produced by the mediator's validation behaviour from a
@@ -8,7 +8,7 @@ namespace ModulithTemplate.Web.Common.Errors;
 /// </summary>
 /// <remarks>
 /// Lives here rather than beside the behaviour so a feature's Blazor components — which reference
-/// <c>ModulithTemplate.Web.Common</c> but not the host — can pattern-match the errors coming back
+/// <c>ModulithTemplate.SharedKernel.Web</c> but not the host — can pattern-match the errors coming back
 /// from <c>IMediator</c> and bind them to the fields they belong to.
 /// </remarks>
 public sealed class ValidationError : Error

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-using ModulithTemplate.Web.Common.Extensions;
+using ModulithTemplate.SharedKernel.Web.Extensions;
 
 namespace ModulithTemplate.WebTests;
 

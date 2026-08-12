@@ -1,8 +1,8 @@
 using Mediator;
 
-using ModulithTemplate.Domain.Common.Events;
+using ModulithTemplate.SharedKernel.Domain.Events;
 
-namespace ModulithTemplate.Application.Common.Events;
+namespace ModulithTemplate.SharedKernel.Application.Events;
 
 /// <summary>
 /// Reacts to a domain event raised inside the same feature.

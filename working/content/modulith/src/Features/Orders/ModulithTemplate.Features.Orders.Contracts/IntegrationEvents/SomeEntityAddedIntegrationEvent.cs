@@ -1,4 +1,4 @@
-using ModulithTemplate.Application.Common.Events;
+using ModulithTemplate.SharedKernel.Application.Events;
 
 namespace ModulithTemplate.Features.Orders.Contracts.IntegrationEvents;
 

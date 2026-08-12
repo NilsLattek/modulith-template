@@ -1,4 +1,4 @@
-namespace ModulithTemplate.Application.Common.Events;
+namespace ModulithTemplate.SharedKernel.Application.Events;
 
 /// <summary>
 /// Buffers the integration events raised while a message is handled, so the host can publish them

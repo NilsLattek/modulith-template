@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-using ModulithTemplate.Domain.Common.Entities;
+using ModulithTemplate.SharedKernel.Domain.Entities;
 
-namespace ModulithTemplate.Infrastructure.Common.Events;
+namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 /// <summary>
 /// Dispatches domain events during <c>SaveChangesAsync</c>, so handlers write through the same

@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.Features.Orders.Domain;
 using ModulithTemplate.Features.Orders.Infrastructure.Data;
-using ModulithTemplate.Infrastructure.Common;
+using ModulithTemplate.SharedKernel.Infrastructure;
 
 namespace ModulithTemplate.Features.Orders.Infrastructure;
 

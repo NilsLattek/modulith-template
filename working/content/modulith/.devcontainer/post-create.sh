@@ -16,6 +16,9 @@ curl -fsSL https://claude.ai/install.sh | bash
 # never sourced here. Add it to PATH now so `claude` below resolves.
 export PATH="$HOME/.local/bin:$PATH"
 
+# fix login via access token. https://github.com/OLibutzki/claude-marketplace/commit/38c0d4647849255ed3de702d770ac2f629f45385
+[ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ ! -f "$HOME/.claude.json" ] && echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json" || true
+
 # Install Claude Code plugins that project settings enable but a fresh container cannot fetch.
 # `.claude/settings.json` only *enables* plugins; the actual bits are cloned per machine, and a
 # fresh container starts with an empty ~/.claude plugin state.
@@ -27,6 +30,3 @@ export PATH="$HOME/.local/bin:$PATH"
 # `|| true` keeps container creation from failing if the network isn't ready yet.
 claude plugin marketplace add anthropics/claude-plugins-official || true
 claude plugin install superpowers@claude-plugins-official || true
-
-# fix login via access token. https://github.com/OLibutzki/claude-marketplace/commit/38c0d4647849255ed3de702d770ac2f629f45385
-[ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ ! -f "$HOME/.claude.json" ] && echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json" || true

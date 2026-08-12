@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace ModulithTemplate.Application.Common.Events;
+namespace ModulithTemplate.SharedKernel.Application.Events;
 
 /// <summary>
 /// Marks a fact that one feature publishes for other features to react to.

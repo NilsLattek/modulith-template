@@ -40,7 +40,7 @@ public class ContractIsolationTests
             .Should().NotDependOnAnyTypesThat()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers)))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
-                + "Application.Common abstractions, so that a consumer referencing it does not transitively gain "
+                + "Shared.Application abstractions, so that a consumer referencing it does not transitively gain "
                 + "access to the owning feature's Domain, Application, Infrastructure or Web layer.");
 
         rule.Check(SolutionAssemblies.Architecture);

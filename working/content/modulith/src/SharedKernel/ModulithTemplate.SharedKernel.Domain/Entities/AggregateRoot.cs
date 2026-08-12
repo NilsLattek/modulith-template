@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-using ModulithTemplate.Domain.Common.Events;
+using ModulithTemplate.SharedKernel.Domain.Events;
 
-namespace ModulithTemplate.Domain.Common.Entities;
+namespace ModulithTemplate.SharedKernel.Domain.Entities;
 
 /// <summary>
 /// Base class for an aggregate root — the one entity in an aggregate that outside code holds a

@@ -6,9 +6,9 @@ using Mediator;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-using ModulithTemplate.Application.Common.Events;
+using ModulithTemplate.SharedKernel.Application.Events;
 using ModulithTemplate.Web.Behaviours;
-using ModulithTemplate.Web.Common.Errors;
+using ModulithTemplate.SharedKernel.Web.Errors;
 
 using NSubstitute;
 

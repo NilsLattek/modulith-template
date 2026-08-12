@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace ModulithTemplate.Application.Common.Events;
+namespace ModulithTemplate.SharedKernel.Application.Events;
 
 /// <summary>
 /// Reacts to an integration event published by another feature.

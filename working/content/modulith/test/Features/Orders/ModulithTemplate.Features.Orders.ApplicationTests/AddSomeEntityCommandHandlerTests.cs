@@ -1,4 +1,4 @@
-using ModulithTemplate.Application.Common.Events;
+using ModulithTemplate.SharedKernel.Application.Events;
 using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 using ModulithTemplate.Features.Orders.Contracts.IntegrationEvents;
 using ModulithTemplate.Features.Orders.Domain;

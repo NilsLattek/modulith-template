@@ -1,5 +1,5 @@
 using ModulithTemplate.Features.Orders.Web;
-using ModulithTemplate.Infrastructure.Common.Events;
+using ModulithTemplate.SharedKernel.Infrastructure.Events;
 using ModulithTemplate.Web.Behaviours;
 using ModulithTemplate.Web.Components;
 

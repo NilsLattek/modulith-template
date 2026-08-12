@@ -3,13 +3,13 @@
   <!-- Abstractions every feature's Application layer implements or injects: the two event-handler
        interfaces, the published-contract marker, and the queue handlers enqueue onto.
 
-       Abstractions only — the implementations live in Infrastructure.Common. -->
+       Abstractions only — the implementations live in Shared.Infrastructure. -->
   <ItemGroup>
     <PackageReference Include="Mediator.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ModulithTemplate.Domain.Common/ModulithTemplate.Domain.Common.csproj" />
+    <ProjectReference Include="../ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
   </ItemGroup>
 
 </Project>

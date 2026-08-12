@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace ModulithTemplate.Domain.Common.Events;
+namespace ModulithTemplate.SharedKernel.Domain.Events;
 
 /// <summary>
 /// Marks something domain-significant that happened inside one feature.

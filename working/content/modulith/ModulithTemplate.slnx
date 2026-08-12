@@ -1,11 +1,13 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/ModulithTemplate.Application.Common/ModulithTemplate.Application.Common.csproj" />
-    <Project Path="src/ModulithTemplate.Domain.Common/ModulithTemplate.Domain.Common.csproj" />
-    <Project Path="src/ModulithTemplate.Infrastructure.Common/ModulithTemplate.Infrastructure.Common.csproj" />
     <Project Path="src/ModulithTemplate.ServiceDefaults/ModulithTemplate.ServiceDefaults.csproj" />
-    <Project Path="src/ModulithTemplate.Web.Common/ModulithTemplate.Web.Common.csproj" />
     <Project Path="src/ModulithTemplate.Web/ModulithTemplate.Web.csproj" />
+  </Folder>
+  <Folder Name="/src/SharedKernel/">
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
   </Folder>
   <Folder Name="/src/Features/" />
   <Folder Name="/src/Features/Orders/">

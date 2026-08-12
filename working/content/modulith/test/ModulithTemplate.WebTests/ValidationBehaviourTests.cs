@@ -5,7 +5,7 @@ using FluentValidation;
 using Mediator;
 
 using ModulithTemplate.Web.Behaviours;
-using ModulithTemplate.Web.Common.Errors;
+using ModulithTemplate.SharedKernel.Web.Errors;
 
 namespace ModulithTemplate.WebTests;
 

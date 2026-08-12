@@ -1,5 +1,5 @@
-using ModulithTemplate.Domain.Common.Entities;
-using ModulithTemplate.Domain.Common.Events;
+using ModulithTemplate.SharedKernel.Domain.Entities;
+using ModulithTemplate.SharedKernel.Domain.Events;
 
 namespace ModulithTemplate.Features.Orders.DomainTests;
 

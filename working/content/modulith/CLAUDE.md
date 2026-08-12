@@ -118,7 +118,7 @@ changed? is this quantity legal?) is an invariant and belongs in the entity or a
 it holds for every caller. Never inject a repository into a validator.
 
 Failures come back as a failed `Result` carrying one `ValidationError` per broken rule
-(`ModulithTemplate.Web.Common/Errors/ValidationError.cs`), each with the `PropertyName` it was declared
+(`ModulithTemplate.SharedKernel.Web/Errors/ValidationError.cs`), each with the `PropertyName` it was declared
 on, so a Blazor form can group `result.Errors.OfType<ValidationError>()` by property and bind the
 messages to their fields.
 
@@ -127,7 +127,7 @@ messages to their fields.
 EF Core + Npgsql, owned entirely by the feature: a concrete `DbContext` (schema set via
 `HasDefaultSchema`), a context-bound `<Name>Repository<T> : RepositoryBase<T>, I<Name>Repository<T>`,
 and its own `Data/Migrations/`. Register the context through
-`ModulithTemplate.Infrastructure.Common`'s `AddModuleDbContext<TContext>(configuration, schema)`, which
+`ModulithTemplate.SharedKernel.Infrastructure`'s `AddModuleDbContext<TContext>(configuration, schema)`, which
 carries the snake_case `EFCore.NamingConventions` setup; that shared project defines EF conventions
 only and never a concrete `DbContext`.
 
@@ -143,8 +143,8 @@ Scoped services live for the whole SignalR circuit in Blazor Server, so a direct
 dependency — `IMediator` included — shares one long-lived, non-thread-safe `DbContext` for the entire
 user session. **Components must not `@inject` `IMediator` for database work**: inject
 `IServiceScopeFactory` and send each message inside `ScopeFactory.WithNewScopeAsync(...)` from
-`ModulithTemplate.Web.Common/Extensions/ServiceScopeExtensions.cs`. That needs `@using Mediator` and
-`@using ModulithTemplate.Web.Common.Extensions` — neither is in `_Imports.razor`. Stateless, non-DB
+`ModulithTemplate.SharedKernel.Web/Extensions/ServiceScopeExtensions.cs`. That needs `@using Mediator` and
+`@using ModulithTemplate.SharedKernel.Web.Extensions` — neither is in `_Imports.razor`. Stateless, non-DB
 services may stay directly injected.
 
 ## Conventions

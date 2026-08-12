@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 
-using ModulithTemplate.Application.Common.Events;
+using ModulithTemplate.SharedKernel.Application.Events;
 
-namespace ModulithTemplate.Infrastructure.Common.Events;
+namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 /// <summary>
 /// Registers the host-side plumbing that carries integration events between features.

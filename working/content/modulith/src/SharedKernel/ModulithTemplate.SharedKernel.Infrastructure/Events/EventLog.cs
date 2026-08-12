@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace ModulithTemplate.Infrastructure.Common.Events;
+namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 /// <summary>
 /// Source-generated log messages emitted at the two event dispatch seams.

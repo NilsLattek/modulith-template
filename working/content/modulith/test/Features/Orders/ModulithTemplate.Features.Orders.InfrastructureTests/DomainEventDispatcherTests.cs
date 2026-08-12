@@ -4,9 +4,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Testing;
 
-using ModulithTemplate.Domain.Common.Entities;
-using ModulithTemplate.Domain.Common.Events;
-using ModulithTemplate.Infrastructure.Common.Events;
+using ModulithTemplate.SharedKernel.Domain.Entities;
+using ModulithTemplate.SharedKernel.Domain.Events;
+using ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 namespace ModulithTemplate.Features.Orders.InfrastructureTests;
 

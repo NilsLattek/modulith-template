@@ -4,9 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 
-using ModulithTemplate.Application.Common.Events;
+using ModulithTemplate.SharedKernel.Application.Events;
 using ModulithTemplate.Features.Orders.Contracts.IntegrationEvents;
-using ModulithTemplate.Infrastructure.Common.Events;
+using ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 namespace ModulithTemplate.WebTests;
 

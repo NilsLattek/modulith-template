@@ -2,9 +2,9 @@ using Mediator;
 
 using Microsoft.Extensions.Logging;
 
-using ModulithTemplate.Application.Common.Events;
+using ModulithTemplate.SharedKernel.Application.Events;
 
-namespace ModulithTemplate.Infrastructure.Common.Events;
+namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 /// <summary>
 /// The in-process <see cref="IIntegrationEventQueue"/>: buffers events for the lifetime of one DI

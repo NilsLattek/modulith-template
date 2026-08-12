@@ -2,7 +2,7 @@ using FluentResults;
 
 using Mediator;
 
-using ModulithTemplate.Application.Common.Events;
+using ModulithTemplate.SharedKernel.Application.Events;
 using ModulithTemplate.Features.Orders.Contracts.IntegrationEvents;
 using ModulithTemplate.Features.Orders.Domain;
 using ModulithTemplate.Features.Orders.Domain.Entities;

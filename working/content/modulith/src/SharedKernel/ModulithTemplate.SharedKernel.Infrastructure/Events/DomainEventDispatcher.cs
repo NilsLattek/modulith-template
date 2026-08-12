@@ -2,9 +2,9 @@ using Mediator;
 
 using Microsoft.Extensions.Logging;
 
-using ModulithTemplate.Domain.Common.Entities;
+using ModulithTemplate.SharedKernel.Domain.Entities;
 
-namespace ModulithTemplate.Infrastructure.Common.Events;
+namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 /// <summary>
 /// Publishes the domain events buffered on tracked aggregates, repeating until none remain.

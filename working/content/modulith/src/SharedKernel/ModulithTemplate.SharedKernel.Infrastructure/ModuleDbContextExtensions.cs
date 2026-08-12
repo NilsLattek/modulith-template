@@ -5,9 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-using ModulithTemplate.Infrastructure.Common.Events;
+using ModulithTemplate.SharedKernel.Infrastructure.Events;
 
-namespace ModulithTemplate.Infrastructure.Common;
+namespace ModulithTemplate.SharedKernel.Infrastructure;
 
 public static class ModuleDbContextExtensions
 {

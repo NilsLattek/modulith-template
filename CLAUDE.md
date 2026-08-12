@@ -33,11 +33,14 @@ The repo root also carries its own `.devcontainer`, `.claude`, `.github`, and `.
 # Build the template content exactly as CI does (must be warning-clean)
 dotnet build working/content/modulith/ModulithTemplate.slnx -warnaserror
 
-# Test the template content (must run from the content dir — global.json opts into
-# Microsoft.Testing.Platform and is resolved from the current directory; passing the
-# .slnx as a path argument from the repo root gets forwarded to the test app instead
-# of being treated as a target, and silently runs zero tests)
-cd working/content/modulith && dotnet test
+# Test the template content. Two traps here, and both report zero tests rather than failing:
+#   * Must run from the content dir — global.json opts into Microsoft.Testing.Platform and is
+#     resolved from the current directory, so passing the .slnx as a path argument from the repo
+#     root gets forwarded to the test app instead of being treated as a target.
+#   * Must be prefixed with `rtk proxy` — otherwise the RTK hook rewrites it to `rtk dotnet test`,
+#     which injects `--report-trx`, an option no test app here implements. `dotnet build` is
+#     unaffected, so only the test commands need the prefix.
+cd working/content/modulith && rtk proxy dotnet test
 
 # Try the solution template locally: install from source, scaffold into a temp dir, then uninstall
 dotnet new install working/content/modulith

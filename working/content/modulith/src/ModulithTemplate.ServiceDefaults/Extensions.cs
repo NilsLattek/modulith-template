@@ -2,6 +2,8 @@
 // Kept as close to upstream as this solution's analyzers allow, so it can be re-based on a future
 // Aspire version with a small diff. Every deviation is listed here and marked in place below:
 //   * `.AddSource("Npgsql")` added, so database calls appear as child spans of their request.
+//   * `.AddSource(ActivitySources.Mediator)` added, so each command/query dispatched through the
+//     mediator becomes one span covering the whole operation.
 //   * `#pragma warning disable MA0074` and `S3241` around code upstream writes differently.
 //   * Project properties come from Directory.Build.props and package versions from
 //     Directory.Packages.props, so the .csproj carries neither.
@@ -12,6 +14,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
+
+using ModulithTemplate.ServiceDefaults;
 
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -85,7 +89,10 @@ public static class Extensions
                     // Npgsql's own ActivitySource, so database calls appear as child spans of the
                     // request that issued them. Equivalent to Npgsql.OpenTelemetry's AddNpgsql(),
                     // which does nothing but subscribe to this same source name.
-                    .AddSource("Npgsql");
+                    .AddSource("Npgsql")
+                    // This solution's own sources. Adding a source to ActivitySources without
+                    // subscribing to it here leaves its spans unsampled and unexported.
+                    .AddSource(ActivitySources.Mediator);
             });
 
         builder.AddOpenTelemetryExporters();

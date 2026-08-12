@@ -1,9 +1,13 @@
+using System.Diagnostics;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+
+using ModulithTemplate.ServiceDefaults;
 
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -60,6 +64,31 @@ public class ServiceDefaultsTests
         // Assert
         Assert.NotNull(app.Services.GetService<TracerProvider>());
         Assert.NotNull(app.Services.GetService<MeterProvider>());
+    }
+
+    /// <remarks>
+    /// The failure this guards against is silent: an <c>ActivitySource</c> nobody subscribed to hands
+    /// back <see langword="null"/> from every <c>StartActivity</c> call, so the instrumentation looks
+    /// present in the source and produces no spans at all. Starting a real activity is the only way to
+    /// observe the subscription, since the SDK exposes no list of the sources it listens to.
+    /// </remarks>
+    [Fact]
+    public async Task ConfigureOpenTelemetry_subscribes_to_the_solution_activity_sources()
+    {
+        // Arrange
+        var builder = CreateBuilder(Environments.Development);
+        builder.AddServiceDefaults();
+        await using var app = builder.Build();
+
+        // Resolving the provider is what attaches the SDK's listeners.
+        Assert.NotNull(app.Services.GetService<TracerProvider>());
+        using var source = new ActivitySource(ActivitySources.Mediator);
+
+        // Act
+        using var activity = source.StartActivity("probe");
+
+        // Assert
+        Assert.NotNull(activity);
     }
 
     [Fact]

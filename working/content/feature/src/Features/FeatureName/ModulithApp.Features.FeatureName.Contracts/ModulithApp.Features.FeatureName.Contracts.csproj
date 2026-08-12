@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- This feature's published contract: the only project of this feature that another feature may
+       reference. It deliberately references nothing but SharedKernel.Application — adding a reference to this
+       feature's Domain, Application, Infrastructure or Web would turn the contract into a back door
+       into the module, and ContractIsolationTests fails the build if one appears. -->
+  <ItemGroup>
+    <ProjectReference Include="../../../SharedKernel/ModulithApp.SharedKernel.Application/ModulithApp.SharedKernel.Application.csproj" />
+  </ItemGroup>
+
+</Project>

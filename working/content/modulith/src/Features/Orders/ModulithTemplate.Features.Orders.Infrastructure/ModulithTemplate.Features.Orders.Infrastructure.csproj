@@ -6,8 +6,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../ModulithTemplate.Features.Orders.Domain/ModulithTemplate.Features.Orders.Domain.csproj" />
-    <ProjectReference Include="../../../ModulithTemplate.FeatureCore/ModulithTemplate.FeatureCore.csproj" />
-    <ProjectReference Include="../../../ModulithTemplate.Infrastructure.Common/ModulithTemplate.Infrastructure.Common.csproj" />
+    <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
+    <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

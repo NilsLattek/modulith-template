@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using ModulithApp.Features.FeatureName.Domain;
 using ModulithApp.Features.FeatureName.Infrastructure.Data;
-using ModulithApp.Infrastructure.Common;
+using ModulithApp.SharedKernel.Infrastructure;
 
 namespace ModulithApp.Features.FeatureName.Infrastructure;
 

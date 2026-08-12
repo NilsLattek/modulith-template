@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Building blocks every feature's Domain layer derives from or implements. It has no project
+       references at all: the innermost layer of the solution, and the one thing every feature can
+       depend on without coupling to anything.
+
+       Mediator.Abstractions is here because IDomainEvent is an INotification — that is what lets
+       the dispatcher publish a raised event without a wrapper type. It is a contracts-only package,
+       and Domain already depends on Ardalis.Specification for IRepository. -->
+  <ItemGroup>
+    <PackageReference Include="Ardalis.Specification" />
+    <PackageReference Include="Mediator.Abstractions" />
+  </ItemGroup>
+
+</Project>

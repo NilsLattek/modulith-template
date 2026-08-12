@@ -17,8 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
+    <ProjectReference Include="../SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
     <ProjectReference Include="../ModulithTemplate.ServiceDefaults/ModulithTemplate.ServiceDefaults.csproj" />
-    <ProjectReference Include="../ModulithTemplate.Web.Common/ModulithTemplate.Web.Common.csproj" />
+    <ProjectReference Include="../SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
     <ProjectReference Include="../Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />
   </ItemGroup>
 

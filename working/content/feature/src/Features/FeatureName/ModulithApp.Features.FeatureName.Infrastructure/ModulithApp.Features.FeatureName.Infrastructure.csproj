@@ -6,8 +6,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" />
-    <ProjectReference Include="../../../ModulithApp.FeatureCore/ModulithApp.FeatureCore.csproj" />
-    <ProjectReference Include="../../../ModulithApp.Infrastructure.Common/ModulithApp.Infrastructure.Common.csproj" />
+    <ProjectReference Include="../../../SharedKernel/ModulithApp.SharedKernel.Domain/ModulithApp.SharedKernel.Domain.csproj" />
+    <ProjectReference Include="../../../SharedKernel/ModulithApp.SharedKernel.Infrastructure/ModulithApp.SharedKernel.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

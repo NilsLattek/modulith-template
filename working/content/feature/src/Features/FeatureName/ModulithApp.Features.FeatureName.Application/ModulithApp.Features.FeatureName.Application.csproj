@@ -9,6 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../SharedKernel/ModulithApp.SharedKernel.Application/ModulithApp.SharedKernel.Application.csproj" />
+    <ProjectReference Include="../ModulithApp.Features.FeatureName.Contracts/ModulithApp.Features.FeatureName.Contracts.csproj" />
     <ProjectReference Include="../ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" />
   </ItemGroup>
 

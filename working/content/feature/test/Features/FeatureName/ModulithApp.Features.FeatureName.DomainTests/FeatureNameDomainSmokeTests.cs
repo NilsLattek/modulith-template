@@ -1,4 +1,4 @@
-using ModulithApp.FeatureCore;
+using ModulithApp.SharedKernel.Domain;
 using ModulithApp.Features.FeatureName.Domain;
 
 namespace ModulithApp.Features.FeatureName.DomainTests;

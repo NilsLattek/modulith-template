@@ -41,33 +41,15 @@ public class FeatureLayerTests
 
         // Guard: fail loudly if the layer's assembly was never discovered, so a future naming
         // drift cannot turn the rule into a vacuously-passing no-op.
-        var layerPresent = SolutionAssemblies.FeatureAssemblies.Any(a =>
-        {
-            var name = a.GetName().Name!;
-            return name.Contains(".Features.", StringComparison.Ordinal)
-                && name.EndsWith("." + rule.Suffix, StringComparison.Ordinal);
-        });
-        Assert.True(layerPresent,
+        Assert.True(SolutionAssemblies.HasFeatureLayer(rule.Suffix),
             $"No assembly for the '{rule.Name}' feature layer was found; the layering rule would pass vacuously.");
 
-        IArchRule layerRule = Types().That().ResideInAssemblyMatching(FeaturePattern(rule.Suffix))
-            .Should().NotDependOnAnyTypesThat().ResideInAssemblyMatching(FeaturePattern(Alternation(rule.Forbidden)))
+        IArchRule layerRule = Types().That()
+            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(rule.Suffix))
+            .Should().NotDependOnAnyTypesThat()
+            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(rule.Forbidden)))
             .Because($"a feature's {rule.Name} layer must not depend on its {string.Join("/", rule.Forbidden)} layer(s).");
 
         layerRule.Check(SolutionAssemblies.Architecture);
     }
-
-    /// <summary>
-    /// Builds an assembly-name regex matching a feature layer by its suffix expression.
-    /// ArchUnitNET matches against the assembly's fully-qualified name
-    /// (e.g. <c>ModulithTemplate.Features.Orders.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c>),
-    /// so the suffix is anchored at the simple-name boundary (end of string or the version comma),
-    /// not at the end of the whole string.
-    /// </summary>
-    private static string FeaturePattern(string suffixExpression) =>
-        @".*\.Features\..*\." + suffixExpression + @"(,.*)?$";
-
-    /// <summary>Combines one or more layer suffixes into a regex alternation.</summary>
-    private static string Alternation(string[] suffixes) =>
-        suffixes.Length == 1 ? suffixes[0] : "(" + string.Join("|", suffixes) + ")";
 }

@@ -1,4 +1,4 @@
-using ModulithTemplate.FeatureCore;
+using ModulithTemplate.SharedKernel.Domain;
 
 namespace ModulithTemplate.Features.Orders.Domain;
 

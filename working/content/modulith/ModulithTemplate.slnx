@@ -1,14 +1,18 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/ModulithTemplate.FeatureCore/ModulithTemplate.FeatureCore.csproj" />
-    <Project Path="src/ModulithTemplate.Infrastructure.Common/ModulithTemplate.Infrastructure.Common.csproj" />
     <Project Path="src/ModulithTemplate.ServiceDefaults/ModulithTemplate.ServiceDefaults.csproj" />
-    <Project Path="src/ModulithTemplate.Web.Common/ModulithTemplate.Web.Common.csproj" />
     <Project Path="src/ModulithTemplate.Web/ModulithTemplate.Web.csproj" />
+  </Folder>
+  <Folder Name="/src/SharedKernel/">
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
   </Folder>
   <Folder Name="/src/Features/" />
   <Folder Name="/src/Features/Orders/">
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Application/ModulithTemplate.Features.Orders.Application.csproj" />
+    <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Contracts/ModulithTemplate.Features.Orders.Contracts.csproj" />
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Domain/ModulithTemplate.Features.Orders.Domain.csproj" />
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Infrastructure/ModulithTemplate.Features.Orders.Infrastructure.csproj" />
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />

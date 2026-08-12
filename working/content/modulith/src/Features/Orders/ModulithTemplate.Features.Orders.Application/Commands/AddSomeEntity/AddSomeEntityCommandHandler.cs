@@ -11,7 +11,7 @@ namespace ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 
 /// <summary>Handles <see cref="AddSomeEntityCommand"/>.</summary>
 /// <param name="repository">The Orders feature's repository.</param>
-/// <param name="events">Collects integration events for dispatch after this command commits.</param>
+/// <param name="events">Enqueues integration events for dispatch after this command commits.</param>
 public sealed class AddSomeEntityCommandHandler(
     IOrdersRepository<SomeEntity> repository,
     IIntegrationEventQueue events)

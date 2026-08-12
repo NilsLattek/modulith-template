@@ -11,8 +11,6 @@ builder.AddServiceDefaults();
 
 builder.ConfigureOrdersFeature();
 
-// The scoped queue features enqueue integration events onto. Registered before AddMediator only
-// for readability — IntegrationEventBehaviour resolves it per message, not at registration time.
 builder.Services.AddIntegrationEvents();
 
 builder.Services.AddMediator(options =>

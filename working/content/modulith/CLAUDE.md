@@ -7,22 +7,19 @@ dotnet restore                            # then pass --no-restore below
 dotnet build --no-restore -warnaserror    # CI treats warnings as errors
 cd src/ModulithTemplate.Web && dotnet run # needs the devcontainer's Postgres
 
-# Tests run on Microsoft.Testing.Platform (via global.json), not VSTest
-dotnet test --no-restore
-dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests
-dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" # or --filter-method
+# Tests run on Microsoft.Testing.Platform (via global.json), not VSTest. The `rtk proxy` prefix is
+# required: without it the RTK hook rewrites these to `rtk dotnet test`, which injects
+# `--report-trx` — an option no test app here implements, so every one of them rejects it and the
+# run ends in "Zero tests ran" with nothing failed. `dotnet build` is unaffected.
+rtk proxy dotnet test --no-restore
+rtk proxy dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests
+rtk proxy dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" # or --filter-method
 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`
 # is always required — these wrappers supply it.
 bash add-migration.sh Orders InitialOrders  # <FeatureName> <MigrationName>
 bash update-database.sh                     # applies every context's pending migrations
 ```
-
-The devcontainer provides Postgres 18 (`localhost:5432`, user/pass/db all `postgres`). CI discovers
-contexts from the host's DI container, so a new feature is covered as soon as `Program.cs` calls its
-`ConfigureXxxFeature()`: `build.yml` fails the build on a model change that landed without its
-migration, and `release-migrations.yml` attaches one idempotent `<Context>.sql` per schema to a
-published release.
 
 ## Architecture
 
@@ -33,10 +30,7 @@ layer projects, mirrored by four test projects under `test/Features/<Name>/`:
 Web  →  Application  →  Domain  ←  Infrastructure
 ```
 
-`Domain` has no outbound dependencies and is the only place business rules live; features must not
-depend on each other; `src/` holds production code only. `ModulithTemplate.ArchitectureTests` enforces
-the layer rules, the cross-feature isolation and the naming/placement conventions below — each in both
-directions, so a `*Spec` outside `Specifications/` fails just as a badly-named type inside it does.
+`Domain` has no outbound dependencies and is the only place business rules live; features must not depend on each other; `ModulithTemplate.ArchitectureTests` enforces the layer rules, the cross-feature isolation and the naming/placement conventions below — each in bothdirections, so a `*Spec` outside `Specifications/` fails just as a badly-named type inside it does.
 
 ### Where business logic goes
 
@@ -152,9 +146,6 @@ services may stay directly injected.
 - **Central management**: target framework, nullable and analyzers come from `Directory.Build.props`;
   package versions are pinned in `Directory.Packages.props` (central package management — add new deps
   there, version-less `PackageReference` in the csproj).
-- **Analyzers as gatekeepers**: Meziantou, SonarAnalyzer and Roslynator run on build with
-  `EnforceCodeStyleInBuild`, and CI builds with `-warnaserror`. Suppress narrowly with
-  `#pragma warning disable <id>` + matching restore, never globally.
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
   Blazor component tests. Shared settings and common test packages come from
   `test/Directory.Build.props`, so a test `.csproj` normally holds nothing but a `ProjectReference`.

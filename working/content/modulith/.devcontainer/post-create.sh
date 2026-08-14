@@ -6,6 +6,11 @@ set -euo pipefail
 # EF Core CLI, used for migrations (see CLAUDE.md). `|| true` so a re-run doesn't fail
 # when the tool is already installed.
 dotnet tool install --global dotnet-ef || true
+# https://claude.com/plugins/csharp-lsp
+dotnet tool install --global csharp-ls || true
+
+# fix login via access token. https://github.com/OLibutzki/claude-marketplace/commit/38c0d4647849255ed3de702d770ac2f629f45385
+[ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ ! -f "$HOME/.claude.json" ] && echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json" || true
 
 # Install the Claude Code CLI via the official installer. Faster than the
 # devcontainer feature, which pulls in Node.js first and tends to lag behind
@@ -15,9 +20,6 @@ curl -fsSL https://claude.ai/install.sh | bash
 # rc files, but this script runs non-interactively so those rc files are
 # never sourced here. Add it to PATH now so `claude` below resolves.
 export PATH="$HOME/.local/bin:$PATH"
-
-# fix login via access token. https://github.com/OLibutzki/claude-marketplace/commit/38c0d4647849255ed3de702d770ac2f629f45385
-[ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ ! -f "$HOME/.claude.json" ] && echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json" || true
 
 # Install Claude Code plugins that project settings enable but a fresh container cannot fetch.
 # `.claude/settings.json` only *enables* plugins; the actual bits are cloned per machine, and a

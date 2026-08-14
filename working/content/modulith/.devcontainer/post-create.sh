@@ -10,7 +10,9 @@ dotnet tool install --global dotnet-ef || true
 dotnet tool install --global csharp-ls || true
 
 # fix login via access token. https://github.com/OLibutzki/claude-marketplace/commit/38c0d4647849255ed3de702d770ac2f629f45385
-[ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ ! -f "$HOME/.claude.json" ] && echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json" || true
+if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ ! -f "$HOME/.claude.json" ]; then
+  echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json"
+fi
 
 # Install the Claude Code CLI via the official installer. Faster than the
 # devcontainer feature, which pulls in Node.js first and tends to lag behind

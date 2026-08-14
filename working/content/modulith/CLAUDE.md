@@ -75,7 +75,7 @@ only through a handler test — the domain is where the guarantee lives.
 ### Data access
 
 Data access sits behind a feature-owned `I<Name>Repository<T>` (e.g. `IOrdersRepository<T>`) in
-`Domain`, extending the shared `IRepository<T>` from `ModulithTemplate.FeatureCore`. Handlers and
+`Domain`, extending the shared `IRepository<T>` from `ModulithTemplate.SharedKernel.Domain`. Handlers and
 domain services inject the **per-feature** interface — never `IRepository<T>` directly: the
 open-generic DI registration is keyed on the interface type, so several features registering
 `IRepository<>` would leave the last one serving every feature's entities from the wrong `DbContext`.

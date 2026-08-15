@@ -14,6 +14,7 @@ public static class Configuration
     {
         services.AddModuleDbContext<OrdersContext>(configuration, schema: "orders");
         services.AddScoped(typeof(IOrdersRepository<>), typeof(OrdersRepository<>));
+        services.AddScoped<IOrdersUnitOfWork, OrdersUnitOfWork>();
         return services;
     }
 }

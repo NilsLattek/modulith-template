@@ -14,6 +14,7 @@ public static class Configuration
     {
         services.AddModuleDbContext<FeatureNameContext>(configuration, schema: "featureschema");
         services.AddScoped(typeof(IFeatureNameRepository<>), typeof(FeatureNameRepository<>));
+        services.AddScoped<IFeatureNameUnitOfWork, FeatureNameUnitOfWork>();
         return services;
     }
 }

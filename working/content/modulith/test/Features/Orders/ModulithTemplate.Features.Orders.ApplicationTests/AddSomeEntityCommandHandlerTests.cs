@@ -1,6 +1,4 @@
-using ModulithTemplate.SharedKernel.Application.Events;
 using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
-using ModulithTemplate.Features.Orders.Contracts.IntegrationEvents;
 using ModulithTemplate.Features.Orders.Domain;
 using ModulithTemplate.Features.Orders.Domain.Entities;
 
@@ -16,7 +14,7 @@ public class AddSomeEntityCommandHandlerTests
     {
         // Arrange
         var repository = Substitute.For<IOrdersRepository<SomeEntity>>();
-        var handler = new AddSomeEntityCommandHandler(repository, Substitute.For<IIntegrationEventQueue>());
+        var handler = new AddSomeEntityCommandHandler(repository);
 
         // Act
         var result = await handler.Handle(new AddSomeEntityCommand("a name"), TestContext.Current.CancellationToken);
@@ -24,24 +22,5 @@ public class AddSomeEntityCommandHandlerTests
         // Assert
         Assert.True(result.IsSuccess);
         await repository.Received(1).AddAsync(Arg.Any<SomeEntity>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task Handle_enqueues_the_integration_event_rather_than_publishing_it()
-    {
-        // Arrange
-        var events = Substitute.For<IIntegrationEventQueue>();
-        var handler = new AddSomeEntityCommandHandler(Substitute.For<IOrdersRepository<SomeEntity>>(), events);
-
-        // Act
-        await handler.Handle(new AddSomeEntityCommand("a name"), TestContext.Current.CancellationToken);
-
-        // Assert
-        events.Received(1).Enqueue(Arg.Is<SomeEntityAddedIntegrationEvent>(e =>
-            string.Equals(e.Name, "a name", StringComparison.Ordinal)));
-
-        // Dispatch is the host's job, not the handler's: flushing here would publish before the
-        // surrounding operation had a chance to fail.
-        await events.DidNotReceive().FlushAsync(Arg.Any<CancellationToken>());
     }
 }

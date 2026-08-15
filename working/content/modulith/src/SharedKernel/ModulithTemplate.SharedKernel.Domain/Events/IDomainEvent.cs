@@ -11,14 +11,9 @@ namespace ModulithTemplate.SharedKernel.Domain.Events;
 /// referenced by another feature. Its purpose is to let an aggregate record that something happened
 /// without knowing who reacts.
 /// <para>
-/// Unlike <c>IIntegrationEvent</c>, a domain event is dispatched <b>inside</b> the
-/// transaction that saved the aggregate that raised it — same feature, same <c>DbContext</c> — so a
-/// handler's writes commit or roll back together with the change that triggered them.
-/// </para>
-/// <para>
-/// Translating one into a published fact is a deliberate step: a handler in the same feature's
-/// Application layer enqueues the corresponding <c>IIntegrationEvent</c>. That translation is
-/// what keeps domain language out of the published contract.
+/// A domain event is dispatched <b>inside</b> the transaction that saved the aggregate that raised
+/// it — same feature, same <c>DbContext</c> — so a handler's writes commit or roll back together
+/// with the change that triggered them.
 /// </para>
 /// <para>
 /// A domain event with no registered handler is reported by the mediator's source generator as

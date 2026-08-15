@@ -10,7 +10,7 @@ namespace ModulithTemplate.ArchitectureTests;
 /// <summary>
 /// Enforces the naming and placement conventions for the feature building blocks described in
 /// CLAUDE.md: specifications, mappers, domain services, commands, queries, DTOs, the module API and
-/// the two kinds of event.
+/// domain events.
 /// </summary>
 /// <remarks>
 /// Each convention is checked in <b>both</b> directions, and the two directions are driven by two
@@ -42,7 +42,7 @@ namespace ModulithTemplate.ArchitectureTests;
 /// </para>
 /// <para>
 /// Every rule is scoped to types in a feature assembly. The shared projects define abstractions
-/// whose names deliberately match these suffixes — <c>IIntegrationEvent</c> and
+/// whose names deliberately match these suffixes — <c>IDomainEvent</c> in Shared.Domain and
 /// <c>IDomainEventHandler</c> in Shared.Application — and those are contracts to implement, not
 /// misplaced feature code. These conventions govern where a <i>feature</i> puts its own types.
 /// </para>
@@ -72,8 +72,6 @@ public class NamingConventionTests
         // the owning feature's Application.Api, where it can reach the repository.
         new("module api", ["Api"], ["Contracts.Api", "Application.Api"]),
 
-        new("integration event", ["IntegrationEvent"], ["Contracts.IntegrationEvents"]),
-        new("integration event handler", ["IntegrationEventHandler"], ["Application.IntegrationEventHandlers"]),
         new("domain event", ["DomainEvent"], ["Domain.Events"]),
         new("domain event handler", ["DomainEventHandler"], ["Application.DomainEventHandlers"]),
     ];
@@ -91,8 +89,6 @@ public class NamingConventionTests
         new("Contracts.Api", ["Api", "Dto"]),
 
         new("Application.Api", ["Api"]),
-        new("Contracts.IntegrationEvents", ["IntegrationEvent"]),
-        new("Application.IntegrationEventHandlers", ["IntegrationEventHandler"]),
         new("Domain.Events", ["DomainEvent"]),
         new("Application.DomainEventHandlers", ["DomainEventHandler"]),
     ];

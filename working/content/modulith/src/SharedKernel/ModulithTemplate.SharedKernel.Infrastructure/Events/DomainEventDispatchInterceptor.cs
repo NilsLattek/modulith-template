@@ -10,11 +10,11 @@ namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 /// <c>DbContext</c> and commit in the same transaction as the change that raised them.
 /// </summary>
 /// <remarks>
-/// This is the difference between the two kinds of event. An integration event crosses features,
-/// where each owns its own context, so it is published only <i>after</i> the producer commits and is
-/// eventually consistent. A domain event stays inside one feature and therefore inside one
-/// transaction, so it is dispatched <i>before</i> the save completes and its handler's writes are
-/// part of that same save. A handler that throws rolls the whole operation back, which is the point.
+/// Dispatching from inside the save is what makes a domain event safe without any delivery
+/// machinery: it stays inside one feature and therefore inside one transaction, so its handler's
+/// writes are part of the same save and commit atomically with the change that raised them. A
+/// handler that throws rolls the whole operation back, which is the point. Nothing is buffered for
+/// later, so nothing can be lost between the write and the reaction.
 /// <para>
 /// <b>Only asynchronous saves dispatch.</b> Publishing is asynchronous, so there is no correct way
 /// to do it from the synchronous <c>SaveChanges</c> path. Every save in this solution goes through

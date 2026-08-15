@@ -23,14 +23,18 @@ bash update-database.sh                     # applies every context's pending mi
 
 ## Architecture
 
-A vertical-slice modular monolith built on DDD. Each feature under `src/Features/<Name>/` owns four
-layer projects, mirrored by four test projects under `test/Features/<Name>/`:
+A vertical-slice modular monolith built on DDD. Each feature under `src/Features/<Name>/` owns a set
+of layer projects, mirrored by test projects under `test/Features/<Name>/`:
 
 ```
 Web  →  Application  →  Domain  ←  Infrastructure
+            ↓
+        Contracts        ← the feature's published API; the only project a neighbour may reference
 ```
 
 `Domain` has no outbound dependencies and is the only place business rules live; features must not depend on each other; `ModulithTemplate.ArchitectureTests` enforces the layer rules, the cross-feature isolation and the naming/placement conventions below — each in bothdirections, so a `*Spec` outside `Specifications/` fails just as a badly-named type inside it does.
+
+`Contracts` is how one feature reaches another.
 
 ### Where business logic goes
 
@@ -149,15 +153,7 @@ services may stay directly injected.
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
   Blazor component tests. Shared settings and common test packages come from
   `test/Directory.Build.props`, so a test `.csproj` normally holds nothing but a `ProjectReference`.
-
-## Code Style
-
-- Prefer clear code over inline comments, but write XML comments on all public classes, methods,
-  properties and fields.
-- C#: 4-space indent, `PascalCase` for classes/methods, `_camelCase` for private fields, `camelCase`
-  for locals and parameters. Prefer primary constructors; use auto-properties, and `field` if needed.
-- Tests: `<ClassName>Tests` for the class, `<MethodName>_<Conditions>_<AssertedOutcome>` in snake_case
-  for methods (never an `Async` suffix), and Arrange/Act/Assert with a comment per section.
+- **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.
 
 ## Adding a feature
 
@@ -165,8 +161,8 @@ services may stay directly injected.
 dotnet new modulith-feature --appName ModulithTemplate -n Payments
 ```
 
-Run this from the solution root (the directory containing the `.slnx`). It creates the four layer and
-four test projects, adds all eight to the solution, and mirrors the `Orders` persistence and DI
+Run this from the solution root (the directory containing the `.slnx`). It creates the feature's
+layer and test projects, adds them all to the solution, and mirrors the `Orders` persistence and DI
 scaffolding. **The one manual step** is registering the feature with the host: add a project reference
 from `src/ModulithTemplate.Web` to the feature's `.Web` project, and call
 `builder.ConfigurePaymentsFeature();` in `Program.cs`. Then model the feature's entities under

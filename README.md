@@ -6,10 +6,11 @@ Work in progress...
 [`Modulith`](https://www.nuget.org/packages/Modulith) package.
 
 `dotnet new modulith` scaffolds a .NET solution: a Blazor Server host plus one vertical slice
-per feature, each owning its own `Domain`/`Application`/`Infrastructure`/`Web` projects, its own
-EF Core `DbContext`, and its own Postgres schema. Features cannot reference each other, and
-architecture tests enforce that. `dotnet new modulith-feature` adds another slice to an existing
-solution — eight projects, fully wired.
+per feature, each owning its own `Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`
+projects, its own EF Core `DbContext`, and its own Postgres schema. Features reach each other only
+through `Contracts`, and architecture tests enforce that. `dotnet new modulith-feature` adds
+another slice to an existing solution — layer projects, test projects and solution registration,
+fully wired.
 
 Use it when a set of microservices would be premature but you still want the module boundaries
 that make splitting one out later a mechanical job.

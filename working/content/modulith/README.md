@@ -1,6 +1,6 @@
 # ModulithTemplate
 
-A modular monolith. Each feature under `src/Features/` owns its own layers (`Domain`, `Application`, `Infrastructure`, `Web`), its own `DbContext`, and its own Postgres schema.
+A modular monolith. Each feature under `src/Features/` owns its own layers (`Contracts`, `Domain`, `Application`, `Infrastructure`, `Web`), its own `DbContext`, and its own Postgres schema.
 
 ## Setup
 
@@ -56,7 +56,7 @@ dotnet ef database update --context OrdersContext \
 
 ## Add a feature
 
-From the solution root, scaffold the feature's four layer projects plus their four test projects:
+From the solution root, scaffold the feature's layer projects plus their test projects:
 
 ```bash
 dotnet new modulith-feature --appName ModulithTemplate -n Payments

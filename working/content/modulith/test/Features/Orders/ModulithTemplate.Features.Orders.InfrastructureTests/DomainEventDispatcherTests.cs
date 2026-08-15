@@ -13,7 +13,7 @@ namespace ModulithTemplate.Features.Orders.InfrastructureTests;
 /// <summary>Tests for <see cref="DomainEventDispatcher"/>.</summary>
 /// <remarks>
 /// The dispatcher takes a delegate rather than a <c>DbContext</c> precisely so these guarantees can
-/// be asserted without a database. <see cref="DomainEventDispatchInterceptor"/> is the thin adapter
+/// be asserted without a database. <see cref="DomainEventDispatchInterceptor{TContext}"/> is the thin adapter
 /// that supplies the change tracker's aggregates to it.
 /// </remarks>
 public class DomainEventDispatcherTests

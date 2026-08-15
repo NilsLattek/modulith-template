@@ -10,7 +10,7 @@ namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 /// Publishes the domain events buffered on tracked aggregates, repeating until none remain.
 /// </summary>
 /// <remarks>
-/// Split out of <see cref="DomainEventDispatchInterceptor"/> so the ordering guarantees below can be
+/// Split out of <see cref="DomainEventDispatchInterceptor{TContext}"/> so the ordering guarantees below can be
 /// asserted without a live database: the interceptor is the EF Core adapter, this is the behaviour.
 /// </remarks>
 /// <param name="publisher">The mediator's notification publisher.</param>

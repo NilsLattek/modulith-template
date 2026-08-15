@@ -16,9 +16,10 @@ public static class ModuleDbContextExtensions
     /// and its domain event dispatch.
     /// </summary>
     /// <remarks>
-    /// The dispatcher and interceptor are registered with <c>TryAdd</c> because every feature calls
-    /// this method: the registration is solution-wide, while the interceptor instance is resolved
-    /// per scope and attached to each feature's own context.
+    /// <c>TryAdd</c> because every feature calls this method. The dispatcher is solution-wide, while
+    /// the interceptor is registered per context type: its re-entrancy guard is instance state, so
+    /// one shared instance would make a handler's save on another feature's context look like
+    /// re-entrancy and silently skip that feature's events.
     /// </remarks>
     /// <typeparam name="TContext">The feature's context type.</typeparam>
     /// <param name="services">The service collection to register into.</param>
@@ -30,7 +31,7 @@ public static class ModuleDbContextExtensions
         where TContext : DbContext
     {
         services.TryAddScoped<DomainEventDispatcher>();
-        services.TryAddScoped<DomainEventDispatchInterceptor>();
+        services.TryAddScoped<DomainEventDispatchInterceptor<TContext>>();
 
         // The (sp, options) overload, so the interceptor comes from the same scope as the context
         // and shares the scope's mediator.
@@ -40,6 +41,6 @@ public static class ModuleDbContextExtensions
                 pg => pg.MigrationsHistoryTable("__EFMigrationsHistory", schema))
             .UseSnakeCaseNamingConvention()
             .UseExceptionProcessor()
-            .AddInterceptors(sp.GetRequiredService<DomainEventDispatchInterceptor>()));
+            .AddInterceptors(sp.GetRequiredService<DomainEventDispatchInterceptor<TContext>>()));
     }
 }

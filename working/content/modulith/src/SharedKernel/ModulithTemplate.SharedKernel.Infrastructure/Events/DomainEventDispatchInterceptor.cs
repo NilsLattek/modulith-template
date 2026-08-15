@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 using ModulithTemplate.SharedKernel.Domain.Entities;
@@ -20,9 +21,19 @@ namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 /// <c>SaveChangesAsync</c> — the repositories and handlers are async throughout — but a hand-written
 /// synchronous save would silently raise no events.
 /// </para>
+/// <para>
+/// <b>Generic in the context type on purpose.</b> The re-entrancy guard below is instance state, so
+/// an instance must serve exactly one context. Closing it over <typeparamref name="TContext"/> gives
+/// each feature its own registration — and therefore its own guard — instead of one shared instance
+/// on which a handler saving feature B's context would look like re-entrancy on feature A's and
+/// silently skip B's events.
+/// </para>
 /// </remarks>
+/// <typeparam name="TContext">The feature's context type; only saves on it are dispatched.</typeparam>
 /// <param name="dispatcher">Performs the collect-clear-publish rounds.</param>
-public sealed class DomainEventDispatchInterceptor(DomainEventDispatcher dispatcher) : SaveChangesInterceptor
+public sealed class DomainEventDispatchInterceptor<TContext>(DomainEventDispatcher dispatcher)
+    : SaveChangesInterceptor
+    where TContext : DbContext
 {
     private bool _dispatching;
 
@@ -37,7 +48,7 @@ public sealed class DomainEventDispatchInterceptor(DomainEventDispatcher dispatc
         // Re-entrancy guard: a handler that calls SaveChangesAsync on this context lands back here
         // mid-dispatch. The outer loop is already re-collecting the change tracker each round, so
         // the nested call must not start a competing dispatch of its own.
-        if (eventData.Context is null || _dispatching)
+        if (eventData.Context is not TContext context || _dispatching)
         {
             return result;
         }
@@ -46,7 +57,7 @@ public sealed class DomainEventDispatchInterceptor(DomainEventDispatcher dispatc
         try
         {
             await dispatcher.DispatchAsync(
-                () => eventData.Context.ChangeTracker.Entries<AggregateRoot>()
+                () => context.ChangeTracker.Entries<AggregateRoot>()
                     .Select(entry => entry.Entity)
                     .ToList(),
                 cancellationToken);

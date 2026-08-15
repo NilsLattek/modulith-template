@@ -6,43 +6,68 @@ using static ArchUnitNET.Fluent.ArchRuleDefinition;
 namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
-/// Enforces that a feature's <c>Contracts</c> project stays a contract.
+/// Fences off a feature's <c>Contracts</c> project in both directions, leaving <c>Application</c>
+/// as the only layer that may touch one.
 /// </summary>
 /// <remarks>
-/// <see cref="FeatureModuleTests"/> forbids features from depending on each other and exempts
-/// <c>Contracts</c> from that rule, which is what lets one feature call another's module API. That
-/// exemption is only safe while a Contracts project is genuinely
-/// self-contained: the moment one references its own feature's Domain, every consumer inherits
-/// visibility of that feature's entities, repositories and domain services, and the isolation the
-/// exemption was granted for is gone — with the cross-feature rule still passing, because the
-/// dependency now routes through an ignored namespace.
-/// <para>
-/// This is the rule that closes that hole, and it is why the exemption can be trusted.
-/// </para>
+/// <see cref="FeatureModuleTests"/> drops Contracts types out of its slices so features can call
+/// each other's module APIs, which also blinds it to anything routed through a Contracts project.
+/// These rules are what make that exemption safe.
 /// </remarks>
 public class ContractIsolationTests
 {
     private const string ContractsLayer = "Contracts";
 
+    /// <summary>The only layer that may touch a <c>Contracts</c> project.</summary>
+    private const string ConsumingLayer = "Application";
+
     private static readonly string[] FeatureInternalLayers = ["Domain", "Application", "Infrastructure", "Web"];
+
+    /// <summary>Every other internal layer, derived so a new layer needs no second list updated.</summary>
+    private static readonly string[] NonConsumingLayers =
+        [.. FeatureInternalLayers.Where(layer => !string.Equals(layer, ConsumingLayer, StringComparison.Ordinal))];
 
     [Fact]
     public void Contracts_do_not_depend_on_any_feature_internal_layer()
     {
-        // Guard: fail loudly if no Contracts assembly was discovered, so the rule cannot pass
-        // vacuously on a solution where the projects were renamed or never built.
-        Assert.True(
-            SolutionAssemblies.HasFeatureLayer(ContractsLayer),
-            $"No assembly for the '{ContractsLayer}' feature layer was found; the contract purity rule would pass vacuously.");
+        AssertLayerDiscovered(ContractsLayer, "contract purity");
 
         IArchRule rule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
             .Should().NotDependOnAnyTypesThat()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers)))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
-                + "Shared.Application abstractions, so that a consumer referencing it does not transitively gain "
-                + "access to the owning feature's Domain, Application, Infrastructure or Web layer.");
+                + "Shared.Application abstractions, so a consumer referencing it does not transitively gain access "
+                + "to the owning feature's internals.");
 
         rule.Check(SolutionAssemblies.Architecture);
     }
+
+    [Fact]
+    public void Only_the_Application_layer_depends_on_Contracts()
+    {
+        AssertLayerDiscovered(ContractsLayer, "contract consumption");
+        foreach (var layer in NonConsumingLayers)
+        {
+            AssertLayerDiscovered(layer, "contract consumption");
+        }
+
+        IArchRule rule = Types().That()
+            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(NonConsumingLayers)))
+            .Should().NotDependOnAnyTypesThat()
+            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
+            .Because($"only an {ConsumingLayer} layer may consume a Contracts project — its own, which implements the "
+                + $"module API, or a neighbouring feature's, which calls it. A {string.Join("/", NonConsumingLayers)} "
+                + "layer reaching for one is a cross-feature dependency FeatureModuleTests cannot see.");
+
+        rule.Check(SolutionAssemblies.Architecture);
+    }
+
+    /// <summary>Fails loudly on a missing layer assembly, so a rule cannot pass vacuously.</summary>
+    /// <param name="layerSuffix">The layer's assembly-name suffix.</param>
+    /// <param name="ruleName">The rule the missing layer would silently disarm.</param>
+    private static void AssertLayerDiscovered(string layerSuffix, string ruleName) =>
+        Assert.True(
+            SolutionAssemblies.HasFeatureLayer(layerSuffix),
+            $"No assembly for the '{layerSuffix}' feature layer was found; the {ruleName} rule would pass vacuously.");
 }

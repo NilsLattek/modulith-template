@@ -1,16 +1,16 @@
 # Modulith
 
-`dotnet new` templates for a .NET modular monolith: a Blazor Server host plus five layer projects
-(`Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`) per feature, each feature owning its
-own `DbContext` and its own Postgres schema.
+`dotnet new` templates for a .NET modular monolith: a Blazor Server host plus a set of layer
+projects (`Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`) per feature, each feature
+owning its own `DbContext` and its own Postgres schema.
 
 ## Templates in this package
 
 - `dotnet new modulith` — scaffolds a new modular-monolith solution.
 - `dotnet new modulith-feature --appName <App> -n <Name>` — run from a scaffolded solution's
-  root to add one feature's five layer projects
-  (`Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`) plus their four matching test
-  projects, nine projects in all, registered in the solution automatically.
+  root to add one feature's layer projects
+  (`Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`) plus their matching test
+  projects, registered in the solution automatically.
 
 A scaffolded feature is added to the `.slnx` but not yet wired into the host. Reference its
 `Web` project from `src/<App>.Web/` and call `builder.Configure<Name>Feature();` in `Program.cs`

@@ -6,11 +6,17 @@ using Assembly = System.Reflection.Assembly;
 namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
-/// Shared discovery and loading of the compiled feature-layer assemblies used by the
-/// architecture tests. Assemblies are matched by file name containing the <c>.Features.</c>
-/// segment, excluding any whose name ends in <c>Tests</c>, which corresponds to the
-/// per-feature layer projects while excluding their test projects.
+/// Shared discovery of the feature-layer assemblies used by the architecture tests: everything in
+/// this project's output whose simple name contains <c>.Features.</c> and does not end in
+/// <c>Tests</c>.
 /// </summary>
+/// <remarks>
+/// Reads the output directory, not the solution tree. The csproj references every
+/// <c>src/Features/**</c> project, so each layer lands here built in the configuration under test;
+/// a tree walk instead yields several copies per assembly (bin and obj, every configuration ever
+/// built, the <c>obj/*/ref</c> stubs), and a leftover <c>bin/Release</c> would then silently
+/// validate stale bits.
+/// </remarks>
 internal static class SolutionAssemblies
 {
     private const string FeaturesKeyword = ".Features.";
@@ -18,20 +24,16 @@ internal static class SolutionAssemblies
     private static readonly Lazy<Assembly[]> LazyFeatureAssemblies = new(LoadFeatureAssemblies);
     private static readonly Lazy<Architecture> LazyArchitecture = new(BuildArchitecture);
 
-    /// <summary>The compiled feature-layer assemblies discovered under the solution directory.</summary>
+    /// <summary>The compiled feature-layer assemblies discovered in this project's output directory.</summary>
     public static Assembly[] FeatureAssemblies => LazyFeatureAssemblies.Value;
 
     /// <summary>The ArchUnitNET architecture built from <see cref="FeatureAssemblies"/>.</summary>
     public static Architecture Architecture => LazyArchitecture.Value;
 
-    /// <summary>
-    /// Builds an assembly-name regex matching a feature layer by its suffix expression.
-    /// </summary>
+    /// <summary>Builds an assembly-name regex matching a feature layer by its suffix expression.</summary>
     /// <remarks>
-    /// ArchUnitNET matches against the assembly's fully-qualified name (e.g.
-    /// <c>ModulithTemplate.Features.Orders.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c>),
-    /// so the suffix is anchored at the simple-name boundary — end of string or the version comma —
-    /// not at the end of the whole string.
+    /// ArchUnitNET matches the fully-qualified name (<c>...Orders.Domain, Version=1.0.0.0, ...</c>),
+    /// so the suffix anchors at the simple-name boundary — end of string or the version comma.
     /// </remarks>
     /// <param name="suffixExpression">A layer suffix, or a regex alternation of several.</param>
     /// <returns>The assembly-name pattern.</returns>
@@ -55,29 +57,19 @@ internal static class SolutionAssemblies
                 && name.EndsWith("." + layerSuffix, StringComparison.Ordinal);
         });
 
-    /// <summary>Walks up from the current working directory to the folder containing the .slnx.</summary>
-    public static string GetSolutionDirectory()
-    {
-        var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (directory != null && directory.GetFiles("*.slnx").Length == 0)
-        {
-            directory = directory.Parent;
-        }
-        return directory!.FullName;
-    }
-
     private static Assembly[] LoadFeatureAssemblies()
     {
         try
         {
-            return Directory.GetFiles(GetSolutionDirectory(), "*.dll", SearchOption.AllDirectories)
-                // Match the assembly's own file name, not the full path: a test project
-                // directory such as ModulithTemplate.Features.Orders.WebTests would otherwise
-                // pull its entire output (xunit, bUnit, AngleSharp, NSubstitute, ...) into the
-                // architecture. Assemblies ending in "Tests" are excluded for the same reason.
-                .Where(f => Path.GetFileName(f).Contains(FeaturesKeyword, StringComparison.Ordinal)
-                    && !Path.GetFileNameWithoutExtension(f).EndsWith("Tests", StringComparison.Ordinal))
-                .DistinctBy(Path.GetFileName, StringComparer.Ordinal)
+            return Directory.GetFiles(AppContext.BaseDirectory, "*.dll", SearchOption.TopDirectoryOnly)
+                // Simple name, never the file name: "Microsoft.Extensions.Features.dll" contains
+                // ".Features." only because of the dot before the extension.
+                .Where(path =>
+                {
+                    var name = Path.GetFileNameWithoutExtension(path);
+                    return name.Contains(FeaturesKeyword, StringComparison.Ordinal)
+                        && !name.EndsWith("Tests", StringComparison.Ordinal);
+                })
                 .Select(Assembly.LoadFile)
                 .ToArray();
         }

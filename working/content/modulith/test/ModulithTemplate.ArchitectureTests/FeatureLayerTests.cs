@@ -46,6 +46,7 @@ public class FeatureLayerTests
 
         IArchRule layerRule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(rule.Suffix))
+            .And().DoNotResideInNamespaceMatching(SolutionAssemblies.InstrumentationNamespacePattern)
             .Should().NotDependOnAnyTypesThat()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(rule.Forbidden)))
             .Because($"a feature's {rule.Name} layer must not depend on its {string.Join("/", rule.Forbidden)} layer(s).");

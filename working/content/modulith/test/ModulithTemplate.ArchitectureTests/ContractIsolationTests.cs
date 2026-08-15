@@ -34,6 +34,7 @@ public class ContractIsolationTests
 
         IArchRule rule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
+            .And().DoNotResideInNamespaceMatching(SolutionAssemblies.InstrumentationNamespacePattern)
             .Should().NotDependOnAnyTypesThat()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers)))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
@@ -54,6 +55,7 @@ public class ContractIsolationTests
 
         IArchRule rule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(NonConsumingLayers)))
+            .And().DoNotResideInNamespaceMatching(SolutionAssemblies.InstrumentationNamespacePattern)
             .Should().NotDependOnAnyTypesThat()
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
             .Because($"only an {ConsumingLayer} layer may consume a Contracts project — its own, which implements the "

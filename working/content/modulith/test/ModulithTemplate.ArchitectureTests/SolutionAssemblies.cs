@@ -40,6 +40,16 @@ internal static class SolutionAssemblies
     public static string FeatureLayerPattern(string suffixExpression) =>
         @".*\.Features\..*\." + suffixExpression + @"(,.*)?$";
 
+    /// <summary>Namespace of the tracker type a code-coverage run injects into every assembly.</summary>
+    /// <remarks>
+    /// <c>dotnet test --coverage</c> statically rewrites the assemblies in place, adding one
+    /// identically-named tracker type to each. ArchUnitNET resolves that type's own references by
+    /// name across the whole architecture, so the copies appear to depend on each other and every
+    /// layering rule fails. Excluding the namespace from a rule's source set is enough — the
+    /// tracker is then never a type under test, and nothing else reaches it across an assembly.
+    /// </remarks>
+    public const string InstrumentationNamespacePattern = @"^Microsoft\.CodeCoverage\..*";
+
     /// <summary>Combines one or more layer suffixes into a regex alternation.</summary>
     /// <param name="suffixes">The suffixes to combine.</param>
     /// <returns>A single suffix expression.</returns>

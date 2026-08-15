@@ -10,7 +10,7 @@ namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 /// Publishes the domain events buffered on tracked aggregates, repeating until none remain.
 /// </summary>
 /// <remarks>
-/// Split out of <see cref="DomainEventDispatchInterceptor"/> so the ordering guarantees below can be
+/// Split out of <see cref="DomainEventDispatchInterceptor{TContext}"/> so the ordering guarantees below can be
 /// asserted without a live database: the interceptor is the EF Core adapter, this is the behaviour.
 /// </remarks>
 /// <param name="publisher">The mediator's notification publisher.</param>
@@ -70,8 +70,14 @@ public sealed class DomainEventDispatcher(
 
             foreach (var domainEvent in dispatching)
             {
-                // The object overload dispatches on the runtime type; see IntegrationEventQueue for
-                // why that matters and what happens to a type the host's generator never saw.
+                // The object overload, deliberately. Both of the mediator's Publish overloads switch
+                // on the *runtime* type, so either would dispatch correctly — but the generic one
+                // reads as though it keyed on IDomainEvent, which is not what happens.
+                //
+                // That switch only covers notification types the source generator found in the
+                // host's compilation, and its default branch neither dispatches nor throws. An event
+                // whose feature the host does not reference is therefore dropped in silence, which
+                // is why registering every feature with the host is not optional.
                 EventLog.DomainEventDispatched(logger, domainEvent.GetType().Name);
                 await publisher.Publish((object)domainEvent, cancellationToken);
             }

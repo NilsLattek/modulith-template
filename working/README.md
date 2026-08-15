@@ -21,13 +21,12 @@ A scaffolded feature is added to the `.slnx` but not yet wired into the host. Re
 - A sample `Orders` feature showing the layering, with command/query handlers, a repository, and
   its own `OrdersContext`.
 - EF Core on Npgsql with snake_case naming and a per-feature migrations history table.
-- [Mediator](https://github.com/martinothamar/Mediator) with logging, exception, validation, and
-  integration-event pipeline behaviours; FluentResults for handler outcomes and FluentValidation
-  for input.
-- Cross-feature communication that keeps the slices isolated: in-process integration events
-  dispatched after commit, a read-only per-feature module API, and in-transaction domain events —
-  all published through a `Contracts` project that is the only part of a feature its neighbours
-  may reference, with architecture tests enforcing it.
+- [Mediator](https://github.com/martinothamar/Mediator) with logging, exception, and validation
+  pipeline behaviours; FluentResults for handler outcomes and FluentValidation for input.
+- Cross-feature communication that keeps the slices isolated: a read-only per-feature module API,
+  published through a `Contracts` project that is the only part of a feature its neighbours may
+  reference, with architecture tests enforcing it. Within a feature, domain events dispatch inside
+  the saving transaction.
 - xUnit v3 test projects per layer, bUnit for components, and ArchUnitNET architecture tests.
 - A devcontainer with .NET, the `dotnet-ef` CLI, and Postgres.
 

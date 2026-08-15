@@ -9,9 +9,9 @@ namespace ModulithTemplate.SharedKernel.Application.Events;
 /// </summary>
 /// <remarks>
 /// Implementations live in the raising feature's Application layer, under
-/// <c>Application/DomainEventHandlers/</c>, and must be <c>public</c> for the same reason as
-/// <see cref="IIntegrationEventHandler{TEvent}"/>: the mediator's source generator emits a hard
-/// <c>typeof(...)</c> reference into the host's compilation.
+/// <c>Application/DomainEventHandlers/</c>, and must be <c>public</c>: the mediator's source
+/// generator emits a hard <c>typeof(...)</c> reference into the host's compilation, so an
+/// <c>internal</c> handler breaks the host build with <c>CS0122</c>.
 /// <para>
 /// A handler runs during <c>SaveChangesAsync</c>, so anything it writes through the same
 /// <c>DbContext</c> is saved in that same call and commits atomically with the change that raised

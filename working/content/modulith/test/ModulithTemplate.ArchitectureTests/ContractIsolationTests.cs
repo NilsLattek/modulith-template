@@ -10,8 +10,8 @@ namespace ModulithTemplate.ArchitectureTests;
 /// </summary>
 /// <remarks>
 /// <see cref="FeatureModuleTests"/> forbids features from depending on each other and exempts
-/// <c>Contracts</c> from that rule, which is what lets one feature subscribe to another's events or
-/// call its module API. That exemption is only safe while a Contracts project is genuinely
+/// <c>Contracts</c> from that rule, which is what lets one feature call another's module API. That
+/// exemption is only safe while a Contracts project is genuinely
 /// self-contained: the moment one references its own feature's Domain, every consumer inherits
 /// visibility of that feature's entities, repositories and domain services, and the isolation the
 /// exemption was granted for is gone — with the cross-feature rule still passing, because the

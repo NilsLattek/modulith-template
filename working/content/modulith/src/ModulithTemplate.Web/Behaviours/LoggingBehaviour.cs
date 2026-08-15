@@ -20,7 +20,7 @@ namespace ModulithTemplate.Web.Behaviours;
 /// runtime so a failed result is reported at warning rather than information.
 /// <para>
 /// <b>The span.</b> Being the outermost behaviour, the activity started here spans the entire
-/// operation: validation, the handler, and the integration events it published. Every span raised
+/// operation: validation, the handler, and the domain events its save dispatched. Every span raised
 /// below it — the Npgsql span of each query the handler issued, the HTTP client span of each call it
 /// made — is a child of this one, and it in turn is a child of the ASP.NET Core request span. One
 /// command or query is therefore one collapsible subtree in the monitoring system, and the log

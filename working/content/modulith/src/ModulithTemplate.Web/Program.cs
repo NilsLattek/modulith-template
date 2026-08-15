@@ -1,5 +1,4 @@
 using ModulithTemplate.Features.Orders.Web;
-using ModulithTemplate.SharedKernel.Infrastructure.Events;
 using ModulithTemplate.Web.Behaviours;
 using ModulithTemplate.Web.Components;
 
@@ -11,8 +10,6 @@ builder.AddServiceDefaults();
 
 builder.ConfigureOrdersFeature();
 
-builder.Services.AddIntegrationEvents();
-
 builder.Services.AddMediator(options =>
 {
     // Scoped, not the library default of Singleton: handlers inject the feature repositories,
@@ -23,16 +20,14 @@ builder.Services.AddMediator(options =>
 
     // Ordered outermost-first. LoggingBehaviour therefore observes a uniform Result outcome for
     // handlers returning Result/Result<T>, because ExceptionBehaviour has already converted any
-    // exception below it. ValidationBehaviour sits above the handler, so a handler never runs on
-    // invalid input, and a validator that throws is still converted by ExceptionBehaviour above it.
-    // IntegrationEventBehaviour is innermost, wrapping the handler alone: it must not publish for a
-    // message that failed validation, and a consumer that throws has to reach ExceptionBehaviour.
+    // exception below it. ValidationBehaviour is innermost, wrapping the handler alone, so a handler
+    // never runs on invalid input and a validator that throws is still converted by
+    // ExceptionBehaviour above it.
     options.PipelineBehaviors =
     [
         typeof(LoggingBehaviour<,>),
         typeof(ExceptionBehaviour<,>),
         typeof(ValidationBehaviour<,>),
-        typeof(IntegrationEventBehaviour<,>),
     ];
 });
 

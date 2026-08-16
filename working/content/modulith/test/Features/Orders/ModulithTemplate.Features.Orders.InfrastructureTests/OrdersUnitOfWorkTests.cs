@@ -12,10 +12,9 @@ namespace ModulithTemplate.Features.Orders.InfrastructureTests;
 
 /// <summary>Tests for the Orders feature's unit of work.</summary>
 /// <remarks>
-/// What is asserted here is the <i>registration</i>, not the transaction.
-/// A feature that declares <see cref="IOrdersUnitOfWork"/> but forgets the DI line
-/// fails only at the first transactional handler, and <c>AddDbContext</c> opens no connection when
-/// the service is resolved, so the check costs nothing.
+/// Asserts the <i>registration</i>, not the transaction: a feature that declares
+/// <see cref="IOrdersUnitOfWork"/> but forgets the DI line fails only at its first transactional
+/// handler.
 /// </remarks>
 public class OrdersUnitOfWorkTests
 {
@@ -35,8 +34,7 @@ public class OrdersUnitOfWorkTests
             .Build();
 
         // Act — logging and IPublisher stand in for what the host supplies (AddLogging, AddMediator).
-        // The context's domain event interceptor needs both, and a feature's own composition root
-        // registers neither.
+        // The context's domain event interceptor needs both; a feature's composition root has neither.
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton(Substitute.For<IPublisher>());

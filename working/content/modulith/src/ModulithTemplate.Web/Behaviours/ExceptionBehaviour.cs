@@ -11,13 +11,10 @@ namespace ModulithTemplate.Web.Behaviours;
 /// <typeparam name="TMessage">The message being handled.</typeparam>
 /// <typeparam name="TResponse">The handler's response type.</typeparam>
 /// <remarks>
-/// The <typeparamref name="TResponse"/> constraint is what makes the conversion type-safe:
-/// FluentResults parameterises each result type by itself (<c>Result : ResultBase&lt;Result&gt;</c>,
-/// <c>Result&lt;T&gt; : ResultBase&lt;Result&lt;T&gt;&gt;</c>), so <c>WithError</c> returns the
-/// concrete type it was called on. It also decides which messages this behaviour applies to at
-/// all — a handler returning something other than a result is not wrapped, and its exceptions
-/// propagate. That is why every handler in this solution returns <c>Result</c> or
-/// <c>Result&lt;T&gt;</c>.
+/// The <typeparamref name="TResponse"/> constraint makes the conversion type-safe — FluentResults
+/// parameterises each result type by itself, so <c>WithError</c> returns the concrete type it was
+/// called on — and also decides which messages are covered at all: a handler returning anything
+/// other than a result is not wrapped, and its exceptions propagate.
 /// </remarks>
 internal sealed class ExceptionBehaviour<TMessage, TResponse>(
     ILogger<ExceptionBehaviour<TMessage, TResponse>> logger)

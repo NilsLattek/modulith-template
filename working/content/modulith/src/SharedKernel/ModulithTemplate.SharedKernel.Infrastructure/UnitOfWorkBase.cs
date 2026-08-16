@@ -11,15 +11,10 @@ namespace ModulithTemplate.SharedKernel.Infrastructure;
 /// </summary>
 /// <remarks>
 /// The counterpart to <c>RepositoryBase&lt;T&gt;</c>, and derived from the same way: a feature
-/// declares <c>internal sealed class XxxUnitOfWork(XxxContext dbContext) :
-/// UnitOfWorkBase&lt;XxxContext&gt;(dbContext), IXxxUnitOfWork;</c> and writes no body. The derived
-/// type exists only to bind the feature's marker interface to the feature's context — that binding
-/// is what keeps one feature's transactions off another feature's connection — so the transaction
-/// logic itself lives here, once.
-/// <para>
-/// Generic in the context type rather than taking a plain <c>DbContext</c>, so the derived
-/// constructor can only be handed the feature's own context; a sibling feature's would not compile.
-/// </para>
+/// declares a body-less <c>XxxUnitOfWork : UnitOfWorkBase&lt;XxxContext&gt;, IXxxUnitOfWork</c>
+/// purely to bind its marker interface to its own context, which is what keeps one feature's
+/// transactions off another's connection. Generic in the context type rather than taking a plain
+/// <c>DbContext</c>, so a sibling feature's context would not compile.
 /// </remarks>
 /// <typeparam name="TContext">The feature's context type.</typeparam>
 /// <param name="dbContext">The feature's context, whose connection the transaction is opened on.</param>
@@ -65,11 +60,9 @@ public abstract class UnitOfWorkBase<TContext>(TContext dbContext) : IUnitOfWork
         catch
         {
             // Rolled back explicitly rather than left to disposal, so the transaction is finished
-            // before the exception reaches the caller. CancellationToken.None on purpose: the
-            // common reason to land here is that cancellationToken was cancelled, and passing it
-            // on would abandon the rollback and replace the original exception with a cancellation.
-            // The original travels unchanged — the host's exception behaviour turns it into a
-            // failed result.
+            // before the exception reaches the caller. CancellationToken.None on purpose: the usual
+            // reason to land here is that cancellationToken was cancelled, and passing it on would
+            // abandon the rollback and replace the original exception with a cancellation.
             await transaction.RollbackAsync(CancellationToken.None);
             throw;
         }

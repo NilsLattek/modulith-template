@@ -8,12 +8,9 @@ namespace ModulithTemplate.Features.Orders.Application.Api;
 /// Implements <see cref="IOrdersApi"/> for callers in other features.
 /// </summary>
 /// <remarks>
-/// The interface is published in <c>Contracts</c>; the implementation stays here, in Application,
+/// The interface is published in <c>Contracts</c>; the implementation stays here in Application,
 /// where it can reach the repository. A consumer therefore compiles against the contract alone and
-/// never sees the Orders domain — which is the whole arrangement in one sentence.
-/// <para>
-/// Registered in this feature's <c>Configuration</c>, like every other service the feature owns.
-/// </para>
+/// never sees the Orders domain.
 /// </remarks>
 /// <param name="repository">The Orders feature's repository.</param>
 public sealed class OrdersApi(IOrdersRepository<SomeEntity> repository) : IOrdersApi

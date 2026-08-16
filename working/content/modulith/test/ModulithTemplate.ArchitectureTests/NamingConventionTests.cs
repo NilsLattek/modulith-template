@@ -9,42 +9,18 @@ namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
 /// Enforces the naming and placement conventions for the feature building blocks described in
-/// CLAUDE.md: specifications, mappers, domain services, commands, queries, DTOs, the module API and
-/// domain events.
+/// CLAUDE.md, in both directions: where a suffix may live, and what a namespace may hold.
 /// </summary>
 /// <remarks>
-/// Each convention is checked in <b>both</b> directions, and the two directions are driven by two
-/// separate tables because they are not each other's mirror image:
-/// <list type="bullet">
-/// <item><description>
-/// <see cref="Placements"/> answers "where may a type with this suffix live?" — and the answer is
-/// sometimes more than one namespace. A <c>*Dto</c> is legitimate both as a feature's internal read
-/// model and as part of its published contract; a <c>*Api</c> type is legitimate both as the
-/// published interface and as the implementation behind it.
-/// </description></item>
-/// <item><description>
-/// <see cref="Contents"/> answers "what may live in this namespace?" — and the answer is sometimes
-/// more than one suffix. <c>Contracts.Api</c> holds the interface <i>and</i> the DTOs it returns.
-/// </description></item>
-/// </list>
-/// Collapsing the two into one table is what a single-suffix-per-namespace assumption buys, and it
-/// stops being true the moment a namespace holds an interface alongside its read models.
+/// The two directions need two tables because neither is the other's mirror: a <c>*Dto</c> has two
+/// homes (internal read model and published contract), and <c>Contracts.Api</c> holds two suffixes
+/// (the interface and the DTOs it returns).
 /// <para>
-/// These rules deliberately carry no "assembly was discovered" presence guard, and none should be
-/// added. A layering rule that matches nothing is a false green over code that exists; a naming rule
-/// that matches nothing simply means the solution has no specifications yet, which is the normal
-/// state of a freshly scaffolded project. These are conditional tripwires armed for code the user
-/// has not written yet. ArchUnitNET's default behavior is the opposite of what that requires — a
-/// rule whose predicate matches zero types throws rather than passing — so each helper opts out via
-/// <c>WithoutRequiringPositiveResults()</c>. That still fails on any real violation among the types
-/// that do match. The <c>AreNotNested()</c> filter is not load-bearing — ArchUnitNET already
-/// excludes compiler-generated nested types — it is insurance against a hand-written nested type.
-/// </para>
-/// <para>
-/// Every rule is scoped to types in a feature assembly. The shared projects define abstractions
-/// whose names deliberately match these suffixes — <c>IDomainEvent</c> in Shared.Domain and
-/// <c>IDomainEventHandler</c> in Shared.Application — and those are contracts to implement, not
-/// misplaced feature code. These conventions govern where a <i>feature</i> puts its own types.
+/// Matching nothing must pass, not fail — a naming rule with no matches means the solution has no
+/// specifications <i>yet</i>, which is the normal state of a fresh scaffold. ArchUnitNET throws in
+/// that case, so every helper opts out via <c>WithoutRequiringPositiveResults()</c>. Rules are
+/// scoped to feature assemblies, because the shared projects deliberately define abstractions with
+/// the same suffixes (<c>IDomainEvent</c>, <c>IDomainEventHandler</c>).
 /// </para>
 /// </remarks>
 public class NamingConventionTests
@@ -144,23 +120,17 @@ public class NamingConventionTests
     private const string FeatureAssemblyPattern = @".*\.Features\..*";
 
     /// <summary>
-    /// Builds a namespace regex matching one or more home namespaces in any feature, e.g.
-    /// <c>Domain.Specifications</c> becomes
-    /// <c>.*\.Features\..*\.(Domain\.Specifications)(\..*)?$</c>. The trailing group admits
-    /// sub-namespaces while still rejecting a sibling whose name merely starts with the same text,
-    /// because after the suffix the pattern requires either end-of-string or a dot.
+    /// Builds a namespace regex matching one or more home namespaces in any feature. The trailing
+    /// group admits sub-namespaces while still rejecting a sibling that merely starts with the same
+    /// text, since after the suffix the pattern requires end-of-string or a dot.
     /// </summary>
     private static string FeatureNamespacePattern(string[] namespaceSuffixes) =>
         @".*\.Features\..*\.(" + string.Join("|", namespaceSuffixes.Select(Regex.Escape)) + @")(\..*)?$";
 
     /// <summary>
-    /// Builds a type-name regex matching a suffix while tolerating the CLR arity suffix that
-    /// generic types carry, e.g. a generic <c>ByIdSpec&lt;T&gt;</c> reports its
-    /// <see cref="ArchUnitNET.Domain.IType.Name"/> as <c>ByIdSpec`1</c>, not <c>ByIdSpec</c>.
-    /// A plain <c>HaveNameEndingWith</c> check on either side of these rules would therefore
-    /// wrongly fail a correctly-named generic specification, and would silently fail to select
-    /// a misplaced one at all — the optional trailing <c>(`\d+)?</c> group admits that suffix
-    /// without weakening the match for ordinary, non-generic types.
+    /// Builds a type-name regex matching a suffix, tolerating the CLR arity suffix generic types
+    /// carry: <c>ByIdSpec&lt;T&gt;</c> reports its name as <c>ByIdSpec`1</c>, which a plain
+    /// <c>HaveNameEndingWith</c> would both wrongly fail and fail to select.
     /// </summary>
     private static string TypeNamePattern(string[] typeSuffixes) =>
         ".*(" + string.Join("|", typeSuffixes.Select(Regex.Escape)) + @")(`\d+)?$";

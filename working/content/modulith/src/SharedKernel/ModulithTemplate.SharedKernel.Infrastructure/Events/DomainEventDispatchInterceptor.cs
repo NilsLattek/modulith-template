@@ -10,23 +10,17 @@ namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 /// <c>DbContext</c> and commit in the same transaction as the change that raised them.
 /// </summary>
 /// <remarks>
-/// Dispatching from inside the save is what makes a domain event safe without any delivery
-/// machinery: it stays inside one feature and therefore inside one transaction, so its handler's
-/// writes are part of the same save and commit atomically with the change that raised them. A
-/// handler that throws rolls the whole operation back, which is the point. Nothing is buffered for
-/// later, so nothing can be lost between the write and the reaction.
+/// Dispatching inside the save is what makes a domain event safe without any delivery machinery:
+/// nothing is buffered for later, and a handler that throws rolls the whole operation back.
 /// <para>
-/// <b>Only asynchronous saves dispatch.</b> Publishing is asynchronous, so there is no correct way
-/// to do it from the synchronous <c>SaveChanges</c> path. Every save in this solution goes through
-/// <c>SaveChangesAsync</c> — the repositories and handlers are async throughout — but a hand-written
-/// synchronous save would silently raise no events.
+/// <b>Only asynchronous saves dispatch</b>, because publishing is asynchronous. Everything here is
+/// async throughout, but a hand-written synchronous <c>SaveChanges</c> would silently raise no
+/// events.
 /// </para>
 /// <para>
-/// <b>Generic in the context type on purpose.</b> The re-entrancy guard below is instance state, so
-/// an instance must serve exactly one context. Closing it over <typeparamref name="TContext"/> gives
-/// each feature its own registration — and therefore its own guard — instead of one shared instance
-/// on which a handler saving feature B's context would look like re-entrancy on feature A's and
-/// silently skip B's events.
+/// <b>Generic in the context type on purpose</b>: the re-entrancy guard below is instance state, so
+/// each feature needs its own registration. With one shared instance, a handler saving feature B's
+/// context would look like re-entrancy on feature A's and silently skip B's events.
 /// </para>
 /// </remarks>
 /// <typeparam name="TContext">The feature's context type; only saves on it are dispatched.</typeparam>

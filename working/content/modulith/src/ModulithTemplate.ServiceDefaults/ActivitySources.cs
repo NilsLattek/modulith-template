@@ -4,14 +4,6 @@ namespace ModulithTemplate.ServiceDefaults;
 /// Names of this solution's own <see cref="System.Diagnostics.ActivitySource"/>s, each subscribed to
 /// by <c>ConfigureOpenTelemetry</c>.
 /// </summary>
-/// <remarks>
-/// A source whose name was never passed to <c>AddSource</c> is silently ignored: every
-/// <c>StartActivity</c> call on it returns <see langword="null"/> and its spans never reach the
-/// exporter, with nothing in the logs to say so. These constants exist so a source and its
-/// subscription cannot drift apart — create an <c>ActivitySource</c> from one of them and it is
-/// already registered. Third-party source names (<c>"Npgsql"</c> and the like) do not belong here;
-/// they are the other library's to change, not ours.
-/// </remarks>
 public static class ActivitySources
 {
     /// <summary>

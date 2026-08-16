@@ -6,18 +6,11 @@ namespace ModulithTemplate.SharedKernel.Domain;
 /// Coordinates several persistence operations inside a single database transaction.
 /// </summary>
 /// <remarks>
-/// A single <c>SaveChangesAsync</c> is already atomic, and the domain events it raises are
-/// dispatched inside it, so their handlers' writes commit with it. This abstraction is for the case
-/// that is not covered by that: an operation whose steps span <i>more than one save</i> — a domain
-/// service that persists between calls, a handler that writes, reads back, then writes again — and
-/// which must still commit or roll back as a whole.
-/// <para>
-/// Features implement this the same way they implement <see cref="IRepository{T}"/>: through their
-/// own derived interface, bound to their own <c>DbContext</c>. Handlers and domain services inject
-/// that per-feature interface, never this one — a container binding <c>IUnitOfWork</c> itself would
-/// keep only the last feature registered and hand every other feature the wrong context's
-/// transaction.
-/// </para>
+/// A single <c>SaveChangesAsync</c> is already atomic, domain events included. This is for what
+/// that does not cover: an operation spanning <i>more than one save</i> which must still commit or
+/// roll back as a whole. Like <see cref="IRepository{T}"/>, features inject their own derived
+/// interface rather than this one: a container binding <c>IUnitOfWork</c> itself would keep only
+/// the last feature registered and hand every other one the wrong context's transaction.
 /// </remarks>
 public interface IUnitOfWork
 {
@@ -26,10 +19,9 @@ public interface IUnitOfWork
     /// back if it throws.
     /// </summary>
     /// <remarks>
-    /// The exception is rethrown unchanged after the rollback: the host's exception behaviour turns
-    /// it into a failed result, so callers branch on <c>IsFailed</c> rather than catching here.
-    /// Calls must not be nested — the underlying context refuses to begin a transaction while one
-    /// is already open.
+    /// The exception is rethrown unchanged after the rollback, for the host's exception behaviour
+    /// to turn into a failed result. Calls must not be nested — the context refuses to begin a
+    /// transaction while one is already open.
     /// </remarks>
     /// <param name="action">The work to execute transactionally.</param>
     /// <param name="isolationLevel">

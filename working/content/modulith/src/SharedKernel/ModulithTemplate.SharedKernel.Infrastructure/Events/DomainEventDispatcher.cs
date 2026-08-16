@@ -28,17 +28,10 @@ public sealed class DomainEventDispatcher(
     /// Publishes every buffered domain event, including any raised by the handlers themselves.
     /// </summary>
     /// <remarks>
-    /// Two orderings carry the correctness of this method:
-    /// <list type="bullet">
-    /// <item><description>
-    /// Events are <b>cleared before</b> they are published. A handler that triggers another save
-    /// would otherwise find them still buffered and dispatch them a second time.
-    /// </description></item>
-    /// <item><description>
-    /// Aggregates are <b>re-collected after</b> each round, because a handler may raise further
-    /// events — or add an entirely new aggregate — while running.
-    /// </description></item>
-    /// </list>
+    /// Two orderings carry the correctness here. Events are <b>cleared before</b> publishing, or a
+    /// handler triggering another save would find them still buffered and dispatch them twice; and
+    /// aggregates are <b>re-collected after</b> each round, because a handler may raise further
+    /// events or add an entirely new aggregate.
     /// </remarks>
     /// <param name="trackedAggregates">
     /// Returns the aggregates currently tracked. Called once per round, so it must re-read the
@@ -70,14 +63,11 @@ public sealed class DomainEventDispatcher(
 
             foreach (var domainEvent in dispatching)
             {
-                // The object overload, deliberately. Both of the mediator's Publish overloads switch
-                // on the *runtime* type, so either would dispatch correctly — but the generic one
-                // reads as though it keyed on IDomainEvent, which is not what happens.
-                //
-                // That switch only covers notification types the source generator found in the
-                // host's compilation, and its default branch neither dispatches nor throws. An event
-                // whose feature the host does not reference is therefore dropped in silence, which
-                // is why registering every feature with the host is not optional.
+                // The object overload, deliberately: both Publish overloads switch on the *runtime*
+                // type, but the generic one reads as though it keyed on IDomainEvent. That switch
+                // covers only notification types the source generator found in the host's
+                // compilation, and its default branch neither dispatches nor throws — so an event
+                // from a feature the host does not reference is dropped in silence.
                 EventLog.DomainEventDispatched(logger, domainEvent.GetType().Name);
                 await publisher.Publish((object)domainEvent, cancellationToken);
             }

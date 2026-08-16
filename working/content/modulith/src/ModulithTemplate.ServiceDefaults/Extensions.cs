@@ -1,6 +1,5 @@
-// Copied from `dotnet new aspire-servicedefaults` (Aspire.ProjectTemplates 13.4.6).
-// Kept as close to upstream as this solution's analyzers allow, so it can be re-based on a future
-// Aspire version with a small diff. Every deviation is listed here and marked in place below:
+// Copied from `dotnet new aspire-servicedefaults` (Aspire.ProjectTemplates 13.4.6), kept close to
+// upstream so it can be re-based with a small diff. Every deviation is listed here, marked in place:
 //   * `.AddSource("Npgsql")` added, so database calls appear as child spans of their request.
 //   * `.AddSource(ActivitySources.Mediator)` added, so each command/query dispatched through the
 //     mediator becomes one span covering the whole operation.

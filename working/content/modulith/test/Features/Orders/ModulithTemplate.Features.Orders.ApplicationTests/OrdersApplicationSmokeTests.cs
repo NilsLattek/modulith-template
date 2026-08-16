@@ -15,10 +15,8 @@ namespace ModulithTemplate.Features.Orders.ApplicationTests;
 public class OrdersApplicationSmokeTests
 {
     /// <summary>
-    /// Smoke test for the layer's test toolchain: a substituted <see cref="IOrdersRepository{T}"/>
-    /// is accepted by the container and <c>ConfigureOrdersApplication</c> composes onto it.
-    /// Handler behaviour is covered by the per-handler tests alongside this file; this one only
-    /// guards the layer's DI composition.
+    /// Guards the layer's DI composition only: a substituted <see cref="IOrdersRepository{T}"/> is
+    /// accepted by the container and <c>ConfigureOrdersApplication</c> composes onto it.
     /// </summary>
     [Fact]
     public void ConfigureOrdersApplication_with_a_substituted_repository_builds_a_resolvable_provider()
@@ -35,9 +33,8 @@ public class OrdersApplicationSmokeTests
     }
 
     /// <summary>
-    /// Guards the assembly scan in <c>ConfigureOrdersApplication</c>: the host's validation
-    /// behaviour resolves <see cref="IValidator{T}"/>, so a validator that is written but never
-    /// registered would silently never run.
+    /// Guards the assembly scan: the host's validation behaviour resolves
+    /// <see cref="IValidator{T}"/>, so an unregistered validator would silently never run.
     /// </summary>
     [Fact]
     public void ConfigureOrdersApplication_registers_the_feature_validators()

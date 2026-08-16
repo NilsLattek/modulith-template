@@ -18,10 +18,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // One DI scope per operation, so the handler's DbContext is created and disposed with the
-        // message. This page renders under static SSR, where the scope would be the request's
-        // anyway — but the moment the component is made interactive, a directly injected IMediator
-        // would hold one DbContext open for the whole circuit.
+        // One DI scope per operation, so the handler's DbContext lives and dies with the message.
+        // Redundant under this page's static SSR, but the moment the component turns interactive a
+        // directly injected IMediator would hold one DbContext open for the whole circuit.
         var result = await ScopeFactory.WithNewScopeAsync(services =>
             services.GetRequiredService<IMediator>()
                 .Send(new GetSomeEntityCountQuery(), CancellationToken.None));

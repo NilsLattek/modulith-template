@@ -12,17 +12,13 @@ builder.ConfigureOrdersFeature();
 
 builder.Services.AddMediator(options =>
 {
-    // Scoped, not the library default of Singleton: handlers inject the feature repositories,
-    // which are bound to a scoped DbContext. That makes IMediator scoped too, so an @injected
-    // one resolves from the Blazor circuit scope — which lives as long as the user's connection
-    // and would hold a single DbContext open for it. Hence WithNewScopeAsync per operation.
+    // Scoped, not the library default of Singleton: handlers inject repositories bound to a scoped
+    // DbContext. That makes an @injected IMediator resolve from the Blazor circuit scope, which
+    // would hold one DbContext open for the connection — hence WithNewScopeAsync per operation.
     options.ServiceLifetime = ServiceLifetime.Scoped;
 
-    // Ordered outermost-first. LoggingBehaviour therefore observes a uniform Result outcome for
-    // handlers returning Result/Result<T>, because ExceptionBehaviour has already converted any
-    // exception below it. ValidationBehaviour is innermost, wrapping the handler alone, so a handler
-    // never runs on invalid input and a validator that throws is still converted by
-    // ExceptionBehaviour above it.
+    // Outermost first, so LoggingBehaviour sees a uniform Result outcome (ExceptionBehaviour below
+    // it has already converted any exception), and ValidationBehaviour wraps the handler alone.
     options.PipelineBehaviors =
     [
         typeof(LoggingBehaviour<,>),

@@ -5,16 +5,12 @@ using Mediator;
 namespace ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 
 /// <summary>
-/// Adds an entity to the Orders feature. Replace this with a real command once the feature has
-/// one — it exists to demonstrate the command shape, including a non-generic
-/// <see cref="Result"/> response. Throws against a real database until
-/// <see cref="Domain.Entities.SomeEntity"/> is mapped in <c>OrdersContext</c>, because the
-/// placeholder entity is deliberately unmapped.
+/// Demonstrates the command shape, including a non-generic <see cref="Result"/> response; replace
+/// it with a real command. Throws against a real database, because
+/// <see cref="Domain.Entities.SomeEntity"/> is deliberately unmapped in <c>OrdersContext</c>.
 /// </summary>
 /// <param name="Name">
-/// A name for the new entity. It goes no further than
-/// <see cref="AddSomeEntityCommandValidator"/> — the placeholder entity holds no state — and is
-/// here only to give the validator a property to demonstrate DTO-level rules on. Replace the
-/// command, its validator and the entity together.
+/// Goes no further than <see cref="AddSomeEntityCommandValidator"/>, and exists only to give that
+/// validator a property to demonstrate DTO-level rules on.
 /// </param>
 public sealed record AddSomeEntityCommand(string Name) : ICommand<Result>;

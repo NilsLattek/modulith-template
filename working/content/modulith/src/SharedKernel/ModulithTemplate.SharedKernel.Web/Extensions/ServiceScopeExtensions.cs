@@ -6,10 +6,8 @@ namespace ModulithTemplate.SharedKernel.Web.Extensions;
 /// Helpers for running a piece of work inside a fresh dependency injection scope.
 /// </summary>
 /// <remarks>
-/// In Blazor Server a DI scope lives for the whole lifetime of the circuit, so scoped
-/// services such as <c>DbContext</c> would otherwise be shared across the entire user
-/// session. Wrapping each database operation in its own scope keeps the context short-lived
-/// and avoids concurrent use of a single context instance.
+/// In Blazor Server a DI scope lives for the whole circuit, so a scoped <c>DbContext</c> would
+/// otherwise be shared — and concurrently used — across the entire user session.
 /// </remarks>
 public static class ServiceScopeExtensions
 {
@@ -58,10 +56,8 @@ public static class ServiceScopeExtensions
     /// <param name="action">The work to run with the scoped service provider.</param>
     /// <returns>A task that completes when the work and scope disposal have finished.</returns>
     /// <remarks>
-    /// The <see cref="ValueTask"/> overloads exist so that a call returning a
-    /// <see cref="ValueTask"/> — such as <c>IMediator.Send</c> — can be passed directly without
-    /// a trailing <c>AsTask()</c> at every call site. The lambda's return type selects the
-    /// overload, so these never compete with the <see cref="Task"/> ones.
+    /// The <see cref="ValueTask"/> overloads let a <c>IMediator.Send</c> call be passed directly,
+    /// without a trailing <c>AsTask()</c>. The lambda's return type selects the overload.
     /// </remarks>
     public static async ValueTask WithNewScopeAsync(
         this IServiceScopeFactory scopeFactory,

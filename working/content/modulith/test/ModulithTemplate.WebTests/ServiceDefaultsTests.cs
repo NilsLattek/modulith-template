@@ -67,10 +67,9 @@ public class ServiceDefaultsTests
     }
 
     /// <remarks>
-    /// The failure this guards against is silent: an <c>ActivitySource</c> nobody subscribed to hands
-    /// back <see langword="null"/> from every <c>StartActivity</c> call, so the instrumentation looks
-    /// present in the source and produces no spans at all. Starting a real activity is the only way to
-    /// observe the subscription, since the SDK exposes no list of the sources it listens to.
+    /// The failure is silent: an unsubscribed <c>ActivitySource</c> looks present in the source but
+    /// produces no spans. Starting a real activity is the only way to observe the subscription — the
+    /// SDK exposes no list of the sources it listens to.
     /// </remarks>
     [Fact]
     public async Task ConfigureOpenTelemetry_subscribes_to_the_solution_activity_sources()

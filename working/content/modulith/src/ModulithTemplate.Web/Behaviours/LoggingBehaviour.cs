@@ -14,25 +14,19 @@ namespace ModulithTemplate.Web.Behaviours;
 /// <typeparam name="TMessage">The message being handled.</typeparam>
 /// <typeparam name="TResponse">The handler's response type.</typeparam>
 /// <remarks>
-/// Deliberately unconstrained on <typeparamref name="TResponse"/>, so that every message is
-/// traced and logged regardless of what its handler returns — observability must never be
-/// conditional on the shape of a response. Responses that happen to be results are inspected at
-/// runtime so a failed result is reported at warning rather than information.
+/// Deliberately unconstrained on <typeparamref name="TResponse"/>: observability must never be
+/// conditional on the shape of a response, so results are inspected at runtime instead, and a
+/// failed one reported at warning rather than information.
 /// <para>
-/// <b>The span.</b> Being the outermost behaviour, the activity started here spans the entire
-/// operation: validation, the handler, and the domain events its save dispatched. Every span raised
-/// below it — the Npgsql span of each query the handler issued, the HTTP client span of each call it
-/// made — is a child of this one, and it in turn is a child of the ASP.NET Core request span. One
-/// command or query is therefore one collapsible subtree in the monitoring system, and the log
-/// records emitted here carry its trace and span id.
+/// Being the outermost behaviour, this span covers validation, the handler and the domain events
+/// its save dispatched, with every Npgsql and HTTP span below it as a child — one command or query
+/// is one collapsible subtree.
 /// </para>
 /// <para>
-/// The status comes off the response rather than a <c>catch</c>, which is what
-/// <see cref="ExceptionBehaviour{TMessage, TResponse}"/> sitting directly beneath makes possible:
-/// exceptions from result-returning handlers have already become failed results by the time they
-/// arrive. The exception it re-throws by design — <see cref="OperationCanceledException"/> — unwinds
-/// through the <c>using</c> below, which still ends the span, leaving its status unset. That is the
-/// intended reading: a cancelled operation neither succeeded nor failed.
+/// The status comes off the response rather than a <c>catch</c>, which
+/// <see cref="ExceptionBehaviour{TMessage, TResponse}"/> directly beneath makes possible. The one
+/// exception it re-throws — <see cref="OperationCanceledException"/> — leaves the status unset: a
+/// cancelled operation neither succeeded nor failed.
 /// </para>
 /// </remarks>
 internal sealed class LoggingBehaviour<TMessage, TResponse>(

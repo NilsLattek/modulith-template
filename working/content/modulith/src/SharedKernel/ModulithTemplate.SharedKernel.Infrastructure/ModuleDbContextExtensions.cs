@@ -16,10 +16,9 @@ public static class ModuleDbContextExtensions
     /// and its domain event dispatch.
     /// </summary>
     /// <remarks>
-    /// <c>TryAdd</c> because every feature calls this method. The dispatcher is solution-wide, while
-    /// the interceptor is registered per context type: its re-entrancy guard is instance state, so
-    /// one shared instance would make a handler's save on another feature's context look like
-    /// re-entrancy and silently skip that feature's events.
+    /// <c>TryAdd</c> because every feature calls this. The dispatcher is solution-wide; the
+    /// interceptor is per context type, for the reason given on
+    /// <see cref="DomainEventDispatchInterceptor{TContext}"/>.
     /// </remarks>
     /// <typeparam name="TContext">The feature's context type.</typeparam>
     /// <param name="services">The service collection to register into.</param>

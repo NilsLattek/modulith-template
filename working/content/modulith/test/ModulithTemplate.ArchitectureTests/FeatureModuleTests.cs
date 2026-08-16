@@ -12,10 +12,9 @@ public class FeatureModuleTests
     {
         const string modulesKeyword = ".Features.";
 
-        // A feature's published contract is the one part of it other features may depend on, so its
-        // types are excluded from the slice assignment entirely — a dependency on them is not a
-        // cross-feature dependency. ContractIsolationTests is what keeps that exemption honest by
-        // forbidding a Contracts project from reaching back into its own feature's internals.
+        // Contracts types are excluded from the slice assignment entirely — depending on a feature's
+        // published contract is not a cross-feature dependency. ContractIsolationTests keeps that
+        // exemption honest.
         const string contractsKeyword = ".Contracts";
 
         // Guard: fail loudly if no feature assemblies were discovered, so the cross-feature

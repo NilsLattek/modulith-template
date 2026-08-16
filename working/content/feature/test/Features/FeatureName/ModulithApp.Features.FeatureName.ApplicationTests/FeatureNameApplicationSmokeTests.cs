@@ -11,20 +11,16 @@ namespace ModulithApp.Features.FeatureName.ApplicationTests;
 public class FeatureNameApplicationSmokeTests
 {
     /// <summary>
-    /// Stand-in entity; replace with a real domain entity once the feature has one. Must be
-    /// visible outside this assembly (not <c>private</c>) because NSubstitute's Castle proxy
-    /// generator needs access to it as a generic argument when substituting
-    /// <see cref="IFeatureNameRepository{T}"/> below.
+    /// Stand-in entity; replace with a real one. Not <c>private</c>, because NSubstitute's Castle
+    /// proxy generator needs access to it as a generic argument.
     /// </summary>
 #pragma warning disable S2094 // Classes should not be empty
     public sealed class TestEntity;
 #pragma warning restore S2094 // Classes should not be empty
 
     /// <summary>
-    /// Smoke test for the layer's test toolchain: a substituted <see cref="IFeatureNameRepository{T}"/>
+    /// Guards the layer's DI composition only: a substituted <see cref="IFeatureNameRepository{T}"/>
     /// is accepted by the container and <c>ConfigureFeatureNameApplication</c> composes onto it.
-    /// This test only guards the layer's DI composition; handler behaviour belongs in per-handler
-    /// tests alongside this file, added as the feature gains handlers.
     /// </summary>
     [Fact]
     public void ConfigureFeatureNameApplication_with_a_substituted_repository_builds_a_resolvable_provider()

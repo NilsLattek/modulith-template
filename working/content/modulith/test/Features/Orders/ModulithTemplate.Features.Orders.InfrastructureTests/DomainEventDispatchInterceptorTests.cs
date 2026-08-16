@@ -15,10 +15,9 @@ namespace ModulithTemplate.Features.Orders.InfrastructureTests;
 
 /// <summary>Tests for <see cref="DomainEventDispatchInterceptor{TContext}"/>.</summary>
 /// <remarks>
-/// The dispatch rounds themselves are covered by <see cref="DomainEventDispatcherTests"/>; what is
-/// asserted here is the part only the interceptor owns — which saves start a dispatch and which are
-/// suppressed as re-entrant. Nothing connects to a database: the interceptor is invoked directly,
-/// exactly as EF Core invokes it at the start of a save, and Npgsql builds a model offline.
+/// Covers only what the interceptor owns — which saves start a dispatch and which are suppressed as
+/// re-entrant; the rounds themselves are <see cref="DomainEventDispatcherTests"/>. Nothing connects
+/// to a database: the interceptor is invoked directly, as EF Core invokes it.
 /// </remarks>
 public class DomainEventDispatchInterceptorTests
 {
@@ -109,11 +108,8 @@ public class DomainEventDispatchInterceptorTests
     [Fact]
     public async Task SavingChangesAsync_dispatches_another_feature_context_saved_from_a_handler()
     {
-        // Arrange
-        // The regression this guards: the interceptor is registered per context type, so a handler
-        // reacting to feature one's event can save feature two's context and have its events
-        // dispatched. A single shared interceptor would read that nested save as re-entrancy and
-        // drop feature two's events silently.
+        // Arrange — the regression: a single shared interceptor would read a handler saving feature
+        // two's context as re-entrancy and drop its events silently.
         var publisher = new CallbackPublisher();
         var services = new ServiceCollection();
         services.AddLogging();

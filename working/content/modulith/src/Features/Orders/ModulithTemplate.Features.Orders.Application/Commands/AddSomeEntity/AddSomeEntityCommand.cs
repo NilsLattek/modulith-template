@@ -6,11 +6,10 @@ namespace ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 
 /// <summary>
 /// Demonstrates the command shape, including a non-generic <see cref="Result"/> response; replace
-/// it with a real command. Throws against a real database, because
-/// <see cref="Domain.Entities.SomeEntity"/> is deliberately unmapped in <c>OrdersContext</c>.
+/// it with a real command.
 /// </summary>
 /// <param name="Name">
-/// Goes no further than <see cref="AddSomeEntityCommandValidator"/>, and exists only to give that
-/// validator a property to demonstrate DTO-level rules on.
+/// The new entity's name. Its <i>shape</i> is checked by <see cref="AddSomeEntityCommandValidator"/>
+/// before the handler runs, and again as an invariant inside the entity.
 /// </param>
 public sealed record AddSomeEntityCommand(string Name) : ICommand<Result>;

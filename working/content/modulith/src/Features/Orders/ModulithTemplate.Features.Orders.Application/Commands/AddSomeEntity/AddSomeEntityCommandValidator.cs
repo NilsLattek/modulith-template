@@ -1,5 +1,7 @@
 using FluentValidation;
 
+using ModulithTemplate.Features.Orders.Domain.Entities;
+
 namespace ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 
 /// <summary>
@@ -15,5 +17,5 @@ public sealed class AddSomeEntityCommandValidator : AbstractValidator<AddSomeEnt
     public AddSomeEntityCommandValidator() =>
         RuleFor(command => command.Name)
             .NotEmpty()
-            .MaximumLength(200);
+            .MaximumLength(SomeEntity.NameMaxLength);
 }

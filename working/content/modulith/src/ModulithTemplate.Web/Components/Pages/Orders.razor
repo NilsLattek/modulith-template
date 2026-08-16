@@ -1,0 +1,11 @@
+@* Routable pages live in the host, so every URL in the solution is visible in one place and two
+   features cannot collide on a route. *@
+
+@page "/orders"
+@using ModulithTemplate.Features.Orders.Web.Components
+
+<PageTitle>Orders</PageTitle>
+
+<h1>Orders</h1>
+
+<OrdersSummary />

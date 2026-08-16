@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="FluentResults" />
   </ItemGroup>
 
   <ItemGroup>

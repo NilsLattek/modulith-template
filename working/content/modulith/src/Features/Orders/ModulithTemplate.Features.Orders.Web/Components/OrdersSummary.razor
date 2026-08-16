@@ -1,0 +1,34 @@
+@using ModulithTemplate.Features.Orders.Application.Queries.GetSomeEntityCount
+
+@inject IServiceScopeFactory ScopeFactory
+
+<h2>Orders</h2>
+
+@if (_count is null)
+{
+    <p><em>Loading…</em></p>
+}
+else
+{
+    <p>Entities recorded: <strong>@_count</strong></p>
+}
+
+@code {
+    private int? _count;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // One DI scope per operation, so the handler's DbContext is created and disposed with the
+        // message. This page renders under static SSR, where the scope would be the request's
+        // anyway — but the moment the component is made interactive, a directly injected IMediator
+        // would hold one DbContext open for the whole circuit.
+        var result = await ScopeFactory.WithNewScopeAsync(services =>
+            services.GetRequiredService<IMediator>()
+                .Send(new GetSomeEntityCountQuery(), CancellationToken.None));
+
+        if (result.IsSuccess)
+        {
+            _count = result.Value;
+        }
+    }
+}

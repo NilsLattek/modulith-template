@@ -70,8 +70,6 @@ Entities are rich, not data bags:
   invalid entity. The domain throws rather than returning `Result` (it takes no dependency on
   FluentResults); unhandled handler exceptions become a failed `Result` centrally. An *expected*
   failure should still be checked by the handler and returned as an explicit `Result.Fail`.
-- Orders' `SomeEntity` placeholder deliberately breaks these rules: an unmapped stand-in to delete,
-  not a pattern to copy.
 
 **When you add or change an invariant, cover it with a `<Name>.DomainTests` test on the entity**, not
 only through a handler test — the domain is where the guarantee lives.

@@ -11,6 +11,14 @@ dotnet restore
 dotnet build --no-restore
 ```
 
+No migrations ship with the scaffold — create and apply the first one, so the sample `Orders` page has
+its table:
+
+```bash
+bash add-migration.sh Orders InitialOrders
+bash update-database.sh
+```
+
 ## Run project
 
 ```bash

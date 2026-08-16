@@ -4,7 +4,14 @@
 
 <h2>Orders</h2>
 
-@if (_count is null)
+@if (_failed)
+{
+    <p class="text-danger">
+        Could not read the Orders schema. Create and apply its migrations first:
+        <code>bash add-migration.sh Orders InitialOrders</code> then <code>bash update-database.sh</code>.
+    </p>
+}
+else if (_count is null)
 {
     <p><em>Loading…</em></p>
 }
@@ -15,6 +22,7 @@ else
 
 @code {
     private int? _count;
+    private bool _failed;
 
     protected override async Task OnInitializedAsync()
     {
@@ -28,6 +36,12 @@ else
         if (result.IsSuccess)
         {
             _count = result.Value;
+        }
+        else
+        {
+            // On a fresh scaffold the one likely failure is the missing table; the pipeline's
+            // ExceptionBehaviour has already logged the real exception.
+            _failed = true;
         }
     }
 }

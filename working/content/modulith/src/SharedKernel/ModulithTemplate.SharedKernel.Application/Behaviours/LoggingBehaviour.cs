@@ -4,9 +4,9 @@ using FluentResults;
 
 using Mediator;
 
-using ModulithTemplate.ServiceDefaults;
+using Microsoft.Extensions.Logging;
 
-namespace ModulithTemplate.Web.Behaviours;
+namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
 /// <summary>
 /// Traces and times every message passing through the mediator, and logs its outcome.
@@ -29,12 +29,13 @@ namespace ModulithTemplate.Web.Behaviours;
 /// cancelled operation neither succeeded nor failed.
 /// </para>
 /// </remarks>
-internal sealed class LoggingBehaviour<TMessage, TResponse>(
+public sealed class LoggingBehaviour<TMessage, TResponse>(
     ILogger<LoggingBehaviour<TMessage, TResponse>> logger)
     : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage
 {
-    private static readonly ActivitySource ActivitySource = new(ActivitySources.Mediator);
+    // Subscribed to by ConfigureOpenTelemetry's "ModulithTemplate.*" prefix, not by name.
+    private static readonly ActivitySource ActivitySource = new("ModulithTemplate.Mediator");
 
     /// <inheritdoc />
     public async ValueTask<TResponse> Handle(

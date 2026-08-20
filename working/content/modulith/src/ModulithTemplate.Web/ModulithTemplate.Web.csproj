@@ -9,11 +9,6 @@
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="FluentResults" />
-    <PackageReference Include="FluentValidation" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="ModulithTemplate.WebTests" />
   </ItemGroup>
 
   <ItemGroup>

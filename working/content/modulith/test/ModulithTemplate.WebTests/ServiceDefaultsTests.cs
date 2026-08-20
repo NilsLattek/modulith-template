@@ -7,8 +7,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-using ModulithTemplate.ServiceDefaults;
-
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -69,7 +67,8 @@ public class ServiceDefaultsTests
     /// <remarks>
     /// The failure is silent: an unsubscribed <c>ActivitySource</c> looks present in the source but
     /// produces no spans. Starting a real activity is the only way to observe the subscription — the
-    /// SDK exposes no list of the sources it listens to.
+    /// SDK exposes no list of the sources it listens to. Any <c>ModulithTemplate.*</c> name would do;
+    /// this one is the name LoggingBehaviour uses.
     /// </remarks>
     [Fact]
     public async Task ConfigureOpenTelemetry_subscribes_to_the_solution_activity_sources()
@@ -81,7 +80,7 @@ public class ServiceDefaultsTests
 
         // Resolving the provider is what attaches the SDK's listeners.
         Assert.NotNull(app.Services.GetService<TracerProvider>());
-        using var source = new ActivitySource(ActivitySources.Mediator);
+        using var source = new ActivitySource("ModulithTemplate.Mediator");
 
         // Act
         using var activity = source.StartActivity("probe");

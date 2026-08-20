@@ -1,8 +1,8 @@
 // Copied from `dotnet new aspire-servicedefaults` (Aspire.ProjectTemplates 13.4.6), kept close to
 // upstream so it can be re-based with a small diff. Every deviation is listed here, marked in place:
 //   * `.AddSource("Npgsql")` added, so database calls appear as child spans of their request.
-//   * `.AddSource(ActivitySources.Mediator)` added, so each command/query dispatched through the
-//     mediator becomes one span covering the whole operation.
+//   * `.AddSource("ModulithTemplate.*")` added, so every ActivitySource this solution defines is
+//     exported — currently the one LoggingBehaviour starts per mediator message.
 //   * `#pragma warning disable MA0074` and `S3241` around code upstream writes differently.
 //   * Project properties come from Directory.Build.props and package versions from
 //     Directory.Packages.props, so the .csproj carries neither.
@@ -13,8 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
-
-using ModulithTemplate.ServiceDefaults;
 
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -89,9 +87,9 @@ public static class Extensions
                     // request that issued them. Equivalent to Npgsql.OpenTelemetry's AddNpgsql(),
                     // which does nothing but subscribe to this same source name.
                     .AddSource("Npgsql")
-                    // This solution's own sources. Adding a source to ActivitySources without
-                    // subscribing to it here leaves its spans unsampled and unexported.
-                    .AddSource(ActivitySources.Mediator);
+                    // Every ActivitySource this solution defines. A prefix, not a list of names, so
+                    // adding a source needs no change here — an unsubscribed one produces no spans.
+                    .AddSource("ModulithTemplate.*");
             });
 
         builder.AddOpenTelemetryExporters();

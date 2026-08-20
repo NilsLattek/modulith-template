@@ -5,9 +5,9 @@ using FluentValidation.Results;
 
 using Mediator;
 
-using ModulithTemplate.SharedKernel.Web.Errors;
+using ModulithTemplate.SharedKernel.Application.Errors;
 
-namespace ModulithTemplate.Web.Behaviours;
+namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
 /// <summary>
 /// Runs every <see cref="IValidator{T}"/> registered for a message before its handler, turning any
@@ -26,7 +26,7 @@ namespace ModulithTemplate.Web.Behaviours;
 /// </para>
 /// </remarks>
 /// <param name="validators">Every validator registered for <typeparamref name="TMessage"/>.</param>
-internal sealed class ValidationBehaviour<TMessage, TResponse>(IEnumerable<IValidator<TMessage>> validators)
+public sealed class ValidationBehaviour<TMessage, TResponse>(IEnumerable<IValidator<TMessage>> validators)
     : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage
     where TResponse : ResultBase<TResponse>, new()

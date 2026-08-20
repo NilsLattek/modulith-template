@@ -1,5 +1,5 @@
 using ModulithTemplate.Features.Orders.Web;
-using ModulithTemplate.Web.Behaviours;
+using ModulithTemplate.SharedKernel.Application.Behaviours;
 using ModulithTemplate.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);

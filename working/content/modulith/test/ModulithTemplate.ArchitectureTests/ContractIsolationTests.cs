@@ -27,6 +27,8 @@ public class ContractIsolationTests
     private static readonly string[] NonConsumingLayers =
         [.. FeatureInternalLayers.Where(layer => !string.Equals(layer, ConsumingLayer, StringComparison.Ordinal))];
 
+    // SharedKernel.Application carries the mediator pipeline behaviours, so FluentResults, FluentValidation,
+    // and Microsoft.Extensions.Logging.Abstractions arrive in Contracts projects transitively — an accepted cost.
     [Fact]
     public void Contracts_do_not_depend_on_any_feature_internal_layer()
     {

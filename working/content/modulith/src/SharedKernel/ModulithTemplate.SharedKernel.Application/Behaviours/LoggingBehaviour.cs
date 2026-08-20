@@ -4,7 +4,9 @@ using FluentResults;
 
 using Mediator;
 
-namespace ModulithTemplate.Web.Behaviours;
+using Microsoft.Extensions.Logging;
+
+namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
 /// <summary>
 /// Traces and times every message passing through the mediator, and logs its outcome.
@@ -27,7 +29,7 @@ namespace ModulithTemplate.Web.Behaviours;
 /// cancelled operation neither succeeded nor failed.
 /// </para>
 /// </remarks>
-internal sealed class LoggingBehaviour<TMessage, TResponse>(
+public sealed class LoggingBehaviour<TMessage, TResponse>(
     ILogger<LoggingBehaviour<TMessage, TResponse>> logger)
     : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage

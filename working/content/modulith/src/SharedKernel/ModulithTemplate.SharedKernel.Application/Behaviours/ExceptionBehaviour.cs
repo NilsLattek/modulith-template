@@ -2,7 +2,9 @@ using FluentResults;
 
 using Mediator;
 
-namespace ModulithTemplate.Web.Behaviours;
+using Microsoft.Extensions.Logging;
+
+namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
 /// <summary>
 /// Converts an unhandled exception thrown by a message handler into a failed result of the
@@ -16,7 +18,7 @@ namespace ModulithTemplate.Web.Behaviours;
 /// called on — and also decides which messages are covered at all: a handler returning anything
 /// other than a result is not wrapped, and its exceptions propagate.
 /// </remarks>
-internal sealed class ExceptionBehaviour<TMessage, TResponse>(
+public sealed class ExceptionBehaviour<TMessage, TResponse>(
     ILogger<ExceptionBehaviour<TMessage, TResponse>> logger)
     : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage

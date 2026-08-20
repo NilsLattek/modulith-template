@@ -7,7 +7,7 @@ using Mediator;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 
-using ModulithTemplate.Web.Behaviours;
+using ModulithTemplate.SharedKernel.Application.Behaviours;
 
 namespace ModulithTemplate.WebTests;
 

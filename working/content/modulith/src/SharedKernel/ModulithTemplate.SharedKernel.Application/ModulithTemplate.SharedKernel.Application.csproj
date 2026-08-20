@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Abstractions every feature's Application layer implements or injects: the two event-handler
-       interfaces, the published-contract marker, and the queue handlers enqueue onto.
+  <!-- What every feature's Application layer implements or injects, plus the mediator pipeline
+       behaviours any host wires into its own AddMediator call.
 
-       Abstractions only — the implementations live in Shared.Infrastructure. -->
+       Feature Contracts projects reference this, so anything added here reaches them transitively. -->
   <ItemGroup>
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="FluentResults" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,6 @@
-namespace ModulithTemplate.Web.Behaviours;
+using Microsoft.Extensions.Logging;
+
+namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
 /// <summary>
 /// Source-generated log messages for the mediator pipeline behaviours.

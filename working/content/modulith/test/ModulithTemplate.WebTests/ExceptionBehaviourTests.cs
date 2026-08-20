@@ -4,7 +4,7 @@ using Mediator;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-using ModulithTemplate.Web.Behaviours;
+using ModulithTemplate.SharedKernel.Application.Behaviours;
 
 namespace ModulithTemplate.WebTests;
 

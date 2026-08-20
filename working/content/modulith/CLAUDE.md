@@ -114,9 +114,13 @@ changed? is this quantity legal?) is an invariant and belongs in the entity or a
 it holds for every caller. Never inject a repository into a validator.
 
 Failures come back as a failed `Result` carrying one `ValidationError` per broken rule
-(`ModulithTemplate.SharedKernel.Web/Errors/ValidationError.cs`), each with the `PropertyName` it was declared
+(`ModulithTemplate.SharedKernel.Application/Errors/ValidationError.cs`), each with the `PropertyName` it was declared
 on, so a Blazor form can group `result.Errors.OfType<ValidationError>()` by property and bind the
 messages to their fields.
+
+Telemetry from the pipeline rides on an `ActivitySource` named `ModulithTemplate.Mediator`.
+`ConfigureOpenTelemetry` subscribes to `ModulithTemplate.*`, so any new source must carry that
+prefix — one named otherwise produces no spans, silently.
 
 ### Infrastructure
 

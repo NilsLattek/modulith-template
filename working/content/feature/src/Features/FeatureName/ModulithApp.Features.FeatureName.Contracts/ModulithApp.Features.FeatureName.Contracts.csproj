@@ -3,7 +3,9 @@
   <!-- This feature's published contract: the only project of this feature that another feature may
        reference. It deliberately references nothing but SharedKernel.Application — adding a reference to this
        feature's Domain, Application, Infrastructure or Web would turn the contract into a back door
-       into the module, and ContractIsolationTests fails the build if one appears. -->
+       into the module, and ContractIsolationTests fails the build if one appears.
+       SharedKernel.Application now also carries the pipeline behaviours, so their packages arrive
+       here transitively — harmless, but this project should still use none of them. -->
   <ItemGroup>
     <ProjectReference Include="../../../SharedKernel/ModulithApp.SharedKernel.Application/ModulithApp.SharedKernel.Application.csproj" />
   </ItemGroup>

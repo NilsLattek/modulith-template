@@ -39,7 +39,8 @@ public class ContractIsolationTests
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers)))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
                 + "Shared.Application abstractions, so a consumer referencing it does not transitively gain access "
-                + "to the owning feature's internals.");
+                + "to the owning feature's internals. Shared.Application also carries the pipeline behaviours, so "
+                + "FluentValidation and Logging.Abstractions arrive here transitively — an accepted cost.");
 
         rule.Check(SolutionAssemblies.Architecture);
     }

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using ModulithTemplate.SharedKernel.Application.Behaviours;
 
-namespace ModulithTemplate.WebTests;
+namespace ModulithTemplate.SharedKernel.ApplicationTests;
 
 /// <summary>Tests for <see cref="ExceptionBehaviour{TMessage, TResponse}"/>.</summary>
 public class ExceptionBehaviourTests

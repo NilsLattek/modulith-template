@@ -21,6 +21,9 @@
     <Project Path="test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj" />
     <Project Path="test/ModulithTemplate.WebTests/ModulithTemplate.WebTests.csproj" />
   </Folder>
+  <Folder Name="/test/SharedKernel/">
+    <Project Path="test/SharedKernel/ModulithTemplate.SharedKernel.ApplicationTests/ModulithTemplate.SharedKernel.ApplicationTests.csproj" />
+  </Folder>
   <Folder Name="/test/Features/" />
   <Folder Name="/test/Features/Orders/">
     <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.ApplicationTests/ModulithTemplate.Features.Orders.ApplicationTests.csproj" />

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging.Testing;
 
 using ModulithTemplate.SharedKernel.Application.Behaviours;
 
-namespace ModulithTemplate.WebTests;
+namespace ModulithTemplate.SharedKernel.ApplicationTests;
 
 /// <summary>Tests for <see cref="LoggingBehaviour{TMessage, TResponse}"/>.</summary>
 public class LoggingBehaviourTests

@@ -7,7 +7,7 @@ using Mediator;
 using ModulithTemplate.SharedKernel.Application.Behaviours;
 using ModulithTemplate.SharedKernel.Application.Errors;
 
-namespace ModulithTemplate.WebTests;
+namespace ModulithTemplate.SharedKernel.ApplicationTests;
 
 /// <summary>Tests for <see cref="ValidationBehaviour{TMessage, TResponse}"/>.</summary>
 public class ValidationBehaviourTests

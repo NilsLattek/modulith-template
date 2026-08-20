@@ -3,8 +3,8 @@
 ## Commands
 
 ```bash
-dotnet restore                            # then pass --no-restore below
-dotnet build --no-restore -warnaserror    # CI treats warnings as errors
+dotnet restore                                       # then pass --no-restore below
+dotnet build --no-restore -warnaserror -v minimal    # CI treats warnings as errors; -v minimal cuts output-path noise
 cd src/ModulithTemplate.Web && dotnet run # needs the devcontainer's Postgres
 
 # Tests run on Microsoft.Testing.Platform (via global.json), not VSTest. The `rtk proxy` prefix is

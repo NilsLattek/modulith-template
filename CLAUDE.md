@@ -30,8 +30,9 @@ The repo root also carries its own `.devcontainer`, `.claude`, `.github`, and `.
 ## Commands
 
 ```bash
-# Build the template content exactly as CI does (must be warning-clean)
-dotnet build working/content/modulith/ModulithTemplate.slnx -warnaserror
+# Build the template content (must be warning-clean, same semantics as CI).
+# -v minimal cuts the per-project output-path noise; still prints warnings/errors.
+dotnet build working/content/modulith/ModulithTemplate.slnx -warnaserror -v minimal
 
 # Test the template content. Two traps here, and both report zero tests rather than failing:
 #   * Must run from the content dir — global.json opts into Microsoft.Testing.Platform and is

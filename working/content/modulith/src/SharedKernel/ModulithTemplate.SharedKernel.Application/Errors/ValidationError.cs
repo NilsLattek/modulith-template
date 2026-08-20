@@ -1,15 +1,15 @@
 using FluentResults;
 
-namespace ModulithTemplate.SharedKernel.Web.Errors;
+namespace ModulithTemplate.SharedKernel.Application.Errors;
 
 /// <summary>
 /// A failed input validation, produced by the mediator's validation behaviour from a
 /// FluentValidation failure and carried on a failed <see cref="Result"/>.
 /// </summary>
 /// <remarks>
-/// Lives here rather than beside the behaviour so a feature's Blazor components — which reference
-/// <c>ModulithTemplate.SharedKernel.Web</c> but not the host — can pattern-match the errors coming back
-/// from <c>IMediator</c> and bind them to the fields they belong to.
+/// In the Application layer so a handler can return one too, not only the behaviour — a uniqueness
+/// check that reads as a field error should not have to invent its own error type. Blazor components
+/// still reach it through their feature's Application project.
 /// </remarks>
 public sealed class ValidationError : Error
 {

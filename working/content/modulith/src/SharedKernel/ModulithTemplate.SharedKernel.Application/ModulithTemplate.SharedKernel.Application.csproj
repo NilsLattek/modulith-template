@@ -6,6 +6,7 @@
        Abstractions only — the implementations live in Shared.Infrastructure. -->
   <ItemGroup>
     <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="FluentResults" />
   </ItemGroup>
 
   <ItemGroup>

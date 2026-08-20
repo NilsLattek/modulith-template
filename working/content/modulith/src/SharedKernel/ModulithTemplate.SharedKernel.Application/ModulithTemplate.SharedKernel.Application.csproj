@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- What every feature's Application layer implements or injects, plus the mediator pipeline
-       behaviours any host wires into its own AddMediator call.
+       behaviours any host wires into its own AddMediator call, and shared error types
+       (Errors/ValidationError.cs) handlers return in a failed Result.
 
        Feature Contracts projects reference this, so anything added here reaches them transitively. -->
   <ItemGroup>

@@ -27,6 +27,8 @@ public class ContractIsolationTests
     private static readonly string[] NonConsumingLayers =
         [.. FeatureInternalLayers.Where(layer => !string.Equals(layer, ConsumingLayer, StringComparison.Ordinal))];
 
+    // SharedKernel.Application carries the mediator pipeline behaviours, so FluentResults, FluentValidation,
+    // and Microsoft.Extensions.Logging.Abstractions arrive in Contracts projects transitively — an accepted cost.
     [Fact]
     public void Contracts_do_not_depend_on_any_feature_internal_layer()
     {
@@ -39,8 +41,7 @@ public class ContractIsolationTests
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers)))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
                 + "Shared.Application abstractions, so a consumer referencing it does not transitively gain access "
-                + "to the owning feature's internals. Shared.Application also carries the pipeline behaviours, so "
-                + "FluentValidation and Logging.Abstractions arrive here transitively — an accepted cost.");
+                + "to the owning feature's internals.");
 
         rule.Check(SolutionAssemblies.Architecture);
     }

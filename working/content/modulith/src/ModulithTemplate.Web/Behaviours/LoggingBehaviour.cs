@@ -4,8 +4,6 @@ using FluentResults;
 
 using Mediator;
 
-using ModulithTemplate.ServiceDefaults;
-
 namespace ModulithTemplate.Web.Behaviours;
 
 /// <summary>
@@ -34,7 +32,8 @@ internal sealed class LoggingBehaviour<TMessage, TResponse>(
     : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage
 {
-    private static readonly ActivitySource ActivitySource = new(ActivitySources.Mediator);
+    // Subscribed to by ConfigureOpenTelemetry's "ModulithTemplate.*" prefix, not by name.
+    private static readonly ActivitySource ActivitySource = new("ModulithTemplate.Mediator");
 
     /// <inheritdoc />
     public async ValueTask<TResponse> Handle(

@@ -7,7 +7,6 @@ using Mediator;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 
-using ModulithTemplate.ServiceDefaults;
 using ModulithTemplate.Web.Behaviours;
 
 namespace ModulithTemplate.WebTests;
@@ -31,7 +30,7 @@ public class LoggingBehaviourTests
     {
         var listener = new ActivityListener
         {
-            ShouldListenTo = source => string.Equals(source.Name, ActivitySources.Mediator, StringComparison.Ordinal),
+            ShouldListenTo = source => string.Equals(source.Name, "ModulithTemplate.Mediator", StringComparison.Ordinal),
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = recorded.Add,
         };

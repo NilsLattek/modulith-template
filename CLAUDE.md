@@ -35,9 +35,7 @@ The repo root also carries its own `.devcontainer`, `.claude`, `.github`, and `.
 dotnet build working/content/modulith/ModulithTemplate.slnx -warnaserror -v minimal
 
 # Test the template content. Must run from the content dir — global.json opts into
-# Microsoft.Testing.Platform and is resolved from the current directory, so passing the .slnx as a
-# path argument from the repo root gets forwarded to the test app instead of being treated as a
-# target, which reports zero tests rather than failing.
+# Microsoft.Testing.Platform and is resolved from the current directory.
 cd working/content/modulith && dotnet test
 
 # Try the solution template locally: install from source, scaffold into a temp dir, then uninstall
@@ -76,10 +74,6 @@ its space only by recording what the code cannot say. Two tight lines beat a wel
 - Bump `<PackageVersion>` in `working/ModularMonolith.Template.csproj` before releasing.
 - CI (`.github/workflows/build.yml`) builds the content solution with `-warnaserror` on every push/PR to `main` — keep it warning-clean.
 - Publishing (`.github/workflows/publish.yml`) is triggered by a **published GitHub Release**: it builds Release, `dotnet pack`s, and pushes `Modulith.*.nupkg` to nuget.org using the `NUGET_APIKEY` secret. Cutting a GitHub Release is what ships a version.
-
-## Versioning
-
-Do not perform any git actions unless explicitly asked — the maintainer handles commits, branches, and releases.
 
 ## Additional Tools
 

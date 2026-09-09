@@ -7,13 +7,9 @@ dotnet restore                                       # then pass --no-restore be
 dotnet build --no-restore -warnaserror -v minimal    # CI treats warnings as errors; -v minimal cuts output-path noise
 cd src/ModulithTemplate.Web && dotnet run # needs the devcontainer's Postgres
 
-# Tests run on Microsoft.Testing.Platform (via global.json), not VSTest. The `rtk proxy` prefix is
-# required: without it the RTK hook rewrites these to `rtk dotnet test`, which injects
-# `--report-trx` — an option no test app here implements, so every one of them rejects it and the
-# run ends in "Zero tests ran" with nothing failed. `dotnet build` is unaffected.
-rtk proxy dotnet test --no-restore
-rtk proxy dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests
-rtk proxy dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" # or --filter-method
+dotnet test --no-restore
+dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests
+dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" # or --filter-method
 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`
 # is always required — these wrappers supply it.
@@ -25,12 +21,6 @@ bash update-database.sh                     # applies every context's pending mi
 
 A vertical-slice modular monolith built on DDD. Each feature under `src/Features/<Name>/` owns a set
 of layer projects, mirrored by test projects under `test/Features/<Name>/`:
-
-```
-Web  →  Application  →  Domain  ←  Infrastructure
-            ↓
-        Contracts        ← the feature's published API; the only project a neighbour may reference
-```
 
 `Domain` has no outbound dependencies and is the only place business rules live; features must not depend on each other; `ModulithTemplate.ArchitectureTests` enforces the layer rules, the cross-feature isolation and the naming/placement conventions below — each in bothdirections, so a `*Spec` outside `Specifications/` fails just as a badly-named type inside it does.
 
@@ -74,15 +64,6 @@ Entities are rich, not data bags:
 **When you add or change an invariant, cover it with a `<Name>.DomainTests` test on the entity**, not
 only through a handler test — the domain is where the guarantee lives.
 
-### Data access
-
-Data access sits behind a feature-owned `I<Name>Repository<T>` (e.g. `IOrdersRepository<T>`) in
-`Domain`, extending the shared `IRepository<T>` from `ModulithTemplate.SharedKernel.Domain`. Handlers and
-domain services inject the **per-feature** interface — never `IRepository<T>` directly: the
-open-generic DI registration is keyed on the interface type, so several features registering
-`IRepository<>` would leave the last one serving every feature's entities from the wrong `DbContext`.
-Query logic belongs in `Domain/Specifications/` as `*Spec` classes, not inline in handlers.
-
 ### Application layer (CQRS)
 
 Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`) plus its
@@ -118,10 +99,6 @@ Failures come back as a failed `Result` carrying one `ValidationError` per broke
 on, so a Blazor form can group `result.Errors.OfType<ValidationError>()` by property and bind the
 messages to their fields.
 
-Telemetry from the pipeline rides on an `ActivitySource` named `ModulithTemplate.Mediator`.
-`ConfigureOpenTelemetry` subscribes to `ModulithTemplate.*`, so any new source must carry that
-prefix — one named otherwise produces no spans, silently.
-
 ### Infrastructure
 
 EF Core + Npgsql, owned entirely by the feature: a concrete `DbContext` (schema set via
@@ -149,9 +126,6 @@ services may stay directly injected.
 
 ## Conventions
 
-- **Central management**: target framework, nullable and analyzers come from `Directory.Build.props`;
-  package versions are pinned in `Directory.Packages.props` (central package management — add new deps
-  there, version-less `PackageReference` in the csproj).
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
   Blazor component tests. Shared settings and common test packages come from
   `test/Directory.Build.props`, so a test `.csproj` normally holds nothing but a `ProjectReference`.
@@ -169,10 +143,6 @@ scaffolding. **The one manual step** is registering the feature with the host: a
 from `src/ModulithTemplate.Web` to the feature's `.Web` project, and call
 `builder.ConfigurePaymentsFeature();` in `Program.cs`. Then model the feature's entities under
 `Payments.Domain/Entities/` and create its first migration.
-
-## Versioning
-
-Do not perform any git actions. I will do them myself.
 
 ## MCP servers
 

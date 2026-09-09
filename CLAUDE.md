@@ -34,14 +34,11 @@ The repo root also carries its own `.devcontainer`, `.claude`, `.github`, and `.
 # -v minimal cuts the per-project output-path noise; still prints warnings/errors.
 dotnet build working/content/modulith/ModulithTemplate.slnx -warnaserror -v minimal
 
-# Test the template content. Two traps here, and both report zero tests rather than failing:
-#   * Must run from the content dir — global.json opts into Microsoft.Testing.Platform and is
-#     resolved from the current directory, so passing the .slnx as a path argument from the repo
-#     root gets forwarded to the test app instead of being treated as a target.
-#   * Must be prefixed with `rtk proxy` — otherwise the RTK hook rewrites it to `rtk dotnet test`,
-#     which injects `--report-trx`, an option no test app here implements. `dotnet build` is
-#     unaffected, so only the test commands need the prefix.
-cd working/content/modulith && rtk proxy dotnet test
+# Test the template content. Must run from the content dir — global.json opts into
+# Microsoft.Testing.Platform and is resolved from the current directory, so passing the .slnx as a
+# path argument from the repo root gets forwarded to the test app instead of being treated as a
+# target, which reports zero tests rather than failing.
+cd working/content/modulith && dotnet test
 
 # Try the solution template locally: install from source, scaffold into a temp dir, then uninstall
 dotnet new install working/content/modulith

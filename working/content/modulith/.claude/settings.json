@@ -49,7 +49,6 @@
     "dotnet-aspnetcore@dotnet-agent-skills": true,
     "dotnet-blazor@dotnet-agent-skills": true,
     "dotnet-data@dotnet-agent-skills": true,
-    "dotnet-nuget@dotnet-agent-skills": true,
     "dotnet-test@dotnet-agent-skills": true
   },
   "autoContinueAtUsageLimit": false,

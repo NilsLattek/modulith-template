@@ -79,11 +79,13 @@ its space only by recording what the code cannot say. Two tight lines beat a wel
 
 ### Issue tracker
 
-Issues and specs live as GitHub issues in `NilsLattek/modulith-template`. See `docs/agents/issue-tracker.md`.
+Issues and specs live as markdown files under `.scratch/`, committed with the repo. See
+`docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-The five canonical triage roles, each label named after its role. See `docs/agents/triage-labels.md`.
+The five canonical triage roles, written on each ticket's `Status:` line. See
+`docs/agents/triage-labels.md`.
 
 ### Domain docs
 

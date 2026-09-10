@@ -1,5 +1,7 @@
 # Cross-feature integration events
 
+Status: ready-for-agent
+
 ## Problem Statement
 
 A developer who scaffolds a solution with `dotnet new modulith` gets a modular monolith in which

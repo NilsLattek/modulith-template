@@ -210,6 +210,17 @@ convention — bidirectional, matching how `NamingConventionTests` already works
 `ValidationBehaviourTests` (xUnit v3 + NSubstitute), only for what the primary seam cannot reach:
 the republisher forwarding to the mediator, and the repeated-failure warning threshold.
 
+**These tests do not ship.** They verify the *template's* design, not behaviour a generated
+project's owner maintains, so a scaffolded solution should not carry them. The project lives in the
+content test tree — inheriting the shared build props and running under the existing
+`cd working/content/modulith && dotnet test` — and is removed at scaffold time by a `template.json`
+`modifiers.exclude`, with its `.slnx` entry wrapped in a template-engine conditional. Verified by
+experiment: the engine processes `<!--#if -->` conditionals in `.slnx`, and because those markers are
+ordinary XML comments the solution still builds normally in this repository. The gating symbol is a
+constant rather than a user-facing parameter, so it cannot be switched on from the command line.
+Note that the excluded files are still *packed* into the `.nupkg` — exclusion happens at scaffold
+time, not pack time — so exclude them from the pack glob too if package size matters.
+
 **Scaffold verification** stays manual and is documented: generate a solution, generate a Feature
 into it, build with `-warnaserror`, and confirm no `ModulithTemplate` or `FeatureName` token
 survives.
@@ -227,6 +238,8 @@ survives.
 - **Scheduled or delayed events**, though the library supports them.
 - **Ordering guarantees across aggregates.** Only within a Group.
 - **A Blazor page for the consuming Feature.**
+- **Shipping the atomicity tests to generated projects.** They are maintainer-facing and excluded
+  from the scaffold.
 
 ## Further Notes
 

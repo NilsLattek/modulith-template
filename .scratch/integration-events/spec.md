@@ -2,6 +2,9 @@
 
 Status: ready-for-agent
 
+Broken into tickets in `issues/`. Implementation order is 01 and 02 (independent), then 03, then
+04-08 (independent of each other).
+
 ## Problem Statement
 
 A developer who scaffolds a solution with `dotnet new modulith` gets a modular monolith in which

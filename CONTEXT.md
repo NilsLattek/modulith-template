@@ -1,8 +1,11 @@
-# ModulithTemplate
+# Modulith
 
-A modular monolith: one deployable application divided into Features that own their data and speak
-to each other only through published contracts. This file is the glossary for that division — the
-words the code, the tests and the architecture rules all have to agree on.
+Modulith is a `dotnet new` template that generates a modular monolith: one deployable application
+divided into Features that own their data and speak to each other only through published contracts.
+This is the glossary for that generated architecture — the words the template's content, its
+architecture tests and its documentation all have to agree on. It is maintained here rather than
+shipped, because these are decisions about what the template produces, not decisions a generated
+project's owner has made.
 
 ## Language
 

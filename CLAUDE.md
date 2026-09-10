@@ -75,6 +75,21 @@ its space only by recording what the code cannot say. Two tight lines beat a wel
 - CI (`.github/workflows/build.yml`) builds the content solution with `-warnaserror` on every push/PR to `main` — keep it warning-clean.
 - Publishing (`.github/workflows/publish.yml`) is triggered by a **published GitHub Release**: it builds Release, `dotnet pack`s, and pushes `Modulith.*.nupkg` to nuget.org using the `NUGET_APIKEY` secret. Cutting a GitHub Release is what ships a version.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as GitHub issues in `NilsLattek/modulith-template`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, each label named after its role. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, describing the generated architecture
+but not shipped with it. See `docs/agents/domain.md`.
+
 ## Additional Tools
 
 @.claude/RTK.md

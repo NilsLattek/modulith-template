@@ -1,14 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Owns the shared outbox table: its DbContext, its migrations, and nothing else. Separate from
-       Shared.Infrastructure so that project keeps its "EF conventions only, never a concrete
-       DbContext" charter, and so the outbox package stays out of every feature's Contracts. -->
+  <!-- Owns the shared outbox table: its DbContext, its migrations, and the delivery machinery that
+       turns a staged row back into an integration event. Separate from Shared.Infrastructure so that
+       project keeps its "EF conventions only, never a concrete DbContext" charter, and so the outbox
+       package stays out of Shared.Application and therefore out of every feature's Contracts. -->
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Underground.Outbox" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
   </ItemGroup>
 
 </Project>

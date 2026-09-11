@@ -13,7 +13,7 @@ dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" 
 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`
 # is always required — these wrappers supply it.
-bash add-migration.sh Orders InitialOrders  # <FeatureName|Outbox> <MigrationName>
+bash add-migration.sh Orders AddSomeColumn  # <FeatureName|Outbox> <MigrationName>
 bash add-migration.sh Outbox AddSomeColumn  # the shared outbox table (ADR 0001), not a feature
 bash update-database.sh                     # applies every context's pending migrations
 ```

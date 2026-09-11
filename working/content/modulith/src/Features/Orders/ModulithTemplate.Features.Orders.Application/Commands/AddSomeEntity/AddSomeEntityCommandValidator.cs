@@ -14,8 +14,14 @@ namespace ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 public sealed class AddSomeEntityCommandValidator : AbstractValidator<AddSomeEntityCommand>
 {
     /// <summary>Declares the command's rules.</summary>
-    public AddSomeEntityCommandValidator() =>
+    public AddSomeEntityCommandValidator()
+    {
         RuleFor(command => command.Name)
             .NotEmpty()
             .MaximumLength(SomeEntity.NameMaxLength);
+
+        RuleFor(command => command.Amount)
+            .InclusiveBetween(0.01m, SomeEntity.MaxAmount)
+            .PrecisionScale(SomeEntity.AmountPrecision, SomeEntity.AmountScale, ignoreTrailingZeros: true);
+    }
 }

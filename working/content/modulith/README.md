@@ -11,11 +11,10 @@ dotnet restore
 dotnet build --no-restore
 ```
 
-The shared outbox and `Payments` migrations ship with the scaffold; `Orders` has none. Create that
-one and apply them all, so the sample `Orders` page has its table:
+Every context's first migration ships with the scaffold. Apply them, so the sample features have
+their tables:
 
 ```bash
-bash add-migration.sh Orders InitialOrders
 bash update-database.sh
 ```
 
@@ -39,7 +38,7 @@ Each feature has its own `DbContext` and schema, so every `dotnet ef` command ne
 Create a new migration for a feature:
 
 ```bash
-bash add-migration.sh Orders InitialOrders     # <FeatureName|Outbox> <MigrationName>
+bash add-migration.sh Orders AddSomeColumn     # <FeatureName|Outbox> <MigrationName>
 ```
 
 The shared outbox table is the one context that is not a feature — it lives at SharedKernel level

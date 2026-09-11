@@ -11,6 +11,9 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
+    <!-- A sibling feature's published contract, and the only part of Orders this feature may see.
+         Application is the one layer allowed to reference a Contracts project. -->
+    <ProjectReference Include="../../Orders/ModulithTemplate.Features.Orders.Contracts/ModulithTemplate.Features.Orders.Contracts.csproj" />
     <ProjectReference Include="../ModulithTemplate.Features.Payments.Contracts/ModulithTemplate.Features.Payments.Contracts.csproj" />
     <ProjectReference Include="../ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" />
   </ItemGroup>

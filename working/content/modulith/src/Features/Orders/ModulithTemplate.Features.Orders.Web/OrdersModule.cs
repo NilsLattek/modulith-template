@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.Features.Orders.Application;
 using ModulithTemplate.Features.Orders.Infrastructure;
@@ -11,6 +12,10 @@ public static class OrdersModule
     {
         builder.Services.ConfigureOrdersInfrastructure(builder.Configuration);
         builder.Services.ConfigureOrdersApplication();
+
+        // Bound here, not in Configure*Infrastructure: the marker interface lives in Application and
+        // Infrastructure may not reference it.
+        builder.Services.AddScoped<IOrdersIntegrationEventPublisher, OrdersIntegrationEventPublisher>();
         return builder;
     }
 }

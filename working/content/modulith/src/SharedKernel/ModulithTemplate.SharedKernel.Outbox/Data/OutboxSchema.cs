@@ -10,4 +10,7 @@ public static class OutboxSchema
 {
     /// <summary>The schema name.</summary>
     public const string Name = "shared";
+
+    /// <summary>The table name, which the library fixes and this solution may not remap.</summary>
+    public const string TableName = "outbox";
 }

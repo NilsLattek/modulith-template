@@ -4,9 +4,11 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="FluentResults" />
+    <PackageReference Include="Underground.Outbox" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Outbox/ModulithTemplate.SharedKernel.Outbox.csproj" />
     <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
     <ProjectReference Include="../ModulithTemplate.Features.Orders.Application/ModulithTemplate.Features.Orders.Application.csproj" />
     <ProjectReference Include="../ModulithTemplate.Features.Orders.Infrastructure/ModulithTemplate.Features.Orders.Infrastructure.csproj" />

@@ -1,5 +1,6 @@
 using ModulithTemplate.Features.Orders.Web;
 using ModulithTemplate.SharedKernel.Application.Behaviours;
+using ModulithTemplate.SharedKernel.Outbox;
 using ModulithTemplate.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Aspire's ServiceDefaults: OpenTelemetry tracing, metrics and logging, health checks, service
 // discovery and HTTP resilience. First, so telemetry is in place before anything else registers.
 builder.AddServiceDefaults();
+
+// Owns the shared outbox table's DDL. Registered here rather than by a feature because
+// update-database.sh and CI's migration checks enumerate contexts from this container.
+builder.Services.AddOutboxDbContext(builder.Configuration);
 
 builder.ConfigureOrdersFeature();
 

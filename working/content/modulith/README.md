@@ -11,8 +11,8 @@ dotnet restore
 dotnet build --no-restore
 ```
 
-No migrations ship with the scaffold — create and apply the first one, so the sample `Orders` page has
-its table:
+Only the shared outbox migration ships with the scaffold — create and apply the first `Orders` one,
+so the sample page has its table:
 
 ```bash
 bash add-migration.sh Orders InitialOrders
@@ -39,7 +39,14 @@ Each feature has its own `DbContext` and schema, so every `dotnet ef` command ne
 Create a new migration for a feature:
 
 ```bash
-bash add-migration.sh Orders InitialOrders     # <FeatureName> <MigrationName>
+bash add-migration.sh Orders InitialOrders     # <FeatureName|Outbox> <MigrationName>
+```
+
+The shared outbox table is the one context that is not a feature — it lives at SharedKernel level
+and owns the single table every feature stages integration events into:
+
+```bash
+bash add-migration.sh Outbox AddSomeColumn
 ```
 
 Apply all pending migrations of every feature to the local database:
@@ -48,7 +55,7 @@ Apply all pending migrations of every feature to the local database:
 bash update-database.sh
 ```
 
-`update-database.sh` discovers the contexts from the host's DI container, so a new feature is included as soon as it's registered in `Program.cs` — nothing to add to the script.
+`update-database.sh` discovers the contexts from the host's DI container, so a new feature — and the outbox — is included as soon as it's registered in `Program.cs` — nothing to add to the script.
 
 The equivalent raw commands, if you need to deviate:
 

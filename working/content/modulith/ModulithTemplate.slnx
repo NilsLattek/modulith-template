@@ -7,6 +7,7 @@
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Outbox/ModulithTemplate.SharedKernel.Outbox.csproj" />
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
   </Folder>
   <Folder Name="/src/Features/" />
@@ -23,6 +24,7 @@
   </Folder>
   <Folder Name="/test/SharedKernel/">
     <Project Path="test/SharedKernel/ModulithTemplate.SharedKernel.ApplicationTests/ModulithTemplate.SharedKernel.ApplicationTests.csproj" />
+    <Project Path="test/SharedKernel/ModulithTemplate.SharedKernel.OutboxTests/ModulithTemplate.SharedKernel.OutboxTests.csproj" />
   </Folder>
   <Folder Name="/test/Features/" />
   <Folder Name="/test/Features/Orders/">

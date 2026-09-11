@@ -18,6 +18,13 @@
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Infrastructure/ModulithTemplate.Features.Orders.Infrastructure.csproj" />
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />
   </Folder>
+  <Folder Name="/src/Features/Payments/">
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Application/ModulithTemplate.Features.Payments.Application.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Contracts/ModulithTemplate.Features.Payments.Contracts.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Infrastructure/ModulithTemplate.Features.Payments.Infrastructure.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj" />
+  </Folder>
   <Folder Name="/test/">
     <Project Path="test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj" />
     <Project Path="test/ModulithTemplate.WebTests/ModulithTemplate.WebTests.csproj" />
@@ -32,5 +39,11 @@
     <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests/ModulithTemplate.Features.Orders.DomainTests.csproj" />
     <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.InfrastructureTests/ModulithTemplate.Features.Orders.InfrastructureTests.csproj" />
     <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.WebTests/ModulithTemplate.Features.Orders.WebTests.csproj" />
+  </Folder>
+  <Folder Name="/test/Features/Payments/">
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.ApplicationTests/ModulithTemplate.Features.Payments.ApplicationTests.csproj" />
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.DomainTests/ModulithTemplate.Features.Payments.DomainTests.csproj" />
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.InfrastructureTests/ModulithTemplate.Features.Payments.InfrastructureTests.csproj" />
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.WebTests/ModulithTemplate.Features.Payments.WebTests.csproj" />
   </Folder>
 </Solution>

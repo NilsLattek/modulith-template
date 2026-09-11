@@ -135,15 +135,19 @@ services may stay directly injected.
 ## Adding a feature
 
 ```bash
-dotnet new modulith-feature --appName ModulithTemplate -n Payments
+dotnet new modulith-feature --appName ModulithTemplate -n Shipping
 ```
 
 Run this from the solution root (the directory containing the `.slnx`). It creates the feature's
 layer and test projects, adds them all to the solution, and mirrors the `Orders` persistence and DI
 scaffolding. **The one manual step** is registering the feature with the host: add a project reference
 from `src/ModulithTemplate.Web` to the feature's `.Web` project, and call
-`builder.ConfigurePaymentsFeature();` in `Program.cs`. Then model the feature's entities under
-`Payments.Domain/Entities/` and create its first migration.
+`builder.ConfigureShippingFeature();` in `Program.cs`. Then model the feature's entities under
+`Shipping.Domain/Entities/` and create its first migration with
+`bash add-migration.sh Shipping InitialShipping`.
+
+`Orders` and `Payments` are both scaffolded this way; `Payments` is the worked example of the
+registration step above.
 
 ## MCP servers
 

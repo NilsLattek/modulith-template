@@ -11,8 +11,8 @@ dotnet restore
 dotnet build --no-restore
 ```
 
-Only the shared outbox migration ships with the scaffold — create and apply the first `Orders` one,
-so the sample page has its table:
+The shared outbox and `Payments` migrations ship with the scaffold; `Orders` has none. Create that
+one and apply them all, so the sample `Orders` page has its table:
 
 ```bash
 bash add-migration.sh Orders InitialOrders
@@ -74,17 +74,20 @@ dotnet ef database update --context OrdersContext \
 From the solution root, scaffold the feature's layer projects plus their test projects:
 
 ```bash
-dotnet new modulith-feature --appName ModulithTemplate -n Payments
+dotnet new modulith-feature --appName ModulithTemplate -n Shipping
 ```
 
 Then register it with the host:
 
 ```bash
 dotnet add src/ModulithTemplate.Web/ModulithTemplate.Web.csproj reference \
-  src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj
+  src/Features/Shipping/ModulithTemplate.Features.Shipping.Web/ModulithTemplate.Features.Shipping.Web.csproj
 ```
 
-and call `builder.ConfigurePaymentsFeature();` in `src/ModulithTemplate.Web/Program.cs`.
+and call `builder.ConfigureShippingFeature();` in `src/ModulithTemplate.Web/Program.cs`.
+
+The bundled `Orders` and `Payments` features were scaffolded exactly this way, so either one is a
+worked example of the steps above.
 
 ## Observability
 

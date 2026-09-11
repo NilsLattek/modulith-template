@@ -1,4 +1,5 @@
 using ModulithTemplate.Features.Orders.Web;
+using ModulithTemplate.Features.Payments.Web;
 using ModulithTemplate.SharedKernel.Application.Behaviours;
 using ModulithTemplate.SharedKernel.Outbox;
 using ModulithTemplate.Web.Components;
@@ -14,6 +15,7 @@ builder.AddServiceDefaults();
 builder.Services.AddOutboxDbContext(builder.Configuration);
 
 builder.ConfigureOrdersFeature();
+builder.ConfigurePaymentsFeature();
 
 builder.Services.AddMediator(options =>
 {

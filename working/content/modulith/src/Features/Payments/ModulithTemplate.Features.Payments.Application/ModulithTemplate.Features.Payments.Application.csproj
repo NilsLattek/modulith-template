@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="FluentResults" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Riok.Mapperly" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Features.Payments.Contracts/ModulithTemplate.Features.Payments.Contracts.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

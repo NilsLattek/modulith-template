@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" />
+    <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
+    <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

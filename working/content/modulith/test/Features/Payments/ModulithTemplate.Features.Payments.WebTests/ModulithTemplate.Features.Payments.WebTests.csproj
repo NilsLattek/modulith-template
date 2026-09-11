@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <ItemGroup>
+    <PackageReference Include="bunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj" />
+  </ItemGroup>
+
+</Project>

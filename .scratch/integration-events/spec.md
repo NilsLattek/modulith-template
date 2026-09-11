@@ -248,9 +248,12 @@ survives.
 
 ## Further Notes
 
-- Blocked on `Underground.Outbox` v0.16.0 reaching NuGet. `StageMessage` is on `main`; until the
-  package is published the template cannot restore. Needs a decision: local `ProjectReference` or
-  wait.
+- `Underground.Outbox` 0.16.0 is published and pinned in central package management. Its
+  `StageMessage(IOutboxDbContext, OutboxMessage)` is synchronous and takes no cancellation token,
+  since it only stages an entity and performs no I/O.
+- The library's source generator emits code that assumes `ImplicitUsings` is enabled; the generated
+  dispatcher does not qualify `Task`, `CancellationToken` or `Action<>`. This solution enables it
+  globally, so it is a non-issue here — worth knowing before anyone turns it off.
 - One behaviour could not be verified by reading and is deliberately designed around rather than
   relied on: whether EF's implicit `SaveChanges` transaction raises the library's commit hook. The
   explicit process-after-save call makes the answer irrelevant to correctness — worst case it is

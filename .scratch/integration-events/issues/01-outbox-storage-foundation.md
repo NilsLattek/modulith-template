@@ -15,12 +15,12 @@ context, and the release workflow's per-schema script loop needs the shared sche
 
 **Blocked by:** None (can start immediately).
 
-**External blocker:** requires `Underground.Outbox` v0.16.0 (the release adding `StageMessage`) to be
-available on NuGet. If it has not shipped, use a local `ProjectReference` and note it in the PR.
+**Dependency:** `Underground.Outbox` 0.16.0 is published and already pinned in central package
+management; this ticket adds the `PackageReference`s that consume it.
 
 **Status:** ready-for-agent
 
-- [ ] The outbox packages are added to central package management, and the source generator is
+- [ ] The outbox packages are referenced by the projects that need them, with the source generator
       referenced from the host project, which is where the library requires it
 - [ ] A new SharedKernel-level project owns the outbox context and its migration, leaving
       `SharedKernel.Infrastructure`'s "EF conventions only, never a concrete `DbContext`" charter intact

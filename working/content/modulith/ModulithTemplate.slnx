@@ -27,6 +27,9 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj" />
+    <!--#if (includeTemplateTests) -->
+    <Project Path="test/ModulithTemplate.AtomicityTests/ModulithTemplate.AtomicityTests.csproj" />
+    <!--#endif -->
     <Project Path="test/ModulithTemplate.WebTests/ModulithTemplate.WebTests.csproj" />
   </Folder>
   <Folder Name="/test/SharedKernel/">

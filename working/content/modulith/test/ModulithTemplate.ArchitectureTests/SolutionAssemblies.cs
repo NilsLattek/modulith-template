@@ -29,6 +29,13 @@ internal static class SolutionAssemblies
     /// <summary>The ArchUnitNET architecture built from <see cref="FeatureAssemblies"/>.</summary>
     public static Architecture Architecture => LazyArchitecture.Value;
 
+    /// <summary>
+    /// Matches any feature-layer assembly, so a rule that governs how a feature arranges its own
+    /// types does not also judge the shared projects, which deliberately define the abstractions
+    /// those conventions are named after (<c>IDomainEvent</c>, <c>IIntegrationEvent</c>).
+    /// </summary>
+    public const string AnyFeatureLayerPattern = @".*\.Features\..*";
+
     /// <summary>Builds an assembly-name regex matching a feature layer by its suffix expression.</summary>
     /// <remarks>
     /// ArchUnitNET matches the fully-qualified name (<c>...Orders.Domain, Version=1.0.0.0, ...</c>),

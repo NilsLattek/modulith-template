@@ -7,6 +7,7 @@
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
+    <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Outbox/ModulithTemplate.SharedKernel.Outbox.csproj" />
     <Project Path="src/SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
   </Folder>
   <Folder Name="/src/Features/" />
@@ -17,12 +18,23 @@
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Infrastructure/ModulithTemplate.Features.Orders.Infrastructure.csproj" />
     <Project Path="src/Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />
   </Folder>
+  <Folder Name="/src/Features/Payments/">
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Application/ModulithTemplate.Features.Payments.Application.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Contracts/ModulithTemplate.Features.Payments.Contracts.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Infrastructure/ModulithTemplate.Features.Payments.Infrastructure.csproj" />
+    <Project Path="src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj" />
+  </Folder>
   <Folder Name="/test/">
     <Project Path="test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj" />
+    <!--#if (includeTemplateTests) -->
+    <Project Path="test/ModulithTemplate.AtomicityTests/ModulithTemplate.AtomicityTests.csproj" />
+    <!--#endif -->
     <Project Path="test/ModulithTemplate.WebTests/ModulithTemplate.WebTests.csproj" />
   </Folder>
   <Folder Name="/test/SharedKernel/">
     <Project Path="test/SharedKernel/ModulithTemplate.SharedKernel.ApplicationTests/ModulithTemplate.SharedKernel.ApplicationTests.csproj" />
+    <Project Path="test/SharedKernel/ModulithTemplate.SharedKernel.OutboxTests/ModulithTemplate.SharedKernel.OutboxTests.csproj" />
   </Folder>
   <Folder Name="/test/Features/" />
   <Folder Name="/test/Features/Orders/">
@@ -30,5 +42,11 @@
     <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests/ModulithTemplate.Features.Orders.DomainTests.csproj" />
     <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.InfrastructureTests/ModulithTemplate.Features.Orders.InfrastructureTests.csproj" />
     <Project Path="test/Features/Orders/ModulithTemplate.Features.Orders.WebTests/ModulithTemplate.Features.Orders.WebTests.csproj" />
+  </Folder>
+  <Folder Name="/test/Features/Payments/">
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.ApplicationTests/ModulithTemplate.Features.Payments.ApplicationTests.csproj" />
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.DomainTests/ModulithTemplate.Features.Payments.DomainTests.csproj" />
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.InfrastructureTests/ModulithTemplate.Features.Payments.InfrastructureTests.csproj" />
+    <Project Path="test/Features/Payments/ModulithTemplate.Features.Payments.WebTests/ModulithTemplate.Features.Payments.WebTests.csproj" />
   </Folder>
 </Solution>

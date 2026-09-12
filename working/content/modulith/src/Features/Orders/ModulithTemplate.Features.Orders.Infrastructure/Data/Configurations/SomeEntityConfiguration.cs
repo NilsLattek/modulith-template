@@ -24,5 +24,7 @@ internal sealed class SomeEntityConfiguration : IEntityTypeConfiguration<SomeEnt
         builder.Property(entity => entity.Name)
             .IsRequired()
             .HasMaxLength(SomeEntity.NameMaxLength);
+        builder.Property(entity => entity.Amount)
+            .HasPrecision(SomeEntity.AmountPrecision, SomeEntity.AmountScale);
     }
 }

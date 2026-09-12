@@ -15,7 +15,9 @@ public sealed class AddSomeEntityCommandHandler(IOrdersRepository<SomeEntity> re
     /// <inheritdoc />
     public async ValueTask<Result> Handle(AddSomeEntityCommand command, CancellationToken cancellationToken)
     {
-        await repository.AddAsync(SomeEntity.Create(command.Name), cancellationToken);
+        ArgumentNullException.ThrowIfNull(command);
+
+        await repository.AddAsync(SomeEntity.Create(command.Name, command.Amount), cancellationToken);
         return Result.Ok();
     }
 }

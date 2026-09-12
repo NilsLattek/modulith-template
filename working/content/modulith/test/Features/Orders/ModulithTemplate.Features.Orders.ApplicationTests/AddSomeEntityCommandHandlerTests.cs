@@ -17,7 +17,7 @@ public class AddSomeEntityCommandHandlerTests
         var handler = new AddSomeEntityCommandHandler(repository);
 
         // Act
-        var result = await handler.Handle(new AddSomeEntityCommand("a name"), TestContext.Current.CancellationToken);
+        var result = await handler.Handle(new AddSomeEntityCommand("a name", 12.34m), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);

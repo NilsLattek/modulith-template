@@ -7,6 +7,7 @@
        Feature Contracts projects reference this, so anything added here reaches them transitively. -->
   <ItemGroup>
     <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="FluentResults" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />

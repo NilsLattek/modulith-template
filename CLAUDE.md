@@ -63,6 +63,7 @@ dotnet new install working/bin/Release/Modulith.*.nupkg
 - **`shortName` is `modulith`** — the `dotnet new modulith` invocation name.
 - The package project packs `content/**` (excluding `bin`/`obj`) and does not compile anything itself (`IncludeBuildOutput=false`, `Compile Remove="**\*"`).
 - **A second template, `modulith-feature`**, lives alongside it at `working/content/feature/` (`sourceName: "FeatureName"`, a required `appName` parameter replacing the `ModulithApp` token). It scaffolds one feature's layer projects (`Contracts`/`Domain`/`Application`/`Infrastructure`/`Web`) plus their matching test projects under `test/Features/<Name>/` into an *already-generated* solution and registers them in its `.slnx` via a post-action. Adding a layer project means editing `primaryOutputs` **and** the post-action's `primaryOutputIndexes` together; a mismatch scaffolds a project the solution never references, and only a real scaffold run reveals it. Both templates pack into the single `Modulith` NuGet package — no extra install step is needed once a developer has installed `Modulith` to get `dotnet new modulith`. Verify changes to it the same way: scaffold a solution, scaffold a feature into it, build `-warnaserror`, and confirm nothing named `FeatureName` or `ModulithApp` survives.
+- **One test project does not ship.** `test/ModulithTemplate.AtomicityTests/` verifies the *template's* design — that the outbox row and the aggregate change are written by one save — rather than behaviour a generated project's owner maintains, so it builds and runs here but is removed at scaffold time by a `modifiers.exclude` in `template.json`. The gate, `includeTemplateTests`, is a **generated constant** rather than a parameter, so `dotnet new` cannot switch it on; `<!--#if (includeTemplateTests) -->` conditionals drop its `.slnx` entry and its SQLite pin in `Directory.Packages.props`. Those markers are ordinary XML comments, so both files still work unchanged in this repository. Maintainer-only test code belongs in that project; anywhere else it ships.
 
 ## Writing comments
 
@@ -74,6 +75,23 @@ its space only by recording what the code cannot say. Two tight lines beat a wel
 - Bump `<PackageVersion>` in `working/ModularMonolith.Template.csproj` before releasing.
 - CI (`.github/workflows/build.yml`) builds the content solution with `-warnaserror` on every push/PR to `main` — keep it warning-clean.
 - Publishing (`.github/workflows/publish.yml`) is triggered by a **published GitHub Release**: it builds Release, `dotnet pack`s, and pushes `Modulith.*.nupkg` to nuget.org using the `NUGET_APIKEY` secret. Cutting a GitHub Release is what ships a version.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as markdown files under `.scratch/`, committed with the repo. See
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, written on each ticket's `Status:` line. See
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, describing the generated architecture
+but not shipped with it. See `docs/agents/domain.md`.
 
 ## Additional Tools
 

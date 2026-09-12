@@ -1,6 +1,12 @@
 using ModulithTemplate.Features.Orders.Web;
+using ModulithTemplate.Features.Payments.Web;
 using ModulithTemplate.SharedKernel.Application.Behaviours;
+using ModulithTemplate.SharedKernel.Outbox;
+using ModulithTemplate.SharedKernel.Outbox.Data;
+using ModulithTemplate.SharedKernel.Outbox.Events;
 using ModulithTemplate.Web.Components;
+
+using Underground.Outbox.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +14,21 @@ var builder = WebApplication.CreateBuilder(args);
 // discovery and HTTP resilience. First, so telemetry is in place before anything else registers.
 builder.AddServiceDefaults();
 
+// Owns the shared outbox table's DDL. Registered here rather than by a feature because
+// update-database.sh and CI's migration checks enumerate contexts from this container.
+builder.Services.AddOutboxDbContext(builder.Configuration);
+
+// The worker that claims and delivers staged rows. AddOutboxServices comes from the outbox source
+// generator, which the library requires to be referenced by the DI root — so this call can only be
+// made here, not from Shared.Outbox.
+builder.Services.AddOutboxServices<OutboxContext>(_ => { });
+
+// After AddOutboxServices, deliberately: it replaces that generator's dispatcher, which can only
+// route to handler classes naming a concrete message type. See IntegrationEventRepublisher.
+builder.Services.AddIntegrationEventDelivery();
+
 builder.ConfigureOrdersFeature();
+builder.ConfigurePaymentsFeature();
 
 builder.Services.AddMediator(options =>
 {

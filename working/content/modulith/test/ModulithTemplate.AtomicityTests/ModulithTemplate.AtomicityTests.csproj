@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Maintainer-facing, and removed at scaffold time: these tests verify the template's own design,
+       not behaviour a generated project's owner maintains. See the exclusion in
+       .template.config/template.json and the conditional around this project in the .slnx. -->
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />
+    <ProjectReference Include="../../src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Both generators emit into whichever assembly references them, so this project gets its own
+         mediator and its own AddOutboxServices — the same composition the host builds, minus the
+         host. Referencing ModulithTemplate.Web instead would make both ambiguous. -->
+    <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
+    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
+  </ItemGroup>
+
+</Project>

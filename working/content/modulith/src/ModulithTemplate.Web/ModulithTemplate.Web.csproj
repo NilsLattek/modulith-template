@@ -9,14 +9,19 @@
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="FluentResults" />
+    <!-- The outbox source generator emits its AddOutboxServices/dispatcher into whichever assembly
+         references it, and the library requires that to be the DI root. -->
+    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../SharedKernel/ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
     <ProjectReference Include="../SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />
+    <ProjectReference Include="../SharedKernel/ModulithTemplate.SharedKernel.Outbox/ModulithTemplate.SharedKernel.Outbox.csproj" />
     <ProjectReference Include="../ModulithTemplate.ServiceDefaults/ModulithTemplate.ServiceDefaults.csproj" />
     <ProjectReference Include="../SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
     <ProjectReference Include="../Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />
+    <ProjectReference Include="../Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,11 +11,10 @@ dotnet restore
 dotnet build --no-restore
 ```
 
-No migrations ship with the scaffold — create and apply the first one, so the sample `Orders` page has
-its table:
+Every context's first migration ships with the scaffold. Apply them, so the sample features have
+their tables:
 
 ```bash
-bash add-migration.sh Orders InitialOrders
 bash update-database.sh
 ```
 
@@ -39,7 +38,14 @@ Each feature has its own `DbContext` and schema, so every `dotnet ef` command ne
 Create a new migration for a feature:
 
 ```bash
-bash add-migration.sh Orders InitialOrders     # <FeatureName> <MigrationName>
+bash add-migration.sh Orders AddSomeColumn     # <FeatureName|Outbox> <MigrationName>
+```
+
+The shared outbox table is the one context that is not a feature — it lives at SharedKernel level
+and owns the single table every feature stages integration events into:
+
+```bash
+bash add-migration.sh Outbox AddSomeColumn
 ```
 
 Apply all pending migrations of every feature to the local database:
@@ -48,7 +54,7 @@ Apply all pending migrations of every feature to the local database:
 bash update-database.sh
 ```
 
-`update-database.sh` discovers the contexts from the host's DI container, so a new feature is included as soon as it's registered in `Program.cs` — nothing to add to the script.
+`update-database.sh` discovers the contexts from the host's DI container, so a new feature — and the outbox — is included as soon as it's registered in `Program.cs` — nothing to add to the script.
 
 The equivalent raw commands, if you need to deviate:
 
@@ -67,17 +73,20 @@ dotnet ef database update --context OrdersContext \
 From the solution root, scaffold the feature's layer projects plus their test projects:
 
 ```bash
-dotnet new modulith-feature --appName ModulithTemplate -n Payments
+dotnet new modulith-feature --appName ModulithTemplate -n Shipping
 ```
 
 Then register it with the host:
 
 ```bash
 dotnet add src/ModulithTemplate.Web/ModulithTemplate.Web.csproj reference \
-  src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj
+  src/Features/Shipping/ModulithTemplate.Features.Shipping.Web/ModulithTemplate.Features.Shipping.Web.csproj
 ```
 
-and call `builder.ConfigurePaymentsFeature();` in `src/ModulithTemplate.Web/Program.cs`.
+and call `builder.ConfigureShippingFeature();` in `src/ModulithTemplate.Web/Program.cs`.
+
+The bundled `Orders` and `Payments` features were scaffolded exactly this way, so either one is a
+worked example of the steps above.
 
 ## Observability
 

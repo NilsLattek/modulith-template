@@ -12,4 +12,5 @@ namespace ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 /// The new entity's name. Its <i>shape</i> is checked by <see cref="AddSomeEntityCommandValidator"/>
 /// before the handler runs, and again as an invariant inside the entity.
 /// </param>
-public sealed record AddSomeEntityCommand(string Name) : ICommand<Result>;
+/// <param name="Amount">The amount to record it for, announced to other features.</param>
+public sealed record AddSomeEntityCommand(string Name, decimal Amount) : ICommand<Result>;

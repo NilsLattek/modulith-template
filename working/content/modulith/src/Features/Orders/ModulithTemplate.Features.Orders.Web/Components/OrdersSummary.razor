@@ -7,8 +7,8 @@
 @if (_failed)
 {
     <p class="text-danger">
-        Could not read the Orders schema. Create and apply its migrations first:
-        <code>bash add-migration.sh Orders InitialOrders</code> then <code>bash update-database.sh</code>.
+        Could not read the Orders schema. Apply the migrations first:
+        <code>bash update-database.sh</code>.
     </p>
 }
 else if (_count is null)

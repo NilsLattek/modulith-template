@@ -2,7 +2,10 @@
 
   <!-- Technical implementations of the shared abstractions: the EF Core conventions every feature's
        DbContext is registered with, and the two event dispatch mechanisms. The abstractions they
-       satisfy live in Shared.Application and Shared.Domain. -->
+       satisfy live in Shared.Application and Shared.Domain.
+
+       Shared.Outbox is referenced so AddModuleDbContext can map every feature context onto the one
+       shared outbox table; it still defines no DbContext of its own. -->
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="EntityFrameworkCore.Exceptions.PostgreSQL" />
@@ -11,11 +14,13 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Underground.Outbox" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
     <ProjectReference Include="../ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
+    <ProjectReference Include="../ModulithTemplate.SharedKernel.Outbox/ModulithTemplate.SharedKernel.Outbox.csproj" />
   </ItemGroup>
 
 </Project>

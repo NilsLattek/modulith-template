@@ -18,9 +18,11 @@ A scaffolded feature is added to the `.slnx` but not yet wired into the host. Re
 
 ## What a scaffolded solution contains
 
-- A sample `Orders` feature showing the layering, with command/query handlers, a repository, and
-  its own `OrdersContext`.
-- EF Core on Npgsql with snake_case naming and a per-feature migrations history table.
+- Two sample features, so the isolation rules are enforced against more than one slice: `Orders`
+  shows the layering with command/query handlers, a repository and its own `OrdersContext`, and
+  `Payments` is a second, minimal slice with its own entity, schema and initial migration.
+- EF Core on Npgsql with snake_case naming and a per-feature migrations history table. The shared
+  outbox and `Payments` ship migrations; create the `Orders` one with `add-migration.sh`.
 - [Mediator](https://github.com/martinothamar/Mediator) with logging, exception, and validation
   pipeline behaviours; FluentResults for handler outcomes and FluentValidation for input.
 - Cross-feature communication that keeps the slices isolated: a read-only per-feature module API,

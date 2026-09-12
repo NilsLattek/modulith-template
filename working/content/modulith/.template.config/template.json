@@ -10,6 +10,29 @@
   "shortName": "modulith",
   "sourceName": "ModulithTemplate",
   "preferNameDirectory": true,
+  "symbols": {
+    "includeTemplateTests": {
+      "type": "generated",
+      "generator": "constant",
+      "datatype": "bool",
+      "parameters": {
+        "value": "false"
+      }
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "// comment": "The atomicity tests verify this template's own design, not behaviour a generated project's owner maintains. Gated on a constant rather than a parameter, so it cannot be switched on from the command line; the matching conditional in the .slnx drops the solution entry.",
+          "condition": "(!includeTemplateTests)",
+          "exclude": [
+            "test/ModulithTemplate.AtomicityTests/**"
+          ]
+        }
+      ]
+    }
+  ],
   "tags": {
     "language": "C#",
     "type": "project"

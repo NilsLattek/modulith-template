@@ -12,10 +12,10 @@ presume, and is explicitly out of scope.
 
 **Blocked by:** 03 (Orders publishes an integration event, Payments consumes it).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A message whose retry count is at or past the threshold logs a warning naming the event type
+- [x] A message whose retry count is at or past the threshold logs a warning naming the event type
       and its identity
-- [ ] Below the threshold, nothing is logged at warning level
-- [ ] The behaviour is covered by a test
-- [ ] `dotnet build -warnaserror` is clean
+- [x] Below the threshold, nothing is logged at warning level
+- [x] The behaviour is covered by a test
+- [x] `dotnet build -warnaserror` is clean

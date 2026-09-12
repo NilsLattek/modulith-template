@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 
 using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
+using ModulithTemplate.SharedKernel.Application.Events;
 using ModulithTemplate.SharedKernel.Outbox.Events;
 
 using Underground.Outbox.Data;
@@ -21,6 +24,33 @@ public class IntegrationEventRepublisherTests
 {
     private static IMessageDispatcher<OutboxMessage> Dispatcher(IServiceScope scope) =>
         scope.ServiceProvider.GetRequiredService<IMessageDispatcher<OutboxMessage>>();
+
+    /// <summary>Stages a row, reports it as having failed that often, and republishes it.</summary>
+    /// <remarks>
+    /// Constructed rather than resolved, unlike the tests above: the composed solution clears its
+    /// logging providers, so a resolved republisher writes where no test can read.
+    /// </remarks>
+    /// <param name="retryCount">Failed attempts the worker has already recorded for the row.</param>
+    /// <param name="cancellationToken">Cancels the republish.</param>
+    /// <returns>The row as it was dispatched, and what was logged while dispatching it.</returns>
+    private static async Task<(OutboxMessage Message, FakeLogCollector Log)> RepublishAfterFailuresAsync(
+        int retryCount, CancellationToken cancellationToken)
+    {
+        await using var solution = SolutionUnderTest.Start();
+        await solution.SendAsync(new AddSomeEntityCommand("a name", 12.34m), cancellationToken);
+
+        // Read untracked, so this stands in for the worker's claim without writing the count back.
+        var staged = Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
+        staged.RetryCount = retryCount;
+
+        var logger = new FakeLogger<IntegrationEventRepublisher>();
+        using var scope = solution.CreateScope();
+        var republisher = new IntegrationEventRepublisher(
+            scope.ServiceProvider.GetRequiredService<IntegrationEventRegistry>(), logger);
+        await republisher.ExecuteAsync(scope, staged, cancellationToken);
+
+        return (staged, logger.Collector);
+    }
 
     [Fact]
     public async Task The_worker_dispatches_through_the_republisher()
@@ -75,5 +105,33 @@ public class IntegrationEventRepublisherTests
         // An event nobody registered is a wiring mistake, and the row must not be silently completed.
         var exception = await Assert.ThrowsAsync<ParsingException>(republishing);
         Assert.Contains("Nothing.Registers.This", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_message_at_the_failure_threshold_warns_with_the_event_and_its_identity()
+    {
+        // Arrange & Act
+        var (message, log) = await RepublishAfterFailuresAsync(
+            IntegrationEventRepublisher.RepeatedFailureThreshold, TestContext.Current.CancellationToken);
+
+        // Assert
+        // A stuck message blocks its Group forever and nothing else reports that, so the warning has
+        // to name what is stuck and which one it is.
+        var warning = Assert.Single(log.GetSnapshot(), record => record.Level == LogLevel.Warning);
+        Assert.Contains(message.Type, warning.Message, StringComparison.Ordinal);
+        Assert.Contains(message.EventId.ToString(), warning.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_message_below_the_failure_threshold_warns_about_nothing()
+    {
+        // Arrange & Act
+        var (_, log) = await RepublishAfterFailuresAsync(
+            IntegrationEventRepublisher.RepeatedFailureThreshold - 1, TestContext.Current.CancellationToken);
+
+        // Assert
+        // Backoff absorbs a transient outage; warning about one would train the operator to ignore
+        // the warning that matters.
+        Assert.DoesNotContain(log.GetSnapshot(), record => record.Level == LogLevel.Warning);
     }
 }

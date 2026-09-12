@@ -3,6 +3,7 @@ using System.Text.Json;
 using Mediator;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using ModulithTemplate.SharedKernel.Application.Events;
 
@@ -28,9 +29,19 @@ namespace ModulithTemplate.SharedKernel.Outbox.Events;
 /// </para>
 /// </remarks>
 /// <param name="registry">Maps a row's stored type name back to the event type.</param>
-public sealed class IntegrationEventRepublisher(IntegrationEventRegistry registry)
+/// <param name="logger">Records a message that keeps failing.</param>
+public sealed class IntegrationEventRepublisher(
+    IntegrationEventRegistry registry, ILogger<IntegrationEventRepublisher> logger)
     : IMessageDispatcher<OutboxMessage>
 {
+    /// <summary>Recorded failures from which an attempt is reported at warning level.</summary>
+    /// <remarks>
+    /// The library retries forever, so a message that can never succeed blocks its Group silently;
+    /// noticing that is the host's job. Three is past what the doubling backoff absorbs, so the
+    /// warning means "look at this" rather than "something blipped".
+    /// </remarks>
+    public const int RepeatedFailureThreshold = 3;
+
     /// <inheritdoc />
     public async Task ExecuteAsync(
         IServiceScope scope, OutboxMessage message, CancellationToken cancellationToken)
@@ -38,6 +49,14 @@ public sealed class IntegrationEventRepublisher(IntegrationEventRegistry registr
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(registry);
+
+        // Before the lookup, so a message failing because nothing is registered for it is reported
+        // too — that one can only ever fail.
+        if (message.RetryCount >= RepeatedFailureThreshold)
+        {
+            IntegrationEventLog.RepeatedFailure(
+                logger, message.Type, message.EventId, message.RetryCount, message.GroupKey);
+        }
 
         var eventType = registry.Find(message.Type)
             ?? throw new ParsingException(

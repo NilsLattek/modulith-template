@@ -13,7 +13,7 @@ template surfaces here rather than after the mechanism is built on top of it.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `Payments` is scaffolded with `dotnet new modulith-feature` and its projects are in the solution
 - [x] It owns an entity, a schema and a migration that `update-database.sh` applies

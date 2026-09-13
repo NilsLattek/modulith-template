@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+    <PackageReference Include="Underground.Outbox" />
   </ItemGroup>
 
   <ItemGroup>

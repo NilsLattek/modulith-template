@@ -25,7 +25,8 @@ of layer projects, mirrored by test projects under `test/Features/<Name>/`:
 
 `Domain` has no outbound dependencies and is the only place business rules live; features must not depend on each other; `ModulithTemplate.ArchitectureTests` enforces the layer rules, the cross-feature isolation and the naming/placement conventions below — each in bothdirections, so a `*Spec` outside `Specifications/` fails just as a badly-named type inside it does.
 
-`Contracts` is how one feature reaches another.
+`Contracts` is how one feature reaches another — synchronously through a Module API, asynchronously
+through an Integration Event. See *Reaching another feature* below.
 
 ### Where business logic goes
 
@@ -99,6 +100,87 @@ Failures come back as a failed `Result` carrying one `ValidationError` per broke
 (`ModulithTemplate.SharedKernel.Application/Errors/ValidationError.cs`), each with the `PropertyName` it was declared
 on, so a Blazor form can group `result.Errors.OfType<ValidationError>()` by property and bind the
 messages to their fields.
+
+### Reaching another feature
+
+Both routes go through the publishing feature's `Contracts` project — the only part of a feature a
+sibling may reference.
+
+| You need… | Use |
+| --- | --- |
+| An answer, now, to finish the request you are in | the **Module API** — `IOrdersApi` in `Orders.Contracts/Api/`, implemented in `Orders.Application/Api/`. Synchronous, read-only, the caller's transaction. |
+| Something to happen elsewhere *because* something happened here | an **Integration Event** — durable, at least once, each consumer in its own transaction. |
+
+Publish an Integration Event when you do not need the answer to proceed: the publisher never learns
+who reacted, or whether they succeeded.
+
+#### Publishing one
+
+Where the pieces live, in the shipped `Orders` → `Payments` example:
+
+| Piece | Lives in |
+| --- | --- |
+| `SomeEntityAddedDomainEvent`, raised by the aggregate's mutator | `Orders.Domain/Events/` |
+| `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
+| The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
+| `services.AddIntegrationEvent<SomeEntityAddedIntegrationEvent>()` | `ConfigureOrdersApplication` |
+| `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` | `Payments.Application/IntegrationEventHandlers/` |
+
+The translating handler hands the event to its feature's `I<Name>IntegrationEventPublisher`, which
+**stages** an outbox row through that feature's `DbContext`: the row is written by the same save that
+persists the aggregate, so the event exists if and only if the change committed. A worker then
+republishes it in-process, each consumer in a fresh scope with its own `DbContext`. No feature code
+opens a transaction. The marker interface and its binding in `<Name>Module.cs` are scaffolded, so
+publishing costs a record, the translating handler, and the one registration line — which lives in
+`Application` because that is the only layer allowed to reference `Contracts`, and is what lets the
+worker turn a stored row back into the event.
+
+`EventId` and `GroupKey` are on the event itself, because republishing hands a consumer the event
+and nothing else. **The Group key is the aggregate the event concerns** — events sharing one are
+delivered in order, one at a time, while unrelated aggregates proceed concurrently; a constant would
+serialise the application behind a single stuck message. The architecture tests fail an
+`IIntegrationEvent` declared outside a `Contracts` assembly, or named or placed off-convention.
+
+#### Consuming one, and what idempotency has to mean
+
+Consuming costs a `ProjectReference` from the consumer's `Application` to the publisher's
+`Contracts`, and the handler — the consumer registers nothing, and neither side mentions the other
+anywhere else.
+
+Delivery is **at least once**, in a stronger sense than that phrase usually carries: one message fans
+out to every consumer, so a consumer that throws fails the *message*. It is redelivered, re-running
+consumers that already succeeded — and consumers ordered after the failing one may not have run at
+all. A handler must tolerate re-running because a **sibling** failed, not merely after its own
+failure.
+
+So check before you write. The shipped consumer asks `PaymentForOrderSpec` whether this order already
+has a payment and returns if it does; a natural key, or a unique index to write against, is the
+cheapest route. `EventId` is there for when no natural key exists — key your own row on it.
+
+**A consumer that genuinely cannot be idempotent** — an external, unrepeatable effect like charging a
+card — keeps that effect out of the fan-out handler:
+
+1. The handler consuming the shared event does only idempotent work: through its own `DbContext` it
+   writes an inbox row keyed on `EventId` (unique index), and returns if the row is already there.
+2. The effect hangs off that row's own save — a domain event on the inbox entity, or this feature's
+   own integration event with exactly one consumer — so a sibling's failure can never re-run it.
+
+The effect is then retried only if it itself failed, which is the floor: at-least-once cannot be made
+exactly-once outside the database. Do not use the shared outbox as an inbox — one row per event id
+would let the first consumer to complete starve the rest.
+
+#### Two things that bite
+
+- **Renaming or moving an Integration Event is a breaking change.** Every outbox row stores the
+  event's full type name and the worker resolves the type back from it, so rows written under the old
+  name can no longer be delivered: they fail forever, blocking their Group, logging
+  `No integration event is registered as '<old name>'` and a repeated-failure warning. The namespace
+  and type name are the wire contract — rename only against a drained outbox.
+- **An Integration Event with no consumer fails the build.** The mediator's source generator reports
+  it against the host as `MSG0005` — a warning, so `-warnaserror` is what turns it into the build
+  failure CI sees. Deliberate: in a monolith every consumer is in the same solution, so "nobody
+  listens to this" is a defect rather than a deployment state, and the alternative is an event
+  dispatched to nobody at runtime. Write the publishing and consuming sides together.
 
 ### Infrastructure
 

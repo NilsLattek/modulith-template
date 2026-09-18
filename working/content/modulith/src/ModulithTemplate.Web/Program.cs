@@ -3,7 +3,6 @@ using ModulithTemplate.Features.Payments.Web;
 using ModulithTemplate.SharedKernel.Application.Behaviours;
 using ModulithTemplate.SharedKernel.Outbox;
 using ModulithTemplate.SharedKernel.Outbox.Data;
-using ModulithTemplate.SharedKernel.Outbox.Events;
 using ModulithTemplate.Web.Components;
 
 using Underground.Outbox.Configuration;
@@ -18,14 +17,10 @@ builder.AddServiceDefaults();
 // update-database.sh and CI's migration checks enumerate contexts from this container.
 builder.Services.AddOutboxDbContext(builder.Configuration);
 
-// The worker that claims and delivers staged rows. AddOutboxServices comes from the outbox source
-// generator, which the library requires to be referenced by the DI root — so this call can only be
-// made here, not from Shared.Outbox.
+// The worker that claims and delivers staged rows. Its dispatcher routes each row to the one
+// IOutboxMessageHandler<T> registered for the type stored on it — contributed by the feature that
+// owns the event, from its own Configure<Name>Application, in any order relative to this call.
 builder.Services.AddOutboxServices<OutboxContext>(_ => { });
-
-// After AddOutboxServices, deliberately: it replaces that generator's dispatcher, which can only
-// route to handler classes naming a concrete message type. See IntegrationEventRepublisher.
-builder.Services.AddIntegrationEventDelivery();
 
 builder.ConfigureOrdersFeature();
 builder.ConfigurePaymentsFeature();

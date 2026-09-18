@@ -17,7 +17,6 @@ using ModulithTemplate.Features.Payments.Web;
 using ModulithTemplate.SharedKernel.Application.Behaviours;
 using ModulithTemplate.SharedKernel.Outbox;
 using ModulithTemplate.SharedKernel.Outbox.Data;
-using ModulithTemplate.SharedKernel.Outbox.Events;
 
 using Underground.Outbox.Configuration;
 using Underground.Outbox.Data;
@@ -100,11 +99,10 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         });
         builder.Services.AddLogging(logging => logging.ClearProviders());
 
-        // From here to AddMediator: Program.cs, in its order, which is load-bearing — the delivery
-        // registration only wins because it follows AddOutboxServices.
+        // From here to AddMediator: Program.cs, in its order. Each feature module contributes its own
+        // outbox handlers, so what the worker can deliver here is what the host can deliver.
         builder.Services.AddOutboxDbContext(builder.Configuration);
         builder.Services.AddOutboxServices<OutboxContext>(_ => { });
-        builder.Services.AddIntegrationEventDelivery();
         builder.ConfigureOrdersFeature();
         builder.ConfigurePaymentsFeature();
         builder.Services.AddMediator(options =>

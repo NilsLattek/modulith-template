@@ -58,6 +58,11 @@ public class NamingConventionTests
 
         // The consuming side stays internal — a handler is the reacting feature's own business.
         new("integration event handler", ["IntegrationEventHandler"], ["Application.IntegrationEventHandlers"]),
+
+        // The publishing side: one per event the feature's own Contracts declares, taking the claimed
+        // outbox row back to the mediator. In Application because only that layer may name a Contracts
+        // type, which is also what keeps it out of Web beside the publisher it mirrors.
+        new("outbox handler", ["OutboxHandler"], ["Application.OutboxHandlers"]),
     ];
 
     private static readonly ContentRule[] Contents =
@@ -77,6 +82,7 @@ public class NamingConventionTests
         new("Application.DomainEventHandlers", ["DomainEventHandler"]),
         new("Contracts.Events", ["IntegrationEvent"]),
         new("Application.IntegrationEventHandlers", ["IntegrationEventHandler"]),
+        new("Application.OutboxHandlers", ["OutboxHandler"]),
     ];
 
     /// <summary>Names of every placement rule, for the theory below.</summary>

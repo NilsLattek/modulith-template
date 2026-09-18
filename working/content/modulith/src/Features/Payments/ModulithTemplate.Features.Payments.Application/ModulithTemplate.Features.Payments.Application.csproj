@@ -7,6 +7,11 @@
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Riok.Mapperly" ExcludeAssets="runtime" PrivateAssets="all" />
+    <!-- The handler interface, and the generator that emits this assembly's
+         AddModulithTemplateFeaturesPaymentsApplicationMessageHandlers(). Scaffolded before this
+         feature publishes anything, so its first Integration Event costs no csproj edit. -->
+    <PackageReference Include="Underground.Outbox" />
+    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

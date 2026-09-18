@@ -12,7 +12,7 @@ presume, and is explicitly out of scope.
 
 **Blocked by:** 03 (Orders publishes an integration event, Payments consumes it).
 
-**Status:** done
+**Status:** done — reverted by 09 (remove the central republisher).
 
 - [x] A message whose retry count is at or past the threshold logs a warning naming the event type
       and its identity

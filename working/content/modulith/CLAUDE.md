@@ -123,20 +123,26 @@ Where the pieces live, in the shipped `Orders` → `Payments` example:
 | `SomeEntityAddedDomainEvent`, raised by the aggregate's mutator | `Orders.Domain/Events/` |
 | `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
 | The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
-| `services.AddIntegrationEvent<SomeEntityAddedIntegrationEvent>()` | `ConfigureOrdersApplication` |
+| `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` — takes the delivered row to the mediator | `Orders.Application/OutboxHandlers/` |
+| `services.AddModulithTemplateFeaturesOrdersApplicationMessageHandlers()` — source-generated, named after the assembly, one call for every handler in it | `ConfigureOrdersApplication` |
 | `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` | `Payments.Application/IntegrationEventHandlers/` |
 
 The translating handler hands the event to its feature's `I<Name>IntegrationEventPublisher`, which
 **stages** an outbox row through that feature's `DbContext`: the row is written by the same save that
-persists the aggregate, so the event exists if and only if the change committed. A worker then
-republishes it in-process, each consumer in a fresh scope with its own `DbContext`. No feature code
-opens a transaction. The marker interface and its binding in `<Name>Module.cs` are scaffolded, so
-publishing costs a record, the translating handler, and the one registration line — which lives in
-`Application` because that is the only layer allowed to reference `Contracts`, and is what lets the
-worker turn a stored row back into the event.
+persists the aggregate, so the event exists if and only if the change committed. A worker later
+claims the row and hands it, in a fresh scope, to the **one** `IOutboxMessageHandler<T>` registered
+for its type — which publishes it to the mediator, where every consumer receives it in that scope
+with its own `DbContext`. No feature code opens a transaction.
 
-`EventId` and `GroupKey` are on the event itself, because republishing hands a consumer the event
-and nothing else. **The Group key is the aggregate the event concerns** — events sharing one are
+That handler belongs to the feature whose `Contracts` declares the event, alongside the rest of its
+`Application` layer, because only `Application` may name a `Contracts` type. The marker interface and
+its binding in `<Name>Module.cs` are scaffolded, and `Configure<Name>Application` already calls the
+source-generated `Add<Assembly>MessageHandlers()` that registers every handler under
+`OutboxHandlers/` — so a second published event costs a record, a translating handler, and an outbox
+handler, with no registration to keep in step.
+
+`EventId` and `GroupKey` are on the event itself, because delivery hands a consumer the event and
+nothing else. **The Group key is the aggregate the event concerns** — events sharing one are
 delivered in order, one at a time, while unrelated aggregates proceed concurrently; a constant would
 serialise the application behind a single stuck message. The architecture tests fail an
 `IIntegrationEvent` declared outside a `Contracts` assembly, or named or placed off-convention.
@@ -172,15 +178,19 @@ would let the first consumer to complete starve the rest.
 #### Two things that bite
 
 - **Renaming or moving an Integration Event is a breaking change.** Every outbox row stores the
-  event's full type name and the worker resolves the type back from it, so rows written under the old
-  name can no longer be delivered: they fail forever, blocking their Group, logging
-  `No integration event is registered as '<old name>'` and a repeated-failure warning. The namespace
-  and type name are the wire contract — rename only against a drained outbox.
+  event's full type name and the worker matches it against the handlers registered for it, so rows
+  written under the old name can no longer be delivered: they fail forever, blocking their Group,
+  logging `No handler configured for message type '<old name>'`. The namespace and type name are the
+  wire contract — rename only against a drained outbox.
 - **An Integration Event with no consumer fails the build.** The mediator's source generator reports
   it against the host as `MSG0005` — a warning, so `-warnaserror` is what turns it into the build
   failure CI sees. Deliberate: in a monolith every consumer is in the same solution, so "nobody
   listens to this" is a defect rather than a deployment state, and the alternative is an event
   dispatched to nobody at runtime. Write the publishing and consuming sides together.
+- **An event may have only one outbox handler.** Two in one assembly is the compile error
+  `OUTBOX001`; two in different assemblies throws `CompetingHandlersException` as the host starts.
+  This is not a limit on consumers — one handler publishes to the mediator once, and every
+  `INotificationHandler` for that event runs.
 
 ### Infrastructure
 

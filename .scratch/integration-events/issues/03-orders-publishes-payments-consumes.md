@@ -132,3 +132,12 @@ matched any payment and the consumer skipped every order after the first. Fixed,
   `AddScoped` in `<Name>Module.cs`.
 - **08** (docs): `CLAUDE.md` in the content tree still says nothing about integration events. Only the
   statements my change made false were corrected here.
+
+### Superseded by 09 (Underground.Outbox 0.17)
+
+The two experiments above still hold for what they tested — an *open generic* handler makes the
+generator emit a type parameter it cannot resolve, and a handler closing one by inheritance is not
+discovered — but the conclusion drawn from them, that the library's dispatcher must be replaced, no
+longer follows. 0.17 discovers handlers per assembly rather than from the composition root, so a
+concrete `IOutboxMessageHandler<TConcreteEvent>` in the publishing feature is discovered and
+dispatched natively. `IntegrationEventRepublisher` and `IntegrationEventRegistry` are gone; see 09.

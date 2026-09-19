@@ -1,8 +1,8 @@
 using Mediator;
 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
@@ -24,78 +24,64 @@ using Underground.Outbox.Data;
 namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
-/// The generated solution's composition, wired as <c>Program.cs</c> wires it but with every context
-/// moved onto one in-memory SQLite database.
+/// The generated solution's composition, wired as <c>Program.cs</c> wires it, over a Postgres
+/// database of this test's own.
 /// </summary>
 /// <remarks>
-/// The feature modules, the outbox registration and the mediator options are the real ones, so a
-/// binding this design depends on cannot be missing in the host yet present here. Only the provider
-/// is swapped, and by rebuilding the registered options rather than writing new ones — see
-/// <see cref="SqliteRebinding"/>, which is what keeps the interceptors under test the ones
-/// <c>AddModuleDbContext</c> attached.
+/// The feature modules, the outbox registration, the mediator options and the provider are all the
+/// real ones, so a binding this design depends on cannot be missing in the host yet present here.
+/// Only the connection string differs, which is also why nothing here rebuilds the options
+/// <c>AddModuleDbContext</c> registered.
 /// </remarks>
 internal sealed class SolutionUnderTest : IAsyncDisposable
 {
-    /// <summary>Syntactically valid and never connected to; SQLite serves every context.</summary>
-    private const string PostgresConnection =
-        "Host=localhost;Database=modulith_tests;Search Path=shared,public";
-
-    private readonly SqliteConnection _connection;
+    private readonly TestDatabase _database;
     private readonly ServiceProvider _provider;
 
     /// <summary>What each save through the Orders context was about to write.</summary>
     public SaveRecorder OrdersSaves { get; }
 
-    private SolutionUnderTest(SqliteConnection connection, ServiceProvider provider, SaveRecorder ordersSaves)
+    private SolutionUnderTest(TestDatabase database, ServiceProvider provider, SaveRecorder ordersSaves)
     {
-        _connection = connection;
+        _database = database;
         _provider = provider;
         OrdersSaves = ordersSaves;
     }
 
-    /// <summary>Builds the solution's services over a fresh in-memory database.</summary>
+    /// <summary>Builds the solution's services over a fresh database.</summary>
     /// <returns>The composed solution.</returns>
     public static SolutionUnderTest Start()
     {
-        // Held open for the lifetime of the test: an in-memory SQLite database exists only as long
-        // as a connection to it does.
-        var connection = new SqliteConnection("Data Source=:memory:");
+        var database = TestDatabase.Create();
         ServiceProvider? provider = null;
 
         try
         {
-            connection.Open();
-
-            // The outbox columns the library defaults in SQL. Only the outbox worker reads them —
-            // these tests reach the row before any claim — so a plausible value each is enough.
-            connection.CreateFunction("clock_timestamp", () => DateTime.UtcNow);
-            connection.CreateFunction("pg_current_xact_id", () => 0L);
-
             var ordersSaves = new SaveRecorder();
-            provider = Compose(connection, ordersSaves);
+            provider = Compose(database.ConnectionString, ordersSaves);
             CreateSchema(provider);
 
-            return new SolutionUnderTest(connection, provider, ordersSaves);
+            return new SolutionUnderTest(database, provider, ordersSaves);
         }
         catch
         {
             // Nothing owns them until the instance exists, and the test never sees one.
             provider?.Dispose();
-            connection.Dispose();
+            database.Dispose();
             throw;
         }
     }
 
-    /// <summary>Registers the solution's services, with every context served from SQLite.</summary>
-    /// <param name="connection">The open in-memory connection.</param>
+    /// <summary>Registers the solution's services against this test's database.</summary>
+    /// <param name="connectionString">The test's own database.</param>
     /// <param name="ordersSaves">Records the saves made through the Orders context.</param>
     /// <returns>The built container.</returns>
-    private static ServiceProvider Compose(SqliteConnection connection, SaveRecorder ordersSaves)
+    private static ServiceProvider Compose(string connectionString, SaveRecorder ordersSaves)
     {
         var builder = WebApplication.CreateEmptyBuilder(new WebApplicationOptions());
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
-            ["ConnectionStrings:PostgresConnection"] = PostgresConnection,
+            ["ConnectionStrings:PostgresConnection"] = connectionString,
         });
         builder.Services.AddLogging(logging => logging.ClearProviders());
 
@@ -116,9 +102,10 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
             ];
         });
 
-        builder.Services.OnSqlite<OutboxContext>(connection);
-        builder.Services.OnSqlite<OrdersContext>(connection, ordersSaves);
-        builder.Services.OnSqlite<PaymentsContext>(connection);
+        // Added to the registered options rather than rebuilt into them, so the recorder runs after
+        // the interceptors AddModuleDbContext attached and sees what their handlers staged.
+        builder.Services.AddSingleton<IDbContextOptionsConfiguration<OrdersContext>>(
+            new AttachInterceptor<OrdersContext>(ordersSaves));
 
         return builder.Services.BuildServiceProvider();
     }
@@ -163,14 +150,16 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await _provider.DisposeAsync();
-        await _connection.DisposeAsync();
+        _database.Dispose();
     }
 
     /// <summary>Creates each context's tables, and only the ones it owns.</summary>
     /// <remarks>
     /// Per context rather than <c>EnsureCreated</c>, which creates nothing once the database has any
     /// table. Tables excluded from a context's migrations are skipped, so only <c>OutboxContext</c>
-    /// creates the shared outbox table — the same division of labour the migrations have.
+    /// creates the shared outbox table — the same division of labour the migrations have. From the
+    /// model rather than by migrating, because the template ships none: the generated project's
+    /// owner adds the first.
     /// </remarks>
     /// <param name="provider">The built container.</param>
     private static void CreateSchema(ServiceProvider provider)
@@ -182,5 +171,17 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
 
         static void CreateTables(DbContext context) =>
             context.GetService<IRelationalDatabaseCreator>().CreateTables();
+    }
+
+    /// <summary>Adds an interceptor to a context the solution has already registered.</summary>
+    /// <typeparam name="TContext">The context to attach to.</typeparam>
+    /// <param name="interceptor">The interceptor to add, after the registered ones.</param>
+    private sealed class AttachInterceptor<TContext>(IInterceptor interceptor)
+        : IDbContextOptionsConfiguration<TContext>
+        where TContext : DbContext
+    {
+        /// <inheritdoc />
+        public void Configure(IServiceProvider serviceProvider, DbContextOptionsBuilder optionsBuilder) =>
+            optionsBuilder.AddInterceptors(interceptor);
     }
 }

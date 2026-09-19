@@ -9,7 +9,7 @@ using ModulithTemplate.Features.Orders.Infrastructure.Data;
 
 using Underground.Outbox.Data;
 
-namespace ModulithTemplate.AtomicityTests;
+namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
 /// The claim the whole design rests on: an integration event is recorded by the same save that

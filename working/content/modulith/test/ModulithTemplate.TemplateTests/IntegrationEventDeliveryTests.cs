@@ -8,7 +8,7 @@ using Underground.Outbox.Data;
 using Underground.Outbox.Domain.Dispatchers;
 using Underground.Outbox.Exceptions;
 
-namespace ModulithTemplate.AtomicityTests;
+namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
 /// The other half of the crossing: a claimed row becomes its event again and reaches the consuming

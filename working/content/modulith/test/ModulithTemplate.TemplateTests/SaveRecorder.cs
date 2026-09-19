@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace ModulithTemplate.AtomicityTests;
+namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
 /// Records what each save on a context was about to write.

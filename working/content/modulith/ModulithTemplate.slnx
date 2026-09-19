@@ -28,7 +28,7 @@
   <Folder Name="/test/">
     <Project Path="test/ModulithTemplate.ArchitectureTests/ModulithTemplate.ArchitectureTests.csproj" />
     <!--#if (includeTemplateTests) -->
-    <Project Path="test/ModulithTemplate.AtomicityTests/ModulithTemplate.AtomicityTests.csproj" />
+    <Project Path="test/ModulithTemplate.TemplateTests/ModulithTemplate.TemplateTests.csproj" />
     <!--#endif -->
     <Project Path="test/ModulithTemplate.WebTests/ModulithTemplate.WebTests.csproj" />
   </Folder>

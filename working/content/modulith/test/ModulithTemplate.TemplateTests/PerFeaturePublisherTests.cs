@@ -7,7 +7,7 @@ using ModulithTemplate.Features.Payments.Infrastructure.Data;
 
 using Underground.Outbox.Data;
 
-namespace ModulithTemplate.AtomicityTests;
+namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
 /// What a feature's own publisher marker buys: the row is staged on that feature's connection

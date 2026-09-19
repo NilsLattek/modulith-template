@@ -21,7 +21,7 @@ using ModulithTemplate.SharedKernel.Outbox.Data;
 using Underground.Outbox.Configuration;
 using Underground.Outbox.Data;
 
-namespace ModulithTemplate.AtomicityTests;
+namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
 /// The generated solution's composition, wired as <c>Program.cs</c> wires it but with every context

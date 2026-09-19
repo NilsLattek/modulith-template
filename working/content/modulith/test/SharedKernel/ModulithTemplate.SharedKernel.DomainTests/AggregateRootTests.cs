@@ -1,7 +1,7 @@
 using ModulithTemplate.SharedKernel.Domain.Entities;
 using ModulithTemplate.SharedKernel.Domain.Events;
 
-namespace ModulithTemplate.Features.Orders.DomainTests;
+namespace ModulithTemplate.SharedKernel.DomainTests;
 
 /// <summary>Tests for <see cref="AggregateRoot"/>.</summary>
 public class AggregateRootTests

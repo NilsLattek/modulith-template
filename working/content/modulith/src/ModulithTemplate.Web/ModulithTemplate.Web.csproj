@@ -9,9 +9,7 @@
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="FluentResults" />
-    <!-- The outbox source generator emits its AddOutboxServices/dispatcher into whichever assembly
-         references it, and the library requires that to be the DI root. -->
-    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
+    <PackageReference Include="Underground.Outbox" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,13 +10,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Both generators emit into whichever assembly references them, so this project gets its own
-         mediator and its own AddOutboxServices — the same composition the host builds, minus the
-         host. Referencing ModulithTemplate.Web instead would make both ambiguous. -->
+    <!-- The mediator generator emits into whichever assembly references it, so this project gets its
+         own AddMediator — the same composition the host builds, minus the host. Referencing
+         ModulithTemplate.Web instead would make it ambiguous. The outbox generator is not needed:
+         this project declares no handler, and picks each feature's up through Configure*Feature. -->
     <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
-    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
+    <PackageReference Include="Underground.Outbox" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
   </ItemGroup>
 
 </Project>

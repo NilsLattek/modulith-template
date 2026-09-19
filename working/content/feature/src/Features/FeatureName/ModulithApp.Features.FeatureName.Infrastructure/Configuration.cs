@@ -15,6 +15,11 @@ public static class Configuration
         services.AddModuleDbContext<FeatureNameContext>(configuration, schema: "featureschema");
         services.AddScoped(typeof(IFeatureNameRepository<>), typeof(FeatureNameRepository<>));
         services.AddScoped<IFeatureNameUnitOfWork, FeatureNameUnitOfWork>();
+
+        // This feature publishes no Integration Event yet. The first one is a record in Contracts, a
+        // SomethingHappenedOutboxHandler : IOutboxMessageHandler<T> under OutboxHandlers/, and then
+        // services.AddModulithAppFeaturesFeatureNameInfrastructureMessageHandlers() here — the
+        // source generator emits that method only once this assembly declares a handler.
         return services;
     }
 }

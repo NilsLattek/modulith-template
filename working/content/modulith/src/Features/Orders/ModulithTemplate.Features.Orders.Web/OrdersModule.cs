@@ -13,9 +13,6 @@ public static class OrdersModule
         builder.Services.ConfigureOrdersInfrastructure(builder.Configuration);
         builder.Services.ConfigureOrdersApplication();
 
-        // Bound here, not in Configure*Infrastructure: the marker interface lives in Application and
-        // Infrastructure may not reference it.
-        builder.Services.AddScoped<IOrdersIntegrationEventPublisher, OrdersIntegrationEventPublisher>();
         return builder;
     }
 }

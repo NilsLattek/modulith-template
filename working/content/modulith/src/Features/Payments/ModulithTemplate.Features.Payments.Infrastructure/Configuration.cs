@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using ModulithTemplate.Features.Payments.Application;
 using ModulithTemplate.Features.Payments.Domain;
 using ModulithTemplate.Features.Payments.Infrastructure.Data;
+using ModulithTemplate.Features.Payments.Infrastructure.Events;
 using ModulithTemplate.SharedKernel.Infrastructure;
 
 namespace ModulithTemplate.Features.Payments.Infrastructure;
@@ -15,6 +17,7 @@ public static class Configuration
         services.AddModuleDbContext<PaymentsContext>(configuration, schema: "payments");
         services.AddScoped(typeof(IPaymentsRepository<>), typeof(PaymentsRepository<>));
         services.AddScoped<IPaymentsUnitOfWork, PaymentsUnitOfWork>();
+        services.AddScoped<IPaymentsIntegrationEventPublisher, PaymentsIntegrationEventPublisher>();
 
         // This feature publishes no Integration Event yet. The first one is a record in Contracts, a
         // SomethingHappenedOutboxHandler : IOutboxMessageHandler<T> under OutboxHandlers/, and then

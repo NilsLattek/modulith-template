@@ -13,9 +13,6 @@ public static class FeatureNameModule
         builder.Services.ConfigureFeatureNameInfrastructure(builder.Configuration);
         builder.Services.ConfigureFeatureNameApplication();
 
-        // Bound here, not in Configure*Infrastructure: the marker interface lives in Application and
-        // Infrastructure may not reference it.
-        builder.Services.AddScoped<IFeatureNameIntegrationEventPublisher, FeatureNameIntegrationEventPublisher>();
         return builder;
     }
 }

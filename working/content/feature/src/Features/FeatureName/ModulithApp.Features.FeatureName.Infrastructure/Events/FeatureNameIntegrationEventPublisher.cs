@@ -4,13 +4,12 @@ using ModulithApp.SharedKernel.Outbox.Events;
 
 using Underground.Outbox;
 
-namespace ModulithApp.Features.FeatureName.Web;
+namespace ModulithApp.Features.FeatureName.Infrastructure.Events;
 
 /// <summary>Binds the FeatureName publisher marker to the FeatureName context.</summary>
 /// <remarks>
-/// Lives here rather than beside <c>FeatureNameRepository</c> because the marker interface is in
-/// <c>Application</c>, which a feature's <c>Infrastructure</c> may not depend on — the one place
-/// this mechanism's layering differs from the repository's.
+/// Sits opposite the outbox handlers that read rows back: staging one is infrastructure too. The
+/// marker it implements is an <c>Application</c> port, which this layer may name — see ADR 0004.
 /// </remarks>
 /// <param name="dbContext">The FeatureName context the event is staged in.</param>
 /// <param name="outbox">The outbox the row is staged in.</param>

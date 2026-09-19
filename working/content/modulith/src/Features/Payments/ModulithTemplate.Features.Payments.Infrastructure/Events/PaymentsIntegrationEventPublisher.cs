@@ -4,13 +4,12 @@ using ModulithTemplate.SharedKernel.Outbox.Events;
 
 using Underground.Outbox;
 
-namespace ModulithTemplate.Features.Payments.Web;
+namespace ModulithTemplate.Features.Payments.Infrastructure.Events;
 
 /// <summary>Binds the Payments publisher marker to the Payments context.</summary>
 /// <remarks>
-/// Lives here rather than beside <c>PaymentsRepository</c> because the marker interface is in
-/// <c>Application</c>, which a feature's <c>Infrastructure</c> may not depend on — the one place
-/// this mechanism's layering differs from the repository's.
+/// Sits opposite the outbox handlers that read rows back: staging one is infrastructure too. The
+/// marker it implements is an <c>Application</c> port, which this layer may name — see ADR 0004.
 /// </remarks>
 /// <param name="dbContext">The Payments context the event is staged in.</param>
 /// <param name="outbox">The outbox the row is staged in.</param>

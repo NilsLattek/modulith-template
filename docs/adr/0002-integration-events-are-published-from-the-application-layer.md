@@ -8,9 +8,10 @@ event, and an application-layer handler turns it into the integration event.
 `IIntegrationEvent` and `IIntegrationEventPublisher` therefore live in `SharedKernel.Application`,
 and a feature's `I<Name>IntegrationEventPublisher` in its own `Application` layer — unlike
 `IRepository` and `IUnitOfWork`, which sit in `Domain` because a repository genuinely *is* a domain
-abstraction. One consequence is easy to trip over: `FeatureLayerTests` forbids `Infrastructure` from
-depending on `Application`, so the publisher is bound in the feature's `Web` composition root
-(`<Name>Module.cs`) rather than beside the repository in `Configure<Name>Infrastructure`.
+abstraction. The implementation binding that port to the feature's `DbContext` lives in
+`Infrastructure/Events/` and is registered in `Configure<Name>Infrastructure`, beside the
+repository — which ADR 0004 is what allows, by opening `Infrastructure` to its own feature's
+`Application`.
 
 ## Consequences
 

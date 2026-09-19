@@ -124,6 +124,7 @@ Where the pieces live, in the shipped `Orders` → `Payments` example:
 | `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
 | The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
 | `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` — takes the delivered row to the mediator | `Orders.Infrastructure/OutboxHandlers/` |
+| `OrdersIntegrationEventPublisher` — binds the marker to the Orders `DbContext` | `Orders.Infrastructure/Events/` |
 | `services.AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers()` — source-generated, named after the assembly, one call for every handler in it | `ConfigureOrdersInfrastructure` |
 | `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` | `Payments.Application/IntegrationEventHandlers/` |
 
@@ -138,7 +139,7 @@ That handler belongs to the feature whose `Contracts` declares the event, in its
 layer: delivery is infrastructure, and this is the reading counterpart to the publisher that staged
 the row. It is the one thing an `Infrastructure` layer may name a `Contracts` type for, and only its
 own feature's — `ContractIsolationTests` still fails it for a sibling's. The marker interface and its
-binding in `<Name>Module.cs` are scaffolded, and `Configure<Name>Infrastructure` already calls the
+binding are scaffolded, both registered by `Configure<Name>Infrastructure`, which already calls the
 source-generated `Add<Assembly>MessageHandlers()` that registers every handler under
 `OutboxHandlers/` — so a second published event costs a record, a translating handler, and an outbox
 handler, with no registration to keep in step.
@@ -202,6 +203,12 @@ and its own `Data/Migrations/`. Register the context through
 `ModulithTemplate.SharedKernel.Infrastructure`'s `AddModuleDbContext<TContext>(configuration, schema)`, which
 carries the snake_case `EFCore.NamingConventions` setup; that shared project defines EF conventions
 only and never a concrete `DbContext`.
+
+This layer **may** name its own feature's `Application` types — that is how `<Name>IntegrationEventPublisher`
+implements a port declared there (ADR 0004). The reverse stays closed: `Application` never names
+`Infrastructure`, and `FeatureLayerTests` fails it. Use the opening for adapters implementing an
+`Application` port, not to reach a command handler, a validator or an integration event handler from
+an adapter — nothing enforces that line, so it is on review to hold it.
 
 ### Dependency injection
 

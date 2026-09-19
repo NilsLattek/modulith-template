@@ -52,9 +52,3 @@ The ordering boundary between Integration Events. Events in one Group are delive
 the order they were recorded; different Groups proceed independently. Keyed by the aggregate the
 event concerns.
 _Avoid_: Partition, stream, queue, channel
-
-**Redelivery**:
-Delivering an Integration Event again because a previous attempt did not complete. Expected rather
-than exceptional: a Consumer must tolerate seeing the same event more than once, including after a
-*sibling* Consumer was the one that failed.
-_Avoid_: Retry, replay, duplicate

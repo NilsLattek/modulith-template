@@ -147,20 +147,10 @@ delivered in order, one at a time, while unrelated aggregates proceed concurrent
 serialise the application behind a single stuck message. The architecture tests fail an
 `IIntegrationEvent` declared outside a `Contracts` assembly, or named or placed off-convention.
 
-### Infrastructure
-
-EF Core + Npgsql, owned entirely by the feature: a concrete `DbContext` (schema set via
-`HasDefaultSchema`), a context-bound `<Name>Repository<T> : RepositoryBase<T>, I<Name>Repository<T>`,
-and its own `Data/Migrations/`. Register the context through
-`ModulithTemplate.SharedKernel.Infrastructure`'s `AddModuleDbContext<TContext>(configuration, schema)`, which
-carries the snake_case `EFCore.NamingConventions` setup; that shared project defines EF conventions
-only and never a concrete `DbContext`.
-
 ### Dependency injection
 
 Register a service in the owning layer's `Configuration.cs` — not in `Program.cs`, and not in another
-feature's composition root. **Handlers are the one exception**: the host's `AddMediator` discovers them
-automatically.
+feature's composition root.
 
 ### Database access from Blazor components
 
@@ -175,8 +165,7 @@ services may stay directly injected.
 ## Conventions
 
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
-  Blazor component tests. Shared settings and common test packages come from
-  `test/Directory.Build.props`, so a test `.csproj` normally holds nothing but a `ProjectReference`.
+  Blazor component tests.
 - **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.
 
 ## Adding a feature
@@ -185,16 +174,9 @@ services may stay directly injected.
 dotnet new modulith-feature --appName ModulithTemplate -n Shipping
 ```
 
-Run this from the solution root (the directory containing the `.slnx`). It creates the feature's
-layer and test projects, adds them all to the solution, and mirrors the `Orders` persistence and DI
-scaffolding. **The one manual step** is registering the feature with the host: add a project reference
+Run this from the solution root. **The one manual step** is registering the feature with the host: add a project reference
 from `src/ModulithTemplate.Web` to the feature's `.Web` project, and call
-`builder.ConfigureShippingFeature();` in `Program.cs`. Then model the feature's entities under
-`Shipping.Domain/Entities/` and create its first migration with
-`bash add-migration.sh Shipping InitialShipping`.
-
-`Orders` and `Payments` are both scaffolded this way; `Payments` is the worked example of the
-registration step above.
+`builder.ConfigureShippingFeature();` in `Program.cs`.
 
 ## MCP servers
 

@@ -1,10 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Owns the shared outbox table — its DbContext, its migrations — and the publishing half of
-       integration events. Delivery is the library's, routed to each feature's own outbox handler.
-       Separate from Shared.Infrastructure so that project keeps its "EF conventions only, never a
-       concrete DbContext" charter, and so the outbox package stays out of Shared.Application and
-       therefore out of every feature's Contracts. -->
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />

@@ -16,10 +16,6 @@ builder.AddServiceDefaults();
 // Owns the shared outbox table's DDL. Registered here rather than by a feature because
 // update-database.sh and CI's migration checks enumerate contexts from this container.
 builder.Services.AddOutboxDbContext(builder.Configuration);
-
-// The worker that claims and delivers staged rows. Its dispatcher routes each row to the one
-// IOutboxMessageHandler<T> registered for the type stored on it — contributed by the feature that
-// owns the event, from its own Configure<Name>Application, in any order relative to this call.
 builder.Services.AddOutboxServices<OutboxContext>(_ => { });
 
 builder.ConfigureOrdersFeature();

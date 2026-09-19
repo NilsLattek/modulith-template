@@ -9,8 +9,6 @@
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="FluentResults" />
-    <!-- AddOutboxServices, called from Program.cs. Not the source generator: that belongs to the
-         projects declaring outbox handlers, and this one declares none. -->
     <PackageReference Include="Underground.Outbox" />
   </ItemGroup>
 

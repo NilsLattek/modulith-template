@@ -11,9 +11,6 @@ public static class Configuration
     // this file.
     public static IServiceCollection ConfigurePaymentsApplication(this IServiceCollection services)
     {
-        // Consuming a sibling's Integration Event costs nothing here: an INotificationHandler<T>
-        // under IntegrationEventHandlers/ is registered by the mediator, as SomeEntityAdded's is.
-        // Publishing one is Infrastructure's side — see ConfigurePaymentsInfrastructure.
         return services.AddValidatorsFromAssembly(typeof(Configuration).Assembly);
     }
 }

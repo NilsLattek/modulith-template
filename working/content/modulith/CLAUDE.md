@@ -204,12 +204,6 @@ and its own `Data/Migrations/`. Register the context through
 carries the snake_case `EFCore.NamingConventions` setup; that shared project defines EF conventions
 only and never a concrete `DbContext`.
 
-This layer **may** name its own feature's `Application` types — that is how `<Name>IntegrationEventPublisher`
-implements a port declared there (ADR 0004). The reverse stays closed: `Application` never names
-`Infrastructure`, and `FeatureLayerTests` fails it. Use the opening for adapters implementing an
-`Application` port, not to reach a command handler, a validator or an integration event handler from
-an adapter — nothing enforces that line, so it is on review to hold it.
-
 ### Dependency injection
 
 Register a service in the owning layer's `Configuration.cs` — not in `Program.cs`, and not in another

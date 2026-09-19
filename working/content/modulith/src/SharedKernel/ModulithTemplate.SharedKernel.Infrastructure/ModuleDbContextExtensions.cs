@@ -41,7 +41,6 @@ public static class ModuleDbContextExtensions
     {
         services.TryAddScoped<DomainEventDispatcher>();
         services.TryAddScoped<DomainEventDispatchInterceptor<TContext>>();
-        services.TryAddScoped<ProcessOutboxAfterSaveInterceptor>();
 
         // The (sp, options) overload, so the interceptors come from the same scope as the context
         // and share the scope's mediator.
@@ -60,7 +59,10 @@ public static class ModuleDbContextExtensions
                 // living alongside a single context, and this is the same hazard the dispatch
                 // interceptor above is generic to avoid.
                 new ProcessMessagesOnSaveChangesInterceptor(
-                    sp, sp.GetRequiredService<ILogger<ProcessMessagesOnSaveChangesInterceptor>>()),
-                sp.GetRequiredService<ProcessOutboxAfterSaveInterceptor>()));
+                    sp,
+                    sp.GetRequiredService<ILogger<ProcessMessagesOnSaveChangesInterceptor>>()
+                )
+            )
+        );
     }
 }

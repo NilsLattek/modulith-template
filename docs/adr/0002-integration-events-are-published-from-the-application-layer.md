@@ -10,8 +10,7 @@ and a feature's `I<Name>IntegrationEventPublisher` in its own `Application` laye
 `IRepository` and `IUnitOfWork`, which sit in `Domain` because a repository genuinely *is* a domain
 abstraction. The implementation binding that port to the feature's `DbContext` lives in
 `Infrastructure/Events/` and is registered in `Configure<Name>Infrastructure`, beside the
-repository — which ADR 0004 is what allows, by opening `Infrastructure` to its own feature's
-`Application`.
+repository.
 
 ## Consequences
 

@@ -7,10 +7,6 @@
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Riok.Mapperly" ExcludeAssets="runtime" PrivateAssets="all" />
-    <!-- The handler interface, and the generator that emits this assembly's AddModulithTemplateFeaturesOrdersApplicationMessageHandlers().
-         Every project declaring outbox handlers needs both; one without handlers needs neither. -->
-    <PackageReference Include="Underground.Outbox" />
-    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

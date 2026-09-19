@@ -60,9 +60,9 @@ public class NamingConventionTests
         new("integration event handler", ["IntegrationEventHandler"], ["Application.IntegrationEventHandlers"]),
 
         // The publishing side: one per event the feature's own Contracts declares, taking the claimed
-        // outbox row back to the mediator. In Application because only that layer may name a Contracts
-        // type, which is also what keeps it out of Web beside the publisher it mirrors.
-        new("outbox handler", ["OutboxHandler"], ["Application.OutboxHandlers"]),
+        // outbox row back to the mediator. Delivery is infrastructure, so it sits opposite the
+        // publisher that staged the row rather than beside the consumers that react to it.
+        new("outbox handler", ["OutboxHandler"], ["Infrastructure.OutboxHandlers"]),
     ];
 
     private static readonly ContentRule[] Contents =
@@ -82,7 +82,7 @@ public class NamingConventionTests
         new("Application.DomainEventHandlers", ["DomainEventHandler"]),
         new("Contracts.Events", ["IntegrationEvent"]),
         new("Application.IntegrationEventHandlers", ["IntegrationEventHandler"]),
-        new("Application.OutboxHandlers", ["OutboxHandler"]),
+        new("Infrastructure.OutboxHandlers", ["OutboxHandler"]),
     ];
 
     /// <summary>Names of every placement rule, for the theory below.</summary>

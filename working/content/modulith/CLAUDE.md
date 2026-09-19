@@ -123,8 +123,8 @@ Where the pieces live, in the shipped `Orders` → `Payments` example:
 | `SomeEntityAddedDomainEvent`, raised by the aggregate's mutator | `Orders.Domain/Events/` |
 | `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
 | The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
-| `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` — takes the delivered row to the mediator | `Orders.Application/OutboxHandlers/` |
-| `services.AddModulithTemplateFeaturesOrdersApplicationMessageHandlers()` — source-generated, named after the assembly, one call for every handler in it | `ConfigureOrdersApplication` |
+| `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` — takes the delivered row to the mediator | `Orders.Infrastructure/OutboxHandlers/` |
+| `services.AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers()` — source-generated, named after the assembly, one call for every handler in it | `ConfigureOrdersInfrastructure` |
 | `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` | `Payments.Application/IntegrationEventHandlers/` |
 
 The translating handler hands the event to its feature's `I<Name>IntegrationEventPublisher`, which
@@ -134,9 +134,11 @@ claims the row and hands it, in a fresh scope, to the **one** `IOutboxMessageHan
 for its type — which publishes it to the mediator, where every consumer receives it in that scope
 with its own `DbContext`. No feature code opens a transaction.
 
-That handler belongs to the feature whose `Contracts` declares the event, alongside the rest of its
-`Application` layer, because only `Application` may name a `Contracts` type. The marker interface and
-its binding in `<Name>Module.cs` are scaffolded, and `Configure<Name>Application` already calls the
+That handler belongs to the feature whose `Contracts` declares the event, in its `Infrastructure`
+layer: delivery is infrastructure, and this is the reading counterpart to the publisher that staged
+the row. It is the one thing an `Infrastructure` layer may name a `Contracts` type for, and only its
+own feature's — `ContractIsolationTests` still fails it for a sibling's. The marker interface and its
+binding in `<Name>Module.cs` are scaffolded, and `Configure<Name>Infrastructure` already calls the
 source-generated `Add<Assembly>MessageHandlers()` that registers every handler under
 `OutboxHandlers/` — so a second published event costs a record, a translating handler, and an outbox
 handler, with no registration to keep in step.

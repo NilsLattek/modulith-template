@@ -11,14 +11,9 @@ public static class Configuration
     // this file.
     public static IServiceCollection ConfigurePaymentsApplication(this IServiceCollection services)
     {
-        // This feature publishes no Integration Event yet. The first one is a record in Contracts,
-        // a SomethingHappenedOutboxHandler : IOutboxMessageHandler<T> under OutboxHandlers/, and
-        // then services.AddModulithTemplateFeaturesPaymentsApplicationMessageHandlers() here — the
-        // source generator emits that method only once this assembly declares a handler. Here
-        // because Application is the only layer allowed to reference a Contracts project.
-        //
-        // Consuming a sibling's event needs none of this: an INotificationHandler<T> under
-        // IntegrationEventHandlers/ is registered by the mediator, as SomeEntityAdded's is.
+        // Consuming a sibling's Integration Event costs nothing here: an INotificationHandler<T>
+        // under IntegrationEventHandlers/ is registered by the mediator, as SomeEntityAdded's is.
+        // Publishing one is Infrastructure's side — see ConfigurePaymentsInfrastructure.
         return services.AddValidatorsFromAssembly(typeof(Configuration).Assembly);
     }
 }

@@ -8,7 +8,7 @@ using Underground.Outbox;
 using Underground.Outbox.Attributes;
 using Underground.Outbox.Data;
 
-namespace ModulithTemplate.Features.Orders.Application.OutboxHandlers;
+namespace ModulithTemplate.Features.Orders.Infrastructure.OutboxHandlers;
 
 /// <summary>
 /// Takes a claimed outbox row carrying this feature's event and publishes it in-process, where every
@@ -21,8 +21,9 @@ namespace ModulithTemplate.Features.Orders.Application.OutboxHandlers;
 /// publishes once and every <c>INotificationHandler</c> runs, so a second consumer costs the
 /// consuming feature a handler and this feature nothing.
 /// <para>
-/// It must name a <c>Contracts</c> type, which only <c>Application</c> may do, so it lives here
-/// rather than beside <c>OrdersIntegrationEventPublisher</c> in <c>Web</c>.
+/// Delivery is infrastructure: this is the seam between the outbox and the application, the reading
+/// counterpart to <c>OrdersIntegrationEventPublisher</c>'s writing one. It names its own feature's
+/// <c>Contracts</c>, which is the one direction <c>ContractIsolationTests</c> admits from here.
 /// </para>
 /// </remarks>
 /// <param name="publisher">Publishes the event to this application's consumers.</param>

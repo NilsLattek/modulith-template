@@ -20,13 +20,15 @@ the library wants, and the republisher, the registry and the registration-order 
 
 - [x] `Underground.Outbox` and its source generator are on 0.17.0
 - [x] `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` lives in
-      `Orders.Application/OutboxHandlers/` and publishes to the mediator
-- [x] `ConfigureOrdersApplication` calls the generated registration method; the source generator is
-      referenced by the projects that declare handlers, not by the DI root
+      `Orders.Infrastructure/OutboxHandlers/` and publishes to the mediator
+- [x] `ConfigureOrdersInfrastructure` calls the generated registration method; the source generator
+      is referenced by the projects that declare handlers, not by the DI root
+- [x] `ContractIsolationTests` admits `Infrastructure` as a consumer of its **own** feature's
+      `Contracts` and still fails it for a sibling's
 - [x] `IntegrationEventRepublisher`, `IntegrationEventDelivery`, `IntegrationEventLog`,
       `IntegrationEventRegistry` and `IntegrationEventRegistration` are gone
 - [x] A staged row still reaches the consuming Feature, and an unclaimed type still fails loudly
-- [x] `NamingConventionTests` governs `*OutboxHandler` → `Application.OutboxHandlers` both ways
+- [x] `NamingConventionTests` governs `*OutboxHandler` → `Infrastructure.OutboxHandlers` both ways
 - [x] The sub-template scaffolds the packages and the hint, and adds no project
 - [x] ADR 0003 records the decision; the generated project's CLAUDE.md matches the new shape
 - [x] `dotnet build -warnaserror` is clean and `dotnet test` passes
@@ -42,5 +44,11 @@ Two package pins had to move with it: `Underground.Outbox` 0.17.0 depends on
 became `NU1109` downgrades and were bumped to 10.0.12.
 
 The generated method is named after the assembly with non-alphanumerics stripped, so the call site
-reads `AddModulithTemplateFeaturesOrdersApplicationMessageHandlers()` — which `sourceName` rewrites
-in step with the assembly name it is derived from. Verified by scaffolding, not by reading.
+reads `AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers()` — which `sourceName`
+rewrites in step with the assembly name it is derived from. Verified by scaffolding, not by reading.
+
+The handler first landed in `Application`, on the grounds that only that layer could name a
+`Contracts` type. Moved to `Infrastructure` on review: turning a stored row back into an object is
+the outbox's business, and it keeps `Underground.Outbox` — EF Core and Npgsql with it — out of a
+layer that had been free of them. The cost is one loosening of `ContractIsolationTests`, narrowed to
+a feature's own `Contracts` and checked per feature so a sibling's is still caught. See ADR 0003.

@@ -2,10 +2,18 @@
 
   <ItemGroup>
     <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+    <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Underground.Outbox" />
+    <!-- Emits this assembly's AddModulithTemplateFeaturesPaymentsInfrastructureMessageHandlers().
+         Scaffolded before this feature publishes anything, so its first Integration Event costs no
+         csproj edit. -->
+    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- This feature's own published contract, for the outbox handlers that take a delivered row
+         back to the mediator. A sibling's Contracts stays out of reach — see ContractIsolationTests. -->
+    <ProjectReference Include="../ModulithTemplate.Features.Payments.Contracts/ModulithTemplate.Features.Payments.Contracts.csproj" />
     <ProjectReference Include="../ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" />
     <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
     <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Infrastructure/ModulithTemplate.SharedKernel.Infrastructure.csproj" />

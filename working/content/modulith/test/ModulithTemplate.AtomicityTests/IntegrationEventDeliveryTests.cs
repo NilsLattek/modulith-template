@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
-using ModulithTemplate.Features.Orders.Application.OutboxHandlers;
 using ModulithTemplate.Features.Orders.Contracts.Events;
+using ModulithTemplate.Features.Orders.Infrastructure.OutboxHandlers;
 
 using Underground.Outbox.Data;
 using Underground.Outbox.Domain.Dispatchers;

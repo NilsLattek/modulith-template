@@ -11,7 +11,7 @@ using ModulithTemplate.SharedKernel.Domain.Events;
 using ModulithTemplate.SharedKernel.Infrastructure;
 using ModulithTemplate.SharedKernel.Infrastructure.Events;
 
-namespace ModulithTemplate.Features.Orders.InfrastructureTests;
+namespace ModulithTemplate.SharedKernel.InfrastructureTests;
 
 /// <summary>Tests for <see cref="DomainEventDispatchInterceptor{TContext}"/>.</summary>
 /// <remarks>

@@ -8,7 +8,7 @@ dotnet build --no-restore -warnaserror -v minimal    # CI treats warnings as err
 cd src/ModulithTemplate.Web && dotnet run # needs the devcontainer's Postgres
 
 dotnet test --no-restore
-dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests
+dotnet test --no-restore --project test/SharedKernel/ModulithTemplate.SharedKernel.DomainTests
 dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" # or --filter-method
 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`

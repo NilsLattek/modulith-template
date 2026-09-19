@@ -22,8 +22,6 @@ public sealed class OutboxModelCustomizer(ModelCustomizerDependencies dependenci
     /// <inheritdoc />
     public override void Customize(ModelBuilder modelBuilder, DbContext context)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-
         base.Customize(modelBuilder, context);
 
         if (context is not IOutboxDbContext)

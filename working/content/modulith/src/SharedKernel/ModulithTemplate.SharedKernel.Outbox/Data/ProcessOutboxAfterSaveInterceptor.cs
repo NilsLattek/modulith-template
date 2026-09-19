@@ -26,8 +26,6 @@ public sealed class ProcessOutboxAfterSaveInterceptor(IServiceProvider services)
     public override ValueTask<int> SavedChangesAsync(
         SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(eventData);
-
         // Read after the save, not before: the translating handler stages its row during dispatch,
         // which another interceptor performs, so asking earlier would depend on interceptor order.
         if (eventData.Context?.ChangeTracker.Entries<OutboxMessage>().Any() == true)

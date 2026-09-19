@@ -42,8 +42,6 @@ internal sealed class SaveRecorder : SaveChangesInterceptor
 
     private void Record(DbContextEventData eventData)
     {
-        ArgumentNullException.ThrowIfNull(eventData);
-
         if (eventData.Context is { } context)
         {
             _saves.Add(

@@ -22,9 +22,6 @@ public static class ServiceScopeExtensions
         this IServiceScopeFactory scopeFactory,
         Func<IServiceProvider, Task> action)
     {
-        ArgumentNullException.ThrowIfNull(scopeFactory);
-        ArgumentNullException.ThrowIfNull(action);
-
         await using var scope = scopeFactory.CreateAsyncScope();
         await action(scope.ServiceProvider);
     }
@@ -41,9 +38,6 @@ public static class ServiceScopeExtensions
         this IServiceScopeFactory scopeFactory,
         Func<IServiceProvider, Task<TResult>> action)
     {
-        ArgumentNullException.ThrowIfNull(scopeFactory);
-        ArgumentNullException.ThrowIfNull(action);
-
         await using var scope = scopeFactory.CreateAsyncScope();
         return await action(scope.ServiceProvider);
     }
@@ -63,9 +57,6 @@ public static class ServiceScopeExtensions
         this IServiceScopeFactory scopeFactory,
         Func<IServiceProvider, ValueTask> action)
     {
-        ArgumentNullException.ThrowIfNull(scopeFactory);
-        ArgumentNullException.ThrowIfNull(action);
-
         await using var scope = scopeFactory.CreateAsyncScope();
         await action(scope.ServiceProvider);
     }
@@ -82,9 +73,6 @@ public static class ServiceScopeExtensions
         this IServiceScopeFactory scopeFactory,
         Func<IServiceProvider, ValueTask<TResult>> action)
     {
-        ArgumentNullException.ThrowIfNull(scopeFactory);
-        ArgumentNullException.ThrowIfNull(action);
-
         await using var scope = scopeFactory.CreateAsyncScope();
         return await action(scope.ServiceProvider);
     }

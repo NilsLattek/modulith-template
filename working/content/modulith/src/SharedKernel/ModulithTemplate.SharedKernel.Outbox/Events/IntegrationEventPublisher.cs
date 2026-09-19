@@ -29,9 +29,6 @@ public abstract class IntegrationEventPublisher<TContext>(TContext dbContext, IO
     /// <inheritdoc />
     public void Publish(IIntegrationEvent integrationEvent)
     {
-        ArgumentNullException.ThrowIfNull(integrationEvent);
-        ArgumentNullException.ThrowIfNull(outbox);
-
         // Staged, never added: AddMessageAsync saves and expects a transaction the caller opened,
         // which would separate the event from the change that caused it. This row is written by
         // whichever SaveChanges comes next — the one persisting the aggregate.

@@ -24,8 +24,6 @@ public static class Configuration
     public static IServiceCollection AddOutboxDbContext(
         this IServiceCollection services, IConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
-
         var connectionString = configuration.GetConnectionString("PostgresConnection");
         RequireOutboxOnSearchPath(connectionString);
 

@@ -18,8 +18,6 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<Payment> builder)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-
         builder.HasKey(payment => payment.Id);
 
         // Explicit, because Npgsql maps an unconfigured decimal to unconstrained `numeric`, which

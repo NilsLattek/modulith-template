@@ -45,8 +45,6 @@ public sealed class DomainEventDispatcher(
         Func<IReadOnlyList<AggregateRoot>> trackedAggregates,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(trackedAggregates);
-
         for (var round = 0; round < MaxDispatchRounds; round++)
         {
             var raising = trackedAggregates().Where(aggregate => aggregate.DomainEvents.Count > 0).ToList();

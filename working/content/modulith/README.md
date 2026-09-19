@@ -11,10 +11,13 @@ dotnet restore
 dotnet build --no-restore
 ```
 
-Every context's first migration ships with the scaffold. Apply them, so the sample features have
-their tables:
+No migrations ship with the scaffold — create and apply the first one, so the sample `Orders` page has
+its table:
 
 ```bash
+bash add-migration.sh Orders InitialOrders
+bash add-migration.sh Payments InitialPayments
+bash add-migration.sh Outbox SetupOutbox
 bash update-database.sh
 ```
 

@@ -202,7 +202,9 @@ EF Core + Npgsql, owned entirely by the feature: a concrete `DbContext` (schema 
 and its own `Data/Migrations/`. Register the context through
 `ModulithTemplate.SharedKernel.Infrastructure`'s `AddModuleDbContext<TContext>(configuration, schema)`, which
 carries the snake_case `EFCore.NamingConventions` setup; that shared project defines EF conventions
-only and never a concrete `DbContext`.
+only and never a concrete `DbContext`. A context staging integration events also calls
+`modelBuilder.MapSharedOutbox()` in its `OnModelCreating` — omit it and the feature maps its own
+second outbox table (ADR 0001); `OutboxMappingTests` fails the build if you do.
 
 ### Dependency injection
 

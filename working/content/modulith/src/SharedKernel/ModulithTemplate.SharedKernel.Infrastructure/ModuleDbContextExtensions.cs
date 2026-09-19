@@ -1,14 +1,12 @@
 using EntityFramework.Exceptions.PostgreSQL;
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 using ModulithTemplate.SharedKernel.Infrastructure.Events;
-using ModulithTemplate.SharedKernel.Outbox.Data;
 
 using Underground.Outbox;
 
@@ -25,9 +23,8 @@ public static class ModuleDbContextExtensions
     /// interceptor is per context type, for the reason given on
     /// <see cref="DomainEventDispatchInterceptor{TContext}"/>.
     /// <para>
-    /// The outbox mapping and its interceptors are attached here rather than per feature, so a
-    /// feature cannot forget the part that only fails at run time. A context that does not implement
-    /// <c>IOutboxDbContext</c> is left alone by <see cref="OutboxModelCustomizer"/>.
+    /// The outbox's save-time interceptor is attached here; its table mapping is not, and each
+    /// feature context calls <c>MapSharedOutbox()</c> in its own <c>OnModelCreating</c>.
     /// </para>
     /// </remarks>
     /// <typeparam name="TContext">The feature's context type.</typeparam>
@@ -50,7 +47,6 @@ public static class ModuleDbContextExtensions
                 pg => pg.MigrationsHistoryTable("__EFMigrationsHistory", schema))
             .UseSnakeCaseNamingConvention()
             .UseExceptionProcessor()
-            .ReplaceService<IModelCustomizer, OutboxModelCustomizer>()
             .AddInterceptors(
                 sp.GetRequiredService<DomainEventDispatchInterceptor<TContext>>(),
                 // Constructed per context rather than resolved: it records what one transaction

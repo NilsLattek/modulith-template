@@ -13,6 +13,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- OutboxMappingTests builds each feature context's model; the provider decides which
+         relational annotations it carries. Nothing here opens a connection. -->
+    <ProjectReference Include="../../src/SharedKernel/ModulithTemplate.SharedKernel.Outbox/ModulithTemplate.SharedKernel.Outbox.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
   </ItemGroup>
 

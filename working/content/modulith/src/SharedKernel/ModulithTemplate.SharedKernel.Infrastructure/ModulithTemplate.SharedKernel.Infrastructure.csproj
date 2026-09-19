@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
-    <ProjectReference Include="../ModulithTemplate.SharedKernel.Outbox/ModulithTemplate.SharedKernel.Outbox.csproj" />
   </ItemGroup>
 
 </Project>

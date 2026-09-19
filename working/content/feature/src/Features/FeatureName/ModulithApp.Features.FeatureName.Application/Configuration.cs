@@ -11,9 +11,6 @@ public static class Configuration
     // this file.
     public static IServiceCollection ConfigureFeatureNameApplication(this IServiceCollection services)
     {
-        // Consuming a sibling's Integration Event costs nothing here: an INotificationHandler<T>
-        // under IntegrationEventHandlers/ is registered by the mediator. Publishing one is
-        // Infrastructure's side — see ConfigureFeatureNameInfrastructure.
         return services.AddValidatorsFromAssembly(typeof(Configuration).Assembly);
     }
 }

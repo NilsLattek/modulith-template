@@ -28,8 +28,6 @@ public sealed class SomeEntityAddedIntegrationEventHandler(IPaymentsRepository<P
     public async ValueTask Handle(
         SomeEntityAddedIntegrationEvent notification, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(notification);
-
         if (await repository.AnyAsync(new PaymentForOrderSpec(notification.SomeEntityId), cancellationToken))
         {
             return;

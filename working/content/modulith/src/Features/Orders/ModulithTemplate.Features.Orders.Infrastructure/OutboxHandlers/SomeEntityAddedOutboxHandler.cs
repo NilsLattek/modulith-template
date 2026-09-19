@@ -15,7 +15,6 @@ namespace ModulithTemplate.Features.Orders.Infrastructure.OutboxHandlers;
 /// consumer receives it through an ordinary mediator notification handler.
 /// </summary>
 /// <param name="publisher">Publishes the event to this application's consumers.</param>
-[MessageHandlerLifetime(ServiceLifetime.Scoped)]
 public sealed class SomeEntityAddedOutboxHandler(IPublisher publisher)
     : IOutboxMessageHandler<SomeEntityAddedIntegrationEvent>
 {

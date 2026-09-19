@@ -247,7 +247,3 @@ registration step above.
 
 - **mslearn** — look up current .NET / C# APIs. This solution targets the latest .NET, so avoid
   writing outdated C#.
-
-## Additional Tools
-
-@.claude/RTK.md

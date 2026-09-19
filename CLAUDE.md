@@ -92,8 +92,3 @@ The five canonical triage roles, written on each ticket's `Status:` line. See
 
 Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, describing the generated architecture
 but not shipped with it. See `docs/agents/domain.md`.
-
-## Additional Tools
-
-@.claude/RTK.md
-

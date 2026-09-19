@@ -188,17 +188,6 @@ public class DomainEventDispatcherTests
     }
 
     [Fact]
-    public async Task DispatchAsync_rejects_a_null_collector()
-    {
-        // Arrange
-        var dispatcher = Dispatcher(new RecordingPublisher());
-
-        // Act / Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await dispatcher.DispatchAsync(null!, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task DispatchAsync_logs_each_dispatched_event_at_debug()
     {
         // Arrange

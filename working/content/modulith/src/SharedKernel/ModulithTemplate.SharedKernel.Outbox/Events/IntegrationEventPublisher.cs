@@ -14,10 +14,6 @@ namespace ModulithTemplate.SharedKernel.Outbox.Events;
 /// Derived from the way <c>RepositoryBase&lt;T&gt;</c> is: a feature declares a body-less
 /// <c>&lt;Name&gt;IntegrationEventPublisher</c> binding its marker interface to its own context, so
 /// the row rides that feature's save rather than a sibling's.
-/// <para>
-/// Bound in the feature's <c>Web</c> composition root rather than beside the repository: the marker
-/// interface lives in <c>Application</c>, which a feature's <c>Infrastructure</c> may not depend on.
-/// </para>
 /// </remarks>
 /// <typeparam name="TContext">The feature's context, which the row is written through.</typeparam>
 /// <param name="dbContext">The feature's context.</param>

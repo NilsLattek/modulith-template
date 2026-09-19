@@ -47,6 +47,8 @@ public sealed class SomeEntity : AggregateRoot
     /// <param name="amount">The amount it is worth.</param>
     internal SomeEntity(string name, decimal amount)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
         var trimmed = name.Trim();
         if (trimmed.Length > NameMaxLength)
         {

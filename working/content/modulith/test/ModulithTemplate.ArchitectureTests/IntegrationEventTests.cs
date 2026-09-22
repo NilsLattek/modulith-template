@@ -12,17 +12,6 @@ namespace ModulithTemplate.ArchitectureTests;
 /// Keeps an Integration Event in the one place a sibling feature may reference: its owning
 /// feature's <c>Contracts</c> project.
 /// </summary>
-/// <remarks>
-/// <see cref="ContractIsolationTests"/> cannot see this. It deliberately exempts Contracts types
-/// from the cross-feature rules so features can reference each other's published API, which means an
-/// event declared in <c>Domain</c> or <c>Application</c> instead compiles, works, and quietly hands
-/// its consumer a dependency on the publishing feature's internals.
-/// <para>
-/// Both directions, because neither implies the other: a correctly named record in the wrong
-/// project and an <see cref="IIntegrationEvent"/> named anything else are the same mistake.
-/// <see cref="NamingConventionTests"/> governs the namespace within the project.
-/// </para>
-/// </remarks>
 public class IntegrationEventTests
 {
     private const string ContractsLayer = "Contracts";

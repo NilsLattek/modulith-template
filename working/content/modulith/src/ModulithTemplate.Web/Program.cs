@@ -2,6 +2,7 @@ using ModulithTemplate.Features.Orders.Web;
 using ModulithTemplate.Features.Payments.Web;
 using ModulithTemplate.SharedKernel.Application.Behaviours;
 using ModulithTemplate.SharedKernel.Outbox;
+using ModulithTemplate.SharedKernel.Web;
 using ModulithTemplate.SharedKernel.Outbox.Data;
 using ModulithTemplate.Web.Components;
 
@@ -25,7 +26,7 @@ builder.Services.AddMediator(options =>
 {
     // Scoped, not the library default of Singleton: handlers inject repositories bound to a scoped
     // DbContext. That makes an @injected IMediator resolve from the Blazor circuit scope, which
-    // would hold one DbContext open for the connection — hence WithNewScopeAsync per operation.
+    // would hold one DbContext open for the connection — hence IScopedMediator for components.
     options.ServiceLifetime = ServiceLifetime.Scoped;
 
     // Outermost first, so LoggingBehaviour sees a uniform Result outcome (ExceptionBehaviour below
@@ -37,6 +38,10 @@ builder.Services.AddMediator(options =>
         typeof(ValidationBehaviour<,>),
     ];
 });
+
+// Components send database work through this, never a directly-injected IMediator: it opens a scope
+// per message, so no DbContext outlives the operation that needed it.
+builder.Services.AddScopedMediator();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

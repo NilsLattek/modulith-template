@@ -98,10 +98,15 @@ feature's composition root.
 Scoped services live for the whole SignalR circuit in Blazor Server, so a directly-injected scoped
 dependency — `IMediator` included — shares one long-lived, non-thread-safe `DbContext` for the entire
 user session. **Components must not `@inject` `IMediator` for database work**: inject
-`IServiceScopeFactory` and send each message inside `ScopeFactory.WithNewScopeAsync(...)` from
-`ModulithTemplate.SharedKernel.Web/Extensions/ServiceScopeExtensions.cs`. That needs `@using Mediator` and
-`@using ModulithTemplate.SharedKernel.Web.Extensions` — neither is in `_Imports.razor`. Stateless, non-DB
-services may stay directly injected.
+`IScopedMediator` and `await Mediator.Send(message)`. It gives each message a DI scope of its own and
+disposes it when the message completes. Stateless, non-DB services may stay directly injected.
+
+**Handlers return DTOs, never entities.** That scope is disposed before the component renders, so a
+returned entity is attached to a dead `DbContext` and reading a navigation property throws
+`ObjectDisposedException` — at render time, long after the query passed. Value objects are fine;
+`ModulithTemplate.ArchitectureTests` enforces the rule.
+
+`ServiceScopeExtensions.WithNewScopeAsync(...)` remains for scoped UI work that is not a message.
 
 ## Conventions
 

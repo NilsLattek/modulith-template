@@ -29,11 +29,6 @@ depend on each other** — `Contracts` is the only crossing point, reached throu
 Integration Event (skill: `reaching-another-feature`). `ModulithTemplate.ArchitectureTests` enforces
 the layer rules.
 
-`Application` and `Infrastructure` reference their feature's `Domain` with `PrivateAssets="all"`, so
-`Domain` does not flow on to *their* consumers: a `Web` project cannot name an entity at all, even
-through `var`, and a message returning one fails to compile at the call site with `CS0012`. Keep that
-attribute on any new `Domain` reference — dropping it reopens the hole quietly.
-
 **A feature is a transaction boundary, sized like a bounded context — not a folder, a screen or a
 CRUD table.** Two features share no transaction, so the split cannot be undone cheaply. The default
 for new work is to put it in an existing feature; creating one needs positive justification (skill:
@@ -105,7 +100,7 @@ Scoped services live for the whole SignalR circuit in Blazor Server, so a direct
 dependency — `IMediator` included — shares one long-lived, non-thread-safe `DbContext` for the entire
 user session. **Components must not `@inject` `IMediator` for database work**: inject
 `IScopedMediator` and `await Mediator.Send(message)`. It gives each message a DI scope of its own and
-disposes it when the message completes. Stateless, non-DB services may stay directly injected.
+disposes it when the message completes.
 
 **Handlers return DTOs, never entities.** That scope is disposed before the component renders, so a
 returned entity is attached to a dead `DbContext` and reading a navigation property throws

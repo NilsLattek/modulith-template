@@ -26,7 +26,7 @@ The validator lives **in the message's own folder**, not a `Validators/` directo
 
 ## The handler
 
-Orchestrates and nothing more: load entities via the repository, call entity methods or a domain
+Orchestrates and nothing more. It acts as the ApplicationService in a DDD architecture: load entities via the repository, call entity methods or a domain
 service, persist, map to a DTO. The happy path plus explicit `Result.Fail` for expected domain
 failures. **No `try`/`catch`** — unhandled exceptions become a failed `Result` centrally.
 

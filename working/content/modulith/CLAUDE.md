@@ -85,7 +85,8 @@ Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`
   reference into the host's compilation, so marking one `internal` breaks the host build with `CS0122`.
   Do not "tidy" them.
 
-`Web` reaches `Application` only through `IMediator` — never by calling a handler directly.
+`Web` reaches `Application` only by sending a message — never by calling a handler directly.
+Components send it with `IScopedMediator` (below); anything else uses `IMediator`.
 Validators check the *shape* of incoming values, never business rules, and never inject a repository.
 
 ### Dependency injection

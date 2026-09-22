@@ -39,8 +39,8 @@ public static class Configuration
     /// </summary>
     /// <remarks>
     /// Without this the app starts and migrates cleanly, then every delivery attempt fails deep in a
-    /// background poll with <c>relation "outbox" does not exist</c> — the failure ADR 0001 warns
-    /// about, in the place it is least likely to be noticed. A connection string set outside
+    /// background poll with <c>relation "outbox" does not exist</c>, in the place it is least likely
+    /// to be noticed. A connection string set outside
     /// development is the easy way to lose the setting, so it is checked wherever it comes from.
     /// </remarks>
     /// <param name="connectionString">The configured Postgres connection string.</param>

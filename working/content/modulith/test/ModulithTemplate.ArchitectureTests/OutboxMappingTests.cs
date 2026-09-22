@@ -18,7 +18,7 @@ namespace ModulithTemplate.ArchitectureTests;
 /// outbox table, which only surfaces as a failed claim at run time. Asserted against the model each
 /// context builds, not against a call site, because a call that maps the wrong thing fails the same
 /// way. <see cref="OutboxContext"/> is not a feature assembly and is excluded by discovery — it owns
-/// the DDL (ADR 0001).
+/// the DDL.
 /// </remarks>
 public class OutboxMappingTests
 {

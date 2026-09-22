@@ -19,7 +19,7 @@ feature=$1
 migration=$2
 
 # The outbox is the one context that is not a feature: it lives at SharedKernel level and owns
-# the single shared table every feature stages integration events into (ADR 0001). "Outbox" is
+# the single shared table every feature stages integration events into. "Outbox" is
 # therefore a reserved name here — a feature of that name would collide with this context in
 # update-database.sh and the CI migration check too, so do not create one.
 if [ "$feature" = "Outbox" ]; then

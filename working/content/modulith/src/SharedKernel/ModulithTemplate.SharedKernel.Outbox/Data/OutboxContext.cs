@@ -9,7 +9,8 @@ namespace ModulithTemplate.SharedKernel.Outbox.Data;
 /// </summary>
 /// <remarks>
 /// The only context that migrates <c>shared.outbox</c>; feature contexts map the same entity with
-/// <c>ExcludeFromMigrations()</c>. See ADR 0001 for why the table is shared rather than per feature.
+/// <c>ExcludeFromMigrations()</c>. The table is shared rather than per feature because an
+/// integration event must commit in the same transaction as the aggregate that raised it.
 /// </remarks>
 /// <param name="options">The context options, supplied by <c>AddOutboxDbContext</c>.</param>
 public class OutboxContext(DbContextOptions<OutboxContext> options) : DbContext(options), IOutboxDbContext

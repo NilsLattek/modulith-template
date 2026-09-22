@@ -12,6 +12,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # ModulithTemplate.TemplateTests runs against a real database, as the generated solution does.
+    # Matches the devcontainer's server, so the tests' default connection string needs no override.
+    services:
+      postgres:
+        image: postgres:18.3
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v7
     - name: Setup .NET

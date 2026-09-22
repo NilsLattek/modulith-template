@@ -37,8 +37,6 @@ public sealed class DomainEventDispatchInterceptor<TContext>(DomainEventDispatch
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(eventData);
-
         // Re-entrancy guard: a handler that calls SaveChangesAsync on this context lands back here
         // mid-dispatch. The outer loop is already re-collecting the change tracker each round, so
         // the nested call must not start a competing dispatch of its own.

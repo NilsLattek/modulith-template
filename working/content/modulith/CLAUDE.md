@@ -8,12 +8,13 @@ dotnet build --no-restore -warnaserror -v minimal    # CI treats warnings as err
 cd src/ModulithTemplate.Web && dotnet run # needs the devcontainer's Postgres
 
 dotnet test --no-restore
-dotnet test --no-restore --project test/Features/Orders/ModulithTemplate.Features.Orders.DomainTests
+dotnet test --no-restore --project test/SharedKernel/ModulithTemplate.SharedKernel.DomainTests
 dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" # or --filter-method
 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`
 # is always required — these wrappers supply it.
-bash add-migration.sh Orders InitialOrders  # <FeatureName> <MigrationName>
+bash add-migration.sh Orders AddSomeColumn  # <FeatureName|Outbox> <MigrationName>
+bash add-migration.sh Outbox AddSomeColumn  # the shared outbox table (ADR 0001), not a feature
 bash update-database.sh                     # applies every context's pending migrations
 ```
 
@@ -22,13 +23,14 @@ bash update-database.sh                     # applies every context's pending mi
 A vertical-slice modular monolith built on DDD. Each feature under `src/Features/<Name>/` owns a set
 of layer projects, mirrored by test projects under `test/Features/<Name>/`:
 
-`Domain` has no outbound dependencies and is the only place business rules live; features must not depend on each other; `ModulithTemplate.ArchitectureTests` enforces the layer rules, the cross-feature isolation and the naming/placement conventions below — each in bothdirections, so a `*Spec` outside `Specifications/` fails just as a badly-named type inside it does.
+`Domain` has no outbound dependencies and is the only place business rules live; features must not depend on each other; `ModulithTemplate.ArchitectureTests` enforces the layer rules.
 
-`Contracts` is how one feature reaches another.
+`Contracts` is how one feature reaches another — synchronously through a Module API, asynchronously
+through an Integration Event.
 
 ### Where business logic goes
 
-**The default answer is: in the entity.** Push behaviour down until it has no lower place to go.
+**The default answer is: in the entity.** Push behaviour down until it has no lower place to go. Follow DDD best practices.
 
 | The rule concerns… | Put it in… |
 | --- | --- |
@@ -99,20 +101,56 @@ Failures come back as a failed `Result` carrying one `ValidationError` per broke
 on, so a Blazor form can group `result.Errors.OfType<ValidationError>()` by property and bind the
 messages to their fields.
 
-### Infrastructure
+### Reaching another feature
 
-EF Core + Npgsql, owned entirely by the feature: a concrete `DbContext` (schema set via
-`HasDefaultSchema`), a context-bound `<Name>Repository<T> : RepositoryBase<T>, I<Name>Repository<T>`,
-and its own `Data/Migrations/`. Register the context through
-`ModulithTemplate.SharedKernel.Infrastructure`'s `AddModuleDbContext<TContext>(configuration, schema)`, which
-carries the snake_case `EFCore.NamingConventions` setup; that shared project defines EF conventions
-only and never a concrete `DbContext`.
+Both routes go through the publishing feature's `Contracts` project — the only part of a feature a
+sibling may reference.
+
+| You need… | Use |
+| --- | --- |
+| An answer, now, to finish the request you are in | the **Module API** — `IOrdersApi` in `Orders.Contracts/Api/`, implemented in `Orders.Application/Api/`. Synchronous, read-only, the caller's transaction. |
+| Something to happen elsewhere *because* something happened here | an **Integration Event** — durable, at least once, each consumer in its own transaction. |
+
+#### Publishing one
+
+Where the pieces live, in the shipped `Orders` → `Payments` example:
+
+| Piece | Lives in |
+| --- | --- |
+| `SomeEntityAddedDomainEvent`, raised by the aggregate's mutator | `Orders.Domain/Events/` |
+| `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
+| The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
+| `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` — takes the delivered row to the mediator | `Orders.Infrastructure/OutboxHandlers/` |
+| `OrdersIntegrationEventPublisher` — binds the marker to the Orders `DbContext` | `Orders.Infrastructure/Events/` |
+| `services.AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers()` — source-generated, named after the assembly, one call for every handler in it | `ConfigureOrdersInfrastructure` |
+| `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` | `Payments.Application/IntegrationEventHandlers/` |
+
+The translating handler hands the event to its feature's `I<Name>IntegrationEventPublisher`, which
+**stages** an outbox row through that feature's `DbContext`: the row is written by the same save that
+persists the aggregate, so the event exists if and only if the change committed. A worker later
+claims the row and hands it, in a fresh scope, to the **one** `IOutboxMessageHandler<T>` registered
+for its type — which publishes it to the mediator, where every consumer receives it in that scope
+with its own `DbContext`. No feature code opens a transaction.
+
+That handler belongs to the feature whose `Contracts` declares the event, in its `Infrastructure`
+layer: delivery is infrastructure, and this is the reading counterpart to the publisher that staged
+the row. It is the one thing an `Infrastructure` layer may name a `Contracts` type for, and only its
+own feature's — `ContractIsolationTests` still fails it for a sibling's. The marker interface and its
+binding are scaffolded, both registered by `Configure<Name>Infrastructure`, which already calls the
+source-generated `Add<Assembly>MessageHandlers()` that registers every handler under
+`OutboxHandlers/` — so a second published event costs a record, a translating handler, and an outbox
+handler, with no registration to keep in step.
+
+`EventId` and `GroupKey` are on the event itself, because delivery hands a consumer the event and
+nothing else. **The Group key is the aggregate the event concerns** — events sharing one are
+delivered in order, one at a time, while unrelated aggregates proceed concurrently; a constant would
+serialise the application behind a single stuck message. The architecture tests fail an
+`IIntegrationEvent` declared outside a `Contracts` assembly, or named or placed off-convention.
 
 ### Dependency injection
 
 Register a service in the owning layer's `Configuration.cs` — not in `Program.cs`, and not in another
-feature's composition root. **Handlers are the one exception**: the host's `AddMediator` discovers them
-automatically.
+feature's composition root.
 
 ### Database access from Blazor components
 
@@ -127,28 +165,20 @@ services may stay directly injected.
 ## Conventions
 
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
-  Blazor component tests. Shared settings and common test packages come from
-  `test/Directory.Build.props`, so a test `.csproj` normally holds nothing but a `ProjectReference`.
+  Blazor component tests.
 - **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.
 
 ## Adding a feature
 
 ```bash
-dotnet new modulith-feature --appName ModulithTemplate -n Payments
+dotnet new modulith-feature --appName ModulithTemplate -n Shipping
 ```
 
-Run this from the solution root (the directory containing the `.slnx`). It creates the feature's
-layer and test projects, adds them all to the solution, and mirrors the `Orders` persistence and DI
-scaffolding. **The one manual step** is registering the feature with the host: add a project reference
+Run this from the solution root. **The one manual step** is registering the feature with the host: add a project reference
 from `src/ModulithTemplate.Web` to the feature's `.Web` project, and call
-`builder.ConfigurePaymentsFeature();` in `Program.cs`. Then model the feature's entities under
-`Payments.Domain/Entities/` and create its first migration.
+`builder.ConfigureShippingFeature();` in `Program.cs`.
 
 ## MCP servers
 
 - **mslearn** — look up current .NET / C# APIs. This solution targets the latest .NET, so avoid
   writing outdated C#.
-
-## Additional Tools
-
-@.claude/RTK.md

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
 using ModulithApp.Features.FeatureName.Application;
 using ModulithApp.Features.FeatureName.Infrastructure;
@@ -11,6 +12,7 @@ public static class FeatureNameModule
     {
         builder.Services.ConfigureFeatureNameInfrastructure(builder.Configuration);
         builder.Services.ConfigureFeatureNameApplication();
+
         return builder;
     }
 }

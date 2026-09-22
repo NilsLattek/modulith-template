@@ -12,7 +12,7 @@ namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 /// </remarks>
 internal static partial class BehaviourLog
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "Handling {MessageType}")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Handling {MessageType}")]
     public static partial void Handling(ILogger logger, string messageType);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Handled {MessageType} in {ElapsedMilliseconds} ms")]

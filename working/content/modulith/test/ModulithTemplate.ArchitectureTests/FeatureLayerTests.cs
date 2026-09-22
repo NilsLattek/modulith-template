@@ -19,7 +19,7 @@ public class FeatureLayerTests
     [
         new("Domain", "Domain", ["Application", "Infrastructure", "Web"]),
         new("Application", "Application", ["Infrastructure", "Web"]),
-        new("Infrastructure", "Infrastructure", ["Application", "Web"]),
+        new("Infrastructure", "Infrastructure", ["Web"]),
         new("Web", "Web", ["Domain"]),
     ];
 
@@ -29,8 +29,11 @@ public class FeatureLayerTests
     [Fact]
     public void Application_depends_only_on_Domain() => AssertLayerRule("Application");
 
+    // Infrastructure may name Application: the publisher marker is an Application port, and an
+    // adapter implementing an inward port is what the dependency rule is for. Only the reverse
+    // direction, Application reaching Infrastructure, is the one that has to stay closed.
     [Fact]
-    public void Infrastructure_depends_only_on_Domain() => AssertLayerRule("Infrastructure");
+    public void Infrastructure_does_not_depend_on_Web() => AssertLayerRule("Infrastructure");
 
     [Fact]
     public void Web_does_not_access_Domain_directly() => AssertLayerRule("Web");

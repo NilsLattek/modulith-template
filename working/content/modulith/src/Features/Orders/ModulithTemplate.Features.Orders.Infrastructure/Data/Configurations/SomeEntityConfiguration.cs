@@ -18,11 +18,11 @@ internal sealed class SomeEntityConfiguration : IEntityTypeConfiguration<SomeEnt
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<SomeEntity> builder)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-
         builder.HasKey(entity => entity.Id);
         builder.Property(entity => entity.Name)
             .IsRequired()
             .HasMaxLength(SomeEntity.NameMaxLength);
+        builder.Property(entity => entity.Amount)
+            .HasPrecision(SomeEntity.AmountPrecision, SomeEntity.AmountScale);
     }
 }

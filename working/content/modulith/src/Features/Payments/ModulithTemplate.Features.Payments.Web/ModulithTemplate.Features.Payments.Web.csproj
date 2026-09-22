@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="FluentResults" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../SharedKernel/ModulithTemplate.SharedKernel.Web/ModulithTemplate.SharedKernel.Web.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Features.Payments.Application/ModulithTemplate.Features.Payments.Application.csproj" />
+    <ProjectReference Include="../ModulithTemplate.Features.Payments.Infrastructure/ModulithTemplate.Features.Payments.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

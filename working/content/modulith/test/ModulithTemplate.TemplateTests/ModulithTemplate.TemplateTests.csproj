@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Maintainer-facing, and removed at scaffold time: these tests verify the template's own design,
+       not behaviour a generated project's owner maintains. See the exclusion in
+       .template.config/template.json and the conditional around this project in the .slnx. -->
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Features/Orders/ModulithTemplate.Features.Orders.Web/ModulithTemplate.Features.Orders.Web.csproj" />
+    <ProjectReference Include="../../src/Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The mediator generator emits into whichever assembly references it, so this project gets its
+         own AddMediator — the same composition the host builds, minus the host. Referencing
+         ModulithTemplate.Web instead would make it ambiguous. The outbox generator is not needed:
+         this project declares no handler, and picks each feature's up through Configure*Feature. -->
+    <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
+    <PackageReference Include="Underground.Outbox" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>

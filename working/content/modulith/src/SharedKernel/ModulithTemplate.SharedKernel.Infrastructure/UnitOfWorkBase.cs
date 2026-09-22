@@ -27,8 +27,6 @@ public abstract class UnitOfWorkBase<TContext>(TContext dbContext) : IUnitOfWork
         IsolationLevel? isolationLevel = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(action);
-
         await ExecuteInTransactionAsync<object?>(
             async () =>
             {
@@ -45,8 +43,6 @@ public abstract class UnitOfWorkBase<TContext>(TContext dbContext) : IUnitOfWork
         IsolationLevel? isolationLevel = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(action);
-
         await using var transaction = isolationLevel is null
             ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
             : await dbContext.Database.BeginTransactionAsync(isolationLevel.Value, cancellationToken);

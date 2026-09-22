@@ -21,6 +21,7 @@ internal static class SolutionAssemblies
     private const string FeaturesKeyword = ".Features.";
 
     private static readonly Lazy<Assembly[]> LazyFeatureAssemblies = new(LoadFeatureAssemblies);
+    private static readonly Lazy<string[]> LazyFeatureNames = new(LoadFeatureNames);
     private static readonly Lazy<Architecture> LazyArchitecture = new(BuildArchitecture);
 
     /// <summary>The compiled feature-layer assemblies discovered in this project's output directory.</summary>
@@ -28,6 +29,13 @@ internal static class SolutionAssemblies
 
     /// <summary>The ArchUnitNET architecture built from <see cref="FeatureAssemblies"/>.</summary>
     public static Architecture Architecture => LazyArchitecture.Value;
+
+    /// <summary>
+    /// Matches any feature-layer assembly, so a rule that governs how a feature arranges its own
+    /// types does not also judge the shared projects, which deliberately define the abstractions
+    /// those conventions are named after (<c>IDomainEvent</c>, <c>IIntegrationEvent</c>).
+    /// </summary>
+    public const string AnyFeatureLayerPattern = @".*\.Features\..*";
 
     /// <summary>Builds an assembly-name regex matching a feature layer by its suffix expression.</summary>
     /// <remarks>
@@ -47,6 +55,27 @@ internal static class SolutionAssemblies
     /// namespace from a rule's source set is enough.
     /// </remarks>
     public const string InstrumentationNamespacePattern = @"^Microsoft\.CodeCoverage\..*";
+
+    /// <summary>
+    /// Builds an assembly-name regex matching one named feature's layer, e.g. Orders' Infrastructure.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="FeatureLayerPattern"/>, which matches that layer in <i>every</i> feature.
+    /// The feature segment anchors on the dot that follows it, so <c>Order</c> does not match
+    /// <c>Orders</c>.
+    /// </remarks>
+    /// <param name="featureExpression">A feature name, or a regex alternation of several.</param>
+    /// <param name="layerSuffix">The layer's assembly-name suffix, e.g. <c>Contracts</c>.</param>
+    /// <returns>The assembly-name pattern.</returns>
+    public static string NamedFeatureLayerPattern(string featureExpression, string layerSuffix) =>
+        @".*\.Features\." + featureExpression + @"\." + layerSuffix + @"(,.*)?$";
+
+    /// <summary>Every feature the discovered assemblies belong to, in no particular order.</summary>
+    /// <remarks>
+    /// Read from assembly names rather than the solution tree, for the reason given on
+    /// <see cref="FeatureAssemblies"/>. A feature appears once however many layers it has.
+    /// </remarks>
+    public static string[] FeatureNames => LazyFeatureNames.Value;
 
     /// <summary>Combines one or more layer suffixes into a regex alternation.</summary>
     /// <param name="suffixes">The suffixes to combine.</param>
@@ -86,6 +115,13 @@ internal static class SolutionAssemblies
             return [];
         }
     }
+
+    private static string[] LoadFeatureNames() =>
+        [.. FeatureAssemblies
+            .Select(assembly => assembly.GetName().Name!)
+            .Select(name => name[(name.IndexOf(FeaturesKeyword, StringComparison.Ordinal) + FeaturesKeyword.Length)..])
+            .Select(rest => rest[..rest.IndexOf('.', StringComparison.Ordinal)])
+            .Distinct(StringComparer.Ordinal)];
 
     private static Architecture BuildArchitecture() =>
         new ArchLoader().LoadAssemblies(FeatureAssemblies).Build();

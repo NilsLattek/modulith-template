@@ -3,6 +3,7 @@
 # Keep steps idempotent so re-running on an existing container is safe.
 set -euo pipefail
 
+dotnet tool install --global dotnet-ef || true
 # https://claude.com/plugins/csharp-lsp
 dotnet tool install --global csharp-ls || true
 

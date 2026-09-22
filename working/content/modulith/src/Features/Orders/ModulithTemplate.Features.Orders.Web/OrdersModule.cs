@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.Features.Orders.Application;
 using ModulithTemplate.Features.Orders.Infrastructure;
@@ -11,6 +12,7 @@ public static class OrdersModule
     {
         builder.Services.ConfigureOrdersInfrastructure(builder.Configuration);
         builder.Services.ConfigureOrdersApplication();
+
         return builder;
     }
 }

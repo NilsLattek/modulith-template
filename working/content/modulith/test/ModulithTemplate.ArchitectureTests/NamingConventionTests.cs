@@ -50,6 +50,19 @@ public class NamingConventionTests
 
         new("domain event", ["DomainEvent"], ["Domain.Events"]),
         new("domain event handler", ["DomainEventHandler"], ["Application.DomainEventHandlers"]),
+
+        // Published like the module API, and for the same reason: a sibling feature compiles
+        // against this record, so it may not sit anywhere a consumer cannot reach.
+        // IntegrationEventTests enforces the Contracts project itself, whatever the type is named.
+        new("integration event", ["IntegrationEvent"], ["Contracts.Events"]),
+
+        // The consuming side stays internal — a handler is the reacting feature's own business.
+        new("integration event handler", ["IntegrationEventHandler"], ["Application.IntegrationEventHandlers"]),
+
+        // The publishing side: one per event the feature's own Contracts declares, taking the claimed
+        // outbox row back to the mediator. Delivery is infrastructure, so it sits opposite the
+        // publisher that staged the row rather than beside the consumers that react to it.
+        new("outbox handler", ["OutboxHandler"], ["Infrastructure.OutboxHandlers"]),
     ];
 
     private static readonly ContentRule[] Contents =
@@ -67,6 +80,9 @@ public class NamingConventionTests
         new("Application.Api", ["Api"]),
         new("Domain.Events", ["DomainEvent"]),
         new("Application.DomainEventHandlers", ["DomainEventHandler"]),
+        new("Contracts.Events", ["IntegrationEvent"]),
+        new("Application.IntegrationEventHandlers", ["IntegrationEventHandler"]),
+        new("Infrastructure.OutboxHandlers", ["OutboxHandler"]),
     ];
 
     /// <summary>Names of every placement rule, for the theory below.</summary>
@@ -84,7 +100,7 @@ public class NamingConventionTests
         var rule = Placements.Single(candidate => string.Equals(candidate.Name, ruleName, StringComparison.Ordinal));
 
         IArchRule archRule = Types().That()
-            .ResideInAssemblyMatching(FeatureAssemblyPattern)
+            .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
             .And().HaveNameMatching(TypeNamePattern(rule.TypeSuffixes))
             .And().AreNotNested()
             .Should().ResideInNamespaceMatching(FeatureNamespacePattern(rule.HomeNamespaces))
@@ -103,7 +119,7 @@ public class NamingConventionTests
         var rule = Contents.Single(candidate => string.Equals(candidate.Namespace, namespaceSuffix, StringComparison.Ordinal));
 
         IArchRule archRule = Types().That()
-            .ResideInAssemblyMatching(FeatureAssemblyPattern)
+            .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
             .And().ResideInNamespaceMatching(FeatureNamespacePattern([rule.Namespace]))
             .And().AreNotNested()
             .Should().HaveNameMatching(TypeNamePattern(rule.AllowedSuffixes))
@@ -112,12 +128,6 @@ public class NamingConventionTests
 
         archRule.Check(SolutionAssemblies.Architecture);
     }
-
-    /// <summary>
-    /// Matches any feature-layer assembly, so the shared projects' abstractions are not judged by
-    /// conventions that only govern where a feature puts its own types.
-    /// </summary>
-    private const string FeatureAssemblyPattern = @".*\.Features\..*";
 
     /// <summary>
     /// Builds a namespace regex matching one or more home namespaces in any feature. The trailing

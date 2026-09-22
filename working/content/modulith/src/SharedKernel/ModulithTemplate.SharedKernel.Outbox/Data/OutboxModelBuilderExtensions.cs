@@ -13,7 +13,7 @@ public static class OutboxModelBuilderExtensions
     /// </summary>
     /// <remarks>
     /// Every feature context implementing <c>IOutboxDbContext</c> calls this; <see cref="OutboxContext"/>
-    /// does not, because it owns the DDL (ADR 0001). Omitting it compiles and starts, then maps the
+    /// does not, because it owns the DDL. Omitting it compiles and starts, then maps the
     /// entity into the feature's own schema and tries to create a second outbox table — which is what
     /// <c>OutboxMappingTests</c> in the architecture tests exists to catch.
     /// </remarks>

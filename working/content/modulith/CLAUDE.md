@@ -14,19 +14,26 @@ dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`
 # is always required — these wrappers supply it.
 bash add-migration.sh Orders AddSomeColumn  # <FeatureName|Outbox> <MigrationName>
-bash add-migration.sh Outbox AddSomeColumn  # the shared outbox table (ADR 0001), not a feature
+bash add-migration.sh Outbox AddSomeColumn  # the shared outbox table, not a feature
 bash update-database.sh                     # applies every context's pending migrations
 ```
 
 ## Architecture
 
 A vertical-slice modular monolith built on DDD. Each feature under `src/Features/<Name>/` owns a set
-of layer projects, mirrored by test projects under `test/Features/<Name>/`:
+of layer projects, mirrored by test projects under `test/Features/<Name>/`. `CONTEXT.md` is the
+glossary for the terms used throughout.
 
-`Domain` has no outbound dependencies and is the only place business rules live; features must not depend on each other; `ModulithTemplate.ArchitectureTests` enforces the layer rules.
+`Domain` has no outbound dependencies and is the only place business rules live. **Features must not
+depend on each other** — `Contracts` is the only crossing point, reached through a Module API or an
+Integration Event (skill: `reaching-another-feature`). `ModulithTemplate.ArchitectureTests` enforces
+the layer rules.
 
-`Contracts` is how one feature reaches another — synchronously through a Module API, asynchronously
-through an Integration Event.
+**A feature is a transaction boundary, sized like a bounded context — not a folder, a screen or a
+CRUD table.** Two features share no transaction, so the split cannot be undone cheaply. The default
+for new work is to put it in an existing feature; creating one needs positive justification (skill:
+`adding-a-feature`, which covers the sizing test and the scaffold). Adding a command or query to an
+existing feature has its own layout and validator rules (skill: `adding-a-command-or-query`).
 
 ### Where business logic goes
 
@@ -69,11 +76,8 @@ only through a handler test — the domain is where the guarantee lives.
 ### Application layer (CQRS)
 
 Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`) plus its
-`public sealed` handler, in a folder of its own under `Application/Commands/<Name>/` or
-`Application/Queries/<Name>/`; DTOs go in `Application/Dtos/`, Mapperly `[Mapper]` partials in
-`Application/Mappers/`. A handler orchestrates and nothing more — load entities via the repository,
-call entity methods or a domain service, persist, map to a DTO — holding the happy path plus explicit
-`Result.Fail` for expected domain failures, and no `try`/`catch`. Two rules easy to get wrong:
+`public sealed` handler, in a folder of its own. A handler orchestrates and nothing more, with no
+`try`/`catch`. Two rules that fail in non-obvious ways:
 
 - **Handlers always return `Result` / `Result<T>`.** Both the exception-to-`Result` and the validation
   behaviour are constrained to result responses, and are silently skipped otherwise.
@@ -82,70 +86,7 @@ call entity methods or a domain service, persist, map to a DTO — holding the h
   Do not "tidy" them.
 
 `Web` reaches `Application` only through `IMediator` — never by calling a handler directly.
-
-#### Validating a command or query
-
-The mediator pipeline validates a message before its handler runs. Put a
-`public sealed class <Name>CommandValidator : AbstractValidator<<Name>Command>` **in the message's own
-folder**; each feature's `ConfigureXxxApplication` picks it up via `AddValidatorsFromAssembly`. A
-message with no validator passes straight through, so validation is opt-in.
-
-**Validators check the shape of incoming values, not business rules** — required, length, range,
-format, "these two fields must both be set". That is the whole remit: a malformed DTO is rejected
-before a handler touches an entity. Anything depending on domain state (may this order still be
-changed? is this quantity legal?) is an invariant and belongs in the entity or a domain service, where
-it holds for every caller. Never inject a repository into a validator.
-
-Failures come back as a failed `Result` carrying one `ValidationError` per broken rule
-(`ModulithTemplate.SharedKernel.Application/Errors/ValidationError.cs`), each with the `PropertyName` it was declared
-on, so a Blazor form can group `result.Errors.OfType<ValidationError>()` by property and bind the
-messages to their fields.
-
-### Reaching another feature
-
-Both routes go through the publishing feature's `Contracts` project — the only part of a feature a
-sibling may reference.
-
-| You need… | Use |
-| --- | --- |
-| An answer, now, to finish the request you are in | the **Module API** — `IOrdersApi` in `Orders.Contracts/Api/`, implemented in `Orders.Application/Api/`. Synchronous, read-only, the caller's transaction. |
-| Something to happen elsewhere *because* something happened here | an **Integration Event** — durable, at least once, each consumer in its own transaction. |
-
-#### Publishing one
-
-Where the pieces live, in the shipped `Orders` → `Payments` example:
-
-| Piece | Lives in |
-| --- | --- |
-| `SomeEntityAddedDomainEvent`, raised by the aggregate's mutator | `Orders.Domain/Events/` |
-| `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
-| The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
-| `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` — takes the delivered row to the mediator | `Orders.Infrastructure/OutboxHandlers/` |
-| `OrdersIntegrationEventPublisher` — binds the marker to the Orders `DbContext` | `Orders.Infrastructure/Events/` |
-| `services.AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers()` — source-generated, named after the assembly, one call for every handler in it | `ConfigureOrdersInfrastructure` |
-| `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` | `Payments.Application/IntegrationEventHandlers/` |
-
-The translating handler hands the event to its feature's `I<Name>IntegrationEventPublisher`, which
-**stages** an outbox row through that feature's `DbContext`: the row is written by the same save that
-persists the aggregate, so the event exists if and only if the change committed. A worker later
-claims the row and hands it, in a fresh scope, to the **one** `IOutboxMessageHandler<T>` registered
-for its type — which publishes it to the mediator, where every consumer receives it in that scope
-with its own `DbContext`. No feature code opens a transaction.
-
-That handler belongs to the feature whose `Contracts` declares the event, in its `Infrastructure`
-layer: delivery is infrastructure, and this is the reading counterpart to the publisher that staged
-the row. It is the one thing an `Infrastructure` layer may name a `Contracts` type for, and only its
-own feature's — `ContractIsolationTests` still fails it for a sibling's. The marker interface and its
-binding are scaffolded, both registered by `Configure<Name>Infrastructure`, which already calls the
-source-generated `Add<Assembly>MessageHandlers()` that registers every handler under
-`OutboxHandlers/` — so a second published event costs a record, a translating handler, and an outbox
-handler, with no registration to keep in step.
-
-`EventId` and `GroupKey` are on the event itself, because delivery hands a consumer the event and
-nothing else. **The Group key is the aggregate the event concerns** — events sharing one are
-delivered in order, one at a time, while unrelated aggregates proceed concurrently; a constant would
-serialise the application behind a single stuck message. The architecture tests fail an
-`IIntegrationEvent` declared outside a `Contracts` assembly, or named or placed off-convention.
+Validators check the *shape* of incoming values, never business rules, and never inject a repository.
 
 ### Dependency injection
 
@@ -167,16 +108,6 @@ services may stay directly injected.
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
   Blazor component tests.
 - **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.
-
-## Adding a feature
-
-```bash
-dotnet new modulith-feature --appName ModulithTemplate -n Shipping
-```
-
-Run this from the solution root. **The one manual step** is registering the feature with the host: add a project reference
-from `src/ModulithTemplate.Web` to the feature's `.Web` project, and call
-`builder.ConfigureShippingFeature();` in `Program.cs`.
 
 ## MCP servers
 

@@ -23,9 +23,17 @@ This is a single-context repo:
 ```
 
 Note that `CONTEXT.md` and `docs/adr/` describe the architecture of the solution this template
-*generates*, but are maintained here and deliberately **not** shipped inside
-`working/content/modulith/`: they record decisions the template's maintainers made, not decisions a
-generated project's owner has made.
+*generates*, but are maintained here for the template's maintainers.
+
+`docs/adr/` is deliberately **not** shipped inside `working/content/modulith/`: ADRs record
+decisions the template's maintainers made, not decisions a generated project's owner has made. So
+never cite an ADR from shipped content — inline the reasoning instead.
+
+`CONTEXT.md` is a different case. The root one is the maintainer's spec of the vocabulary the
+template produces, complete with the `_Avoid_` lists that keep the content honest. A **separate,
+seeded** `working/content/modulith/CONTEXT.md` ships to generated projects, carrying the same
+architectural terms but framed as a living glossary its owner extends with their own domain
+language. Keep the two in step when a term changes.
 
 ## Use the glossary's vocabulary
 

@@ -15,7 +15,10 @@
          Application is the one layer allowed to reference a Contracts project. -->
     <ProjectReference Include="../../Orders/ModulithTemplate.Features.Orders.Contracts/ModulithTemplate.Features.Orders.Contracts.csproj" />
     <ProjectReference Include="../ModulithTemplate.Features.Payments.Contracts/ModulithTemplate.Features.Payments.Contracts.csproj" />
-    <ProjectReference Include="../ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" />
+    <!-- PrivateAssets: Domain is used here but not handed on to this project's consumers, so a
+         Web project cannot name an entity even through 'var'. Removing it silently reopens the
+         layering hole that ArchitectureTests can only catch after the fact. -->
+    <ProjectReference Include="../ModulithTemplate.Features.Payments.Domain/ModulithTemplate.Features.Payments.Domain.csproj" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

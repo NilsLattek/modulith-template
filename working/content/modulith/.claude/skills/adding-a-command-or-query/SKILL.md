@@ -68,7 +68,8 @@ a scope of its own.
 
 That scope is gone by the time the component renders, so **the handler must return a DTO, never an
 entity** — a returned entity's navigation properties throw `ObjectDisposedException` at render time.
-`ModulithTemplate.ArchitectureTests` fails the build if a message's response exposes an aggregate.
+A message typed `IQuery<Result<SomeEntity>>` will not compile where a component consumes it: the
+feature's `Domain` is referenced with `PrivateAssets="all"` and never reaches the `Web` layer.
 
 ## Tests
 

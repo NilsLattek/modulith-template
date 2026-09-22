@@ -2,6 +2,10 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../../src/Features/FeatureName/ModulithApp.Features.FeatureName.Application/ModulithApp.Features.FeatureName.Application.csproj" />
+
+    <!-- Domain is explicit: Application keeps it private so it cannot reach the Web layer, which
+         also means it no longer arrives here transitively. Handler tests build aggregates. -->
+    <ProjectReference Include="../../../../src/Features/FeatureName/ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" />
   </ItemGroup>
 
 </Project>

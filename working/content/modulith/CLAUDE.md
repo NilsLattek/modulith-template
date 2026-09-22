@@ -29,9 +29,11 @@ depend on each other** — `Contracts` is the only crossing point, reached throu
 Integration Event (skill: `reaching-another-feature`). `ModulithTemplate.ArchitectureTests` enforces
 the layer rules.
 
-Adding a whole new feature is a scaffold plus one manual registration step (skill:
-`adding-a-feature`). Adding a command or query to an existing one has its own layout and validator
-rules (skill: `adding-a-command-or-query`).
+**A feature is a transaction boundary, sized like a bounded context — not a folder, a screen or a
+CRUD table.** Two features share no transaction, so the split cannot be undone cheaply. The default
+for new work is to put it in an existing feature; creating one needs positive justification (skill:
+`adding-a-feature`, which covers the sizing test and the scaffold). Adding a command or query to an
+existing feature has its own layout and validator rules (skill: `adding-a-command-or-query`).
 
 ### Where business logic goes
 

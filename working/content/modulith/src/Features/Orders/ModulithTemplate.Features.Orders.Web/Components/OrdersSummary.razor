@@ -1,7 +1,7 @@
 @using ModulithTemplate.Features.Orders.Application.Queries.GetSomeEntityCount
 @using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity
 
-@inject IServiceScopeFactory ScopeFactory
+@inject IScopedMediator Mediator
 
 <h2>Orders</h2>
 
@@ -31,12 +31,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // One DI scope per operation, so the handler's DbContext lives and dies with the message.
-        // Redundant under this page's static SSR, but the moment the component turns interactive a
-        // directly injected IMediator would hold one DbContext open for the whole circuit.
-        var result = await ScopeFactory.WithNewScopeAsync(services =>
-            services.GetRequiredService<IMediator>()
-                .Send(new GetSomeEntityCountQuery(), CancellationToken.None));
+        // IScopedMediator, never a directly injected IMediator: it gives the message a DI scope of
+        // its own, so the handler's DbContext lives and dies with it. Redundant under this page's
+        // static SSR, but the moment the component turns interactive one DbContext would otherwise
+        // stay open for the whole circuit.
+        var result = await Mediator.Send(new GetSomeEntityCountQuery());
 
         if (result.IsSuccess)
         {
@@ -52,10 +51,6 @@ else
 
     private async Task AddClicked()
     {
-        await ScopeFactory.WithNewScopeAsync(services =>
-        {
-            var command = new AddSomeEntityCommand("Test", 1);
-            return services.GetRequiredService<IMediator>().Send(command, CancellationToken.None);
-        });
+        await Mediator.Send(new AddSomeEntityCommand("Test", 1));
     }
 }

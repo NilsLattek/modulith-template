@@ -12,7 +12,10 @@
   <ItemGroup>
     <ProjectReference Include="../../../SharedKernel/ModulithApp.SharedKernel.Application/ModulithApp.SharedKernel.Application.csproj" />
     <ProjectReference Include="../ModulithApp.Features.FeatureName.Contracts/ModulithApp.Features.FeatureName.Contracts.csproj" />
-    <ProjectReference Include="../ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" />
+    <!-- PrivateAssets: Domain is used here but not handed on to this project's consumers, so a
+         Web project cannot name an entity even through 'var'. Removing it silently reopens the
+         layering hole that ArchitectureTests can only catch after the fact. -->
+    <ProjectReference Include="../ModulithApp.Features.FeatureName.Domain/ModulithApp.Features.FeatureName.Domain.csproj" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

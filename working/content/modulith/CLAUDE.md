@@ -85,7 +85,8 @@ Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`
   reference into the host's compilation, so marking one `internal` breaks the host build with `CS0122`.
   Do not "tidy" them.
 
-`Web` reaches `Application` only through `IMediator` — never by calling a handler directly.
+`Web` reaches `Application` only by sending a message — never by calling a handler directly.
+Components send it with `IScopedMediator` (below); anything else uses `IMediator`.
 Validators check the *shape* of incoming values, never business rules, and never inject a repository.
 
 ### Dependency injection
@@ -98,10 +99,14 @@ feature's composition root.
 Scoped services live for the whole SignalR circuit in Blazor Server, so a directly-injected scoped
 dependency — `IMediator` included — shares one long-lived, non-thread-safe `DbContext` for the entire
 user session. **Components must not `@inject` `IMediator` for database work**: inject
-`IServiceScopeFactory` and send each message inside `ScopeFactory.WithNewScopeAsync(...)` from
-`ModulithTemplate.SharedKernel.Web/Extensions/ServiceScopeExtensions.cs`. That needs `@using Mediator` and
-`@using ModulithTemplate.SharedKernel.Web.Extensions` — neither is in `_Imports.razor`. Stateless, non-DB
-services may stay directly injected.
+`IScopedMediator` and `await Mediator.Send(message)`. It gives each message a DI scope of its own and
+disposes it when the message completes.
+
+**Handlers return DTOs, never entities.** That scope is disposed before the component renders, so a
+returned entity is attached to a dead `DbContext` and reading a navigation property throws
+`ObjectDisposedException` — at render time, long after the query passed. Value objects are fine.
+
+`ServiceScopeExtensions.WithNewScopeAsync(...)` remains for scoped UI work that is not a message.
 
 ## Conventions
 

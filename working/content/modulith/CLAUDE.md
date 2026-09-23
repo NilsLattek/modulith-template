@@ -115,10 +115,18 @@ returned entity is attached to a dead `DbContext` and reading a navigation prope
 
 `ServiceScopeExtensions.WithNewScopeAsync(...)` remains for scoped UI work that is not a message.
 
+### Forms
+
+A form binds to a form model declared in its component — never to the command — and shows the
+server's answer with `<FormFeedback Result="_result" />`, **never by rendering `result.Errors`
+itself**, which is how exception text reaches a page. Instant validation depends on the interactive
+render mode every page uses; a page switched to static SSR silently loses it (skill: `adding-a-form`).
+
 ## Conventions
 
 - **No new reflection**: prefer a source generator, as Mediator, Mapperly and `[LoggerMessage]` already
-  are here.
+  are here. The one accepted exception is form validation, whose models live in `.razor` files where
+  the validation generator cannot see them.
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
   Blazor component tests.
 - **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.

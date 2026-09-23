@@ -1,0 +1,116 @@
+@* The server's answer to a form's last submit, placed inside its EditForm: validation errors go to
+   their fields, anything else becomes an alert, and a summary lists every validation message —
+   including one whose property this form has no field for. *@
+
+@implements IDisposable
+
+@if (_alerts.Count > 0)
+{
+    <div class="alert alert-danger" role="alert">
+        @foreach (var alert in _alerts)
+        {
+            <div>@alert</div>
+        }
+    </div>
+}
+
+<ValidationSummary />
+
+@code {
+    private const string UnexpectedText = "Something went wrong.";
+
+    private readonly List<string> _alerts = [];
+    private ValidationMessageStore? _messages;
+    private IResultBase? _shown;
+
+    [CascadingParameter]
+    private EditContext? EditContext { get; set; }
+
+    /// <summary>The outcome of the last submit; <see langword="null"/> before the first.</summary>
+    [Parameter]
+    public IResultBase? Result { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        if (EditContext is null)
+        {
+            throw new InvalidOperationException($"{nameof(FormFeedback)} must be placed inside an EditForm.");
+        }
+
+        _messages = new ValidationMessageStore(EditContext);
+        EditContext.OnValidationRequested += ClearAll;
+        EditContext.OnFieldChanged += ClearField;
+    }
+
+    /// <inheritdoc />
+    protected override void OnParametersSet()
+    {
+        // Only a new result replaces what is shown: a re-render for any other reason must not bring
+        // back errors the user has edited away since.
+        if (ReferenceEquals(Result, _shown))
+        {
+            return;
+        }
+
+        _shown = Result;
+        _messages!.Clear();
+        _alerts.Clear();
+
+        foreach (var error in Result?.Errors ?? Enumerable.Empty<IError>())
+        {
+            switch (error)
+            {
+                case ValidationError validation:
+                    _messages.Add(EditContext!.Field(validation.PropertyName), validation.Message);
+                    break;
+                case NotFoundError or ConflictError:
+                    AddAlert(error.Message);
+                    break;
+                case UnexpectedError { TraceId: { } traceId }:
+                    AddAlert($"{UnexpectedText} Reference: {traceId}");
+                    break;
+                default:
+                    // Unexpected, or from outside the taxonomy and possibly exception text: show none of it.
+                    AddAlert(UnexpectedText);
+                    break;
+            }
+        }
+
+        EditContext!.NotifyValidationStateChanged();
+    }
+
+    private void AddAlert(string text)
+    {
+        if (!_alerts.Contains(text, StringComparer.Ordinal))
+        {
+            _alerts.Add(text);
+        }
+    }
+
+    // A new submit: the last answer no longer applies, and must not block the new one.
+    private void ClearAll(object? sender, ValidationRequestedEventArgs e)
+    {
+        _messages!.Clear();
+        _alerts.Clear();
+        StateHasChanged();
+    }
+
+    private void ClearField(object? sender, FieldChangedEventArgs e)
+    {
+        _messages!.Clear(e.FieldIdentifier);
+        EditContext!.NotifyValidationStateChanged();
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (EditContext is not null)
+        {
+            EditContext.OnValidationRequested -= ClearAll;
+            EditContext.OnFieldChanged -= ClearField;
+        }
+
+        _messages?.Clear();
+    }
+}

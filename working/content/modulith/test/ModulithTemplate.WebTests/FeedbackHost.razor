@@ -1,0 +1,22 @@
+@* A minimal form for FormFeedback to sit in: one field the server's errors can target. *@
+
+<EditForm Model="Model">
+    <FormFeedback Result="Result" />
+    <InputText id="name" @bind-Value="Model.Name" />
+    <ValidationMessage For="() => Model.Name" />
+</EditForm>
+
+@code {
+    /// <summary>The result under test.</summary>
+    [Parameter]
+    public IResultBase? Result { get; set; }
+
+    /// <summary>What the form edits.</summary>
+    public HostModel Model { get; } = new();
+
+    /// <summary>The form model; its <c>Name</c> matches the server error's property.</summary>
+    public sealed class HostModel
+    {
+        public string? Name { get; set; }
+    }
+}

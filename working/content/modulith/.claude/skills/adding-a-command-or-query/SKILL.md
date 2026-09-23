@@ -89,6 +89,9 @@ Components must not `@inject IMediator` for database work — scoped services li
 SignalR circuit. Inject `IScopedMediator` and `await Mediator.Send(message)`; it gives each message
 a scope of its own.
 
+A form that sends a command has its own pattern for binding and for showing the result (skill:
+`adding-a-form`).
+
 That scope is gone by the time the component renders, so **the handler must return a DTO, never an
 entity** — a returned entity's navigation properties throw `ObjectDisposedException` at render time.
 A message typed `IQuery<Result<SomeEntity>>` will not compile where a component consumes it: the

@@ -1,0 +1,86 @@
+@* The reference form: a form model the inputs bind to, instant client-side checks, and the server's
+   answer shown by FormFeedback. The adding-a-form skill walks through it. *@
+
+@using System.ComponentModel.DataAnnotations
+@using FluentResults
+@using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity
+
+@inject IScopedMediator Mediator
+
+<EditForm Model="_model" OnValidSubmit="SubmitAsync">
+    <DataAnnotationsValidator />
+    <FormFeedback Result="_result" />
+
+    <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <InputText id="name" class="form-control" @bind-Value="_model.Name" />
+        <ValidationMessage For="() => _model.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label for="amount" class="form-label">Amount</label>
+        <InputNumber id="amount" class="form-control" step="0.01" @bind-Value="_model.Amount" />
+        <ValidationMessage For="() => _model.Amount" />
+    </div>
+
+    <button type="submit" class="btn btn-primary" disabled="@_submitting">Add</button>
+    @if (_added)
+    {
+        <span class="text-success ms-2" role="status">Added.</span>
+    }
+</EditForm>
+
+@code {
+    private FormModel _model = new();
+    private IResultBase? _result;
+    private bool _submitting;
+    private bool _added;
+
+    /// <summary>Raised after an entity has been added.</summary>
+    [Parameter]
+    public EventCallback OnAdded { get; set; }
+
+    private async Task SubmitAsync()
+    {
+        _submitting = true;
+        _added = false;
+
+        try
+        {
+            var result = await Mediator.Send(_model.ToCommand());
+            _result = result;
+
+            if (result.IsSuccess)
+            {
+                // A new instance, not cleared properties: EditForm builds a fresh EditContext only
+                // when Model changes, and the old one would keep every field marked as modified.
+                _model = new FormModel();
+                _added = true;
+                await OnAdded.InvokeAsync();
+            }
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    /// <summary>What the inputs edit: settable, and empty until the user types.</summary>
+    /// <remarks>
+    /// The limits restate the command validator's for instant feedback; the server re-checks them.
+    /// Property names match the command's, so its validation errors land beside these fields.
+    /// </remarks>
+    public sealed class FormModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string? Name { get; set; }
+
+        [Required]
+        [Range(typeof(decimal), "0.01", "9999999999999999.99", ParseLimitsInInvariantCulture = true)]
+        public decimal? Amount { get; set; }
+
+        /// <summary>Only called from a valid submit, when both values are present.</summary>
+        public AddSomeEntityCommand ToCommand() => new(Name!, Amount!.Value);
+    }
+}

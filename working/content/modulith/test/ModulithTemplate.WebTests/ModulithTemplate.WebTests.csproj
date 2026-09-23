@@ -1,4 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <ItemGroup>
+    <PackageReference Include="bunit" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/ModulithTemplate.Web/ModulithTemplate.Web.csproj" />

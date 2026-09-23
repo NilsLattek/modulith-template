@@ -28,6 +28,12 @@ A Feature's synchronous, read-only contract, answering "I need your data to fini
 in right now".
 _Avoid_: Service, gateway, client
 
+**Form Model**:
+What a form edits: the values a user is typing, in the shape the screen needs — empty until filled
+in, possibly incomplete, not yet sent. Becomes a command on submit. It may repeat the command's rules
+to give instant feedback, but it is never their authority.
+_Avoid_: View model, input model, DTO, command
+
 ## Events
 
 **Domain Event**:

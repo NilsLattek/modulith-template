@@ -67,8 +67,9 @@ Entities are rich, not data bags:
   through a `public static` factory method or a domain service — never `new`.
 - **Invariants are enforced in the constructor and in every mutator**, so no call path can produce an
   invalid entity. The domain throws rather than returning `Result` (it takes no dependency on
-  FluentResults); unhandled handler exceptions become a failed `Result` centrally. An *expected*
-  failure should still be checked by the handler and returned as an explicit `Result.Fail`.
+  FluentResults); an unhandled exception becomes an `UnexpectedError` centrally. An *expected*
+  failure is not thrown: the handler asks the entity (`order.CanBeCancelled`) and returns the
+  Rejection itself.
 
 **When you add or change an invariant, cover it with a `<Name>.DomainTests` test on the entity**, not
 only through a handler test — the domain is where the guarantee lives.
@@ -84,6 +85,12 @@ Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`
 - **Handlers must be `public`.** The mediator's source generator emits a hard `typeof(<Handler>)`
   reference into the host's compilation, so marking one `internal` breaks the host build with `CS0122`.
   Do not "tidy" them.
+
+**A failed `Result` carries only the `AppError` types** in `SharedKernel.Application/Errors`
+(`ValidationError`, `NotFoundError`, `ConflictError`, `UnexpectedError`) — never `Result.Fail("text")`,
+which logging and the UI can only treat as unexpected. `CONTEXT.md` defines when each applies. A
+`NotFoundError` or `ConflictError` message is shown to the user verbatim, so write it as UI copy; its
+code is `<Feature>.<Reason>`.
 
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
 Components send it with `IScopedMediator` (below); anything else uses `IMediator`.
@@ -110,6 +117,8 @@ returned entity is attached to a dead `DbContext` and reading a navigation prope
 
 ## Conventions
 
+- **No new reflection**: prefer a source generator, as Mediator, Mapperly and `[LoggerMessage]` already
+  are here.
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
   Blazor component tests.
 - **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.

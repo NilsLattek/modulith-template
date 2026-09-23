@@ -27,8 +27,8 @@ The validator lives **in the message's own folder**, not a `Validators/` directo
 ## The handler
 
 Orchestrates and nothing more. It acts as the ApplicationService in a DDD architecture: load entities via the repository, call entity methods or a domain
-service, persist, map to a DTO. The happy path plus explicit `Result.Fail` for expected domain
-failures. **No `try`/`catch`** — unhandled exceptions become a failed `Result` centrally.
+service, persist, map to a DTO. The happy path plus an explicit `Result.Fail` for each expected
+failure. **No `try`/`catch`** — unhandled exceptions become an `UnexpectedError` centrally.
 
 A handler that decides whether something is *valid*, rather than reacting to the domain's answer,
 has taken work that belongs in the entity.
@@ -41,6 +41,30 @@ Two rules that fail in non-obvious ways:
   reference into the host's compilation, so `internal` breaks the host build with `CS0122`.
 
 `Web` reaches `Application` only through `IMediator` — never by calling a handler directly.
+
+## Returning a failure
+
+An expected failure is a **Rejection** — return it, never throw it. Pick the type by the definitions
+in `CONTEXT.md`; the test is whether the user could fix it by changing a value they typed:
+
+```csharp
+if (await repository.AnyAsync(new OrderByNameSpec(command.Name), cancellationToken))
+    return Result.Fail(new ValidationError(nameof(command.Name), "Orders.NameTaken", "That name is already taken."));
+
+if (!order.CanBeCancelled)
+    return Result.Fail(new ConflictError("Orders.AlreadyShipped", "This order has shipped and can no longer be cancelled."));
+```
+
+- **The rule stays in the entity.** The handler asks (`order.CanBeCancelled`) and reports the answer;
+  it does not decide. The entity still throws if called anyway — that is the invariant.
+- **Codes are `<Feature>.<Reason>`** and never change; logs record them and a localization pass keys on
+  them. Messages of `NotFoundError` and `ConflictError` reach the user verbatim — write them as UI copy.
+- **A `ValidationError`'s property name is the command's**, so a form can put the message beside the
+  field.
+- **Database outcomes need no handler code.** A lost concurrency race or a unique-constraint violation
+  arrives as a `ConflictError`, translated in `SharedKernel.Infrastructure` by an
+  `IExceptionTranslator`. Add another translator there for any other exception that means an expected
+  outcome.
 
 ## The validator
 
@@ -55,10 +79,9 @@ Anything depending on domain state (may this order still be changed? is this qua
 invariant and belongs in the entity or a domain service, where it holds for every caller. **Never
 inject a repository into a validator.**
 
-Failures come back as a failed `Result` carrying one `ValidationError` per broken rule
-(`ModulithTemplate.SharedKernel.Application/Errors/ValidationError.cs`), each with the `PropertyName`
-it was declared on — so a Blazor form can group `result.Errors.OfType<ValidationError>()` by
-property and bind the messages to their fields.
+Failures come back as a failed `Result` carrying one `ValidationError` per broken rule, each with
+the `PropertyName` it was declared on and a `Code` — FluentValidation's validator name
+(`NotEmptyValidator`) unless the rule sets `.WithErrorCode(...)`.
 
 ## Calling it from Blazor
 

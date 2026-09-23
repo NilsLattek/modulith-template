@@ -54,7 +54,8 @@ public sealed class ValidationBehaviour<TMessage, TResponse>(IEnumerable<IValida
             return await next(message, cancellationToken);
         }
 
-        return new TResponse().WithErrors(
-            failures.Select(failure => new ValidationError(failure.PropertyName, failure.ErrorMessage)));
+        // ErrorCode defaults to the validator's name (NotEmptyValidator) unless a rule sets WithErrorCode.
+        return new TResponse().WithErrors(failures.Select(failure =>
+            new ValidationError(failure.PropertyName, failure.ErrorCode, failure.ErrorMessage)));
     }
 }

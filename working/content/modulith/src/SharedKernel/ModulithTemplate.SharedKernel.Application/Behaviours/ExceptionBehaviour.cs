@@ -1,8 +1,12 @@
+using System.Diagnostics;
+
 using FluentResults;
 
 using Mediator;
 
 using Microsoft.Extensions.Logging;
+
+using ModulithTemplate.SharedKernel.Application.Errors;
 
 namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
@@ -17,8 +21,14 @@ namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 /// parameterises each result type by itself, so <c>WithError</c> returns the concrete type it was
 /// called on — and also decides which messages are covered at all: a handler returning anything
 /// other than a result is not wrapped, and its exceptions propagate.
+/// <para>
+/// An exception an <see cref="IExceptionTranslator"/> recognises becomes the error it names; any
+/// other is logged with its trace id and becomes an <see cref="UnexpectedError"/> carrying only that
+/// id, so exception text never reaches the caller.
+/// </para>
 /// </remarks>
 public sealed class ExceptionBehaviour<TMessage, TResponse>(
+    IEnumerable<IExceptionTranslator> translators,
     ILogger<ExceptionBehaviour<TMessage, TResponse>> logger)
     : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage
@@ -41,8 +51,17 @@ public sealed class ExceptionBehaviour<TMessage, TResponse>(
         }
         catch (Exception ex)
         {
-            BehaviourLog.HandlerThrew(logger, typeof(TMessage).Name, ex);
-            return new TResponse().WithError(new ExceptionalError(ex));
+            foreach (var translator in translators)
+            {
+                if (translator.Translate(ex) is { } expected)
+                {
+                    return new TResponse().WithError(expected);
+                }
+            }
+
+            var traceId = Activity.Current?.TraceId.ToHexString();
+            BehaviourLog.HandlerThrew(logger, typeof(TMessage).Name, traceId, ex);
+            return new TResponse().WithError(new UnexpectedError(traceId));
         }
     }
 }

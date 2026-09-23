@@ -56,3 +56,30 @@ The ordering boundary between Integration Events. Events in one Group are delive
 the order they were recorded; different Groups proceed independently. Keyed by the aggregate the
 event concerns.
 _Avoid_: Partition, stream, queue, channel
+
+## Failures
+
+**Rejection**:
+A request the application declined for an expected reason — a Validation Error, Not Found or a
+Conflict. The system working as designed, and recorded as such rather than as a fault.
+_Avoid_: Failure, error, exception
+
+**Validation Error**:
+A Rejection the user can put right by changing one of the values they supplied — a blank name, an
+amount out of range, a name already taken. It belongs to the value that caused it.
+_Avoid_: Invalid input, bad request, form error
+
+**Not Found**:
+A Rejection because the request names something that does not exist.
+_Avoid_: Missing, 404, null result
+
+**Conflict**:
+A Rejection of a well-formed request that the current state forbids — the order has already shipped,
+or someone else changed the record first. No change to the supplied values would fix it, which is
+what separates it from a Validation Error.
+_Avoid_: Business rule violation, domain error, concurrency error, 409
+
+**Unexpected Error**:
+A failure nobody anticipated — a bug or an infrastructure fault. Its details are recorded for the
+team and never shown to the user, who receives only a reference to quote.
+_Avoid_: Exception, crash, server error, internal error

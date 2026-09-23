@@ -28,6 +28,11 @@ public class ValidationBehaviourTests
         public NameMinLengthValidator() => RuleFor(command => command.Name).MinimumLength(3).WithMessage("name is too short");
     }
 
+    private sealed class NameCodedValidator : AbstractValidator<TestCommand>
+    {
+        public NameCodedValidator() => RuleFor(command => command.Name).NotEmpty().WithErrorCode("Test.NameRequired");
+    }
+
     private sealed class PagePositiveValidator : AbstractValidator<TestQuery>
     {
         public PagePositiveValidator() => RuleFor(query => query.Page).GreaterThan(0);
@@ -88,6 +93,24 @@ public class ValidationBehaviourTests
         var error = Assert.IsType<ValidationError>(Assert.Single(result.Errors));
         Assert.Equal(nameof(TestCommand.Name), error.PropertyName);
         Assert.Equal(nameof(TestCommand.Name), error.Metadata[nameof(ValidationError.PropertyName)]);
+    }
+
+    [Fact]
+    public async Task Handle_when_a_rule_fails_carries_its_error_code()
+    {
+        // Arrange
+        var behaviour = new ValidationBehaviour<TestCommand, Result>([new NameNotEmptyValidator(), new NameCodedValidator()]);
+
+        // Act
+        var result = await behaviour.Handle(
+            new TestCommand(""),
+            (_, _) => ValueTask.FromResult(Result.Ok()),
+            TestContext.Current.CancellationToken);
+
+        // Assert — FluentValidation's default code is the validator's name; WithErrorCode overrides it
+        var codes = result.Errors.Cast<ValidationError>().Select(error => error.Code).ToList();
+        Assert.Contains("NotEmptyValidator", codes, StringComparer.Ordinal);
+        Assert.Contains("Test.NameRequired", codes, StringComparer.Ordinal);
     }
 
     [Fact]

@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../ModulithTemplate.SharedKernel.Domain/ModulithTemplate.SharedKernel.Domain.csproj" />
+    <!-- For IExceptionTranslator: an adapter implementing an inward port, as feature Infrastructure does. -->
+    <ProjectReference Include="../ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
   </ItemGroup>
 
 </Project>

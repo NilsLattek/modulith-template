@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
+using ModulithTemplate.SharedKernel.Application;
 using ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 using Underground.Outbox;
@@ -16,7 +17,8 @@ public static class ModuleDbContextExtensions
 {
     /// <summary>
     /// Registers a feature's <see cref="DbContext"/> with this solution's shared EF Core conventions,
-    /// its domain event dispatch, and its half of the shared outbox.
+    /// its domain event dispatch, its half of the shared outbox, and the translation of database
+    /// exceptions into expected errors.
     /// </summary>
     /// <remarks>
     /// <c>TryAdd</c> because every feature calls this. The dispatcher is solution-wide; the
@@ -38,6 +40,7 @@ public static class ModuleDbContextExtensions
     {
         services.TryAddScoped<DomainEventDispatcher>();
         services.TryAddScoped<DomainEventDispatchInterceptor<TContext>>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IExceptionTranslator, DatabaseExceptionTranslator>());
 
         // The (sp, options) overload, so the interceptors come from the same scope as the context
         // and share the scope's mediator.

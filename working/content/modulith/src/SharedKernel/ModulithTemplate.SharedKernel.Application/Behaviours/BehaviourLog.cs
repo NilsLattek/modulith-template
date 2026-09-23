@@ -18,9 +18,12 @@ internal static partial class BehaviourLog
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Handled {MessageType} in {ElapsedMilliseconds} ms")]
     public static partial void Handled(ILogger logger, string messageType, long elapsedMilliseconds);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "{MessageType} failed in {ElapsedMilliseconds} ms: {Errors}")]
-    public static partial void Failed(ILogger logger, string messageType, long elapsedMilliseconds, string errors);
+    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "{MessageType} failed in {ElapsedMilliseconds} ms: {Codes}")]
+    public static partial void Failed(ILogger logger, string messageType, long elapsedMilliseconds, string codes);
 
-    [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "{MessageType} threw an unhandled exception")]
-    public static partial void HandlerThrew(ILogger logger, string messageType, Exception exception);
+    [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "{MessageType} threw an unhandled exception (trace {TraceId})")]
+    public static partial void HandlerThrew(ILogger logger, string messageType, string? traceId, Exception exception);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Information, Message = "{MessageType} was rejected in {ElapsedMilliseconds} ms: {Codes}")]
+    public static partial void Rejected(ILogger logger, string messageType, long elapsedMilliseconds, string codes);
 }

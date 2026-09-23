@@ -24,6 +24,11 @@ A Feature's synchronous, read-only contract, answering "I need your data to fini
 in right now".
 _Avoid_: Service, gateway, client
 
+**Command**:
+A request to carry out one business operation, named in the business's own words, that changes one
+aggregate. Sized by intent, not by field: neither one per field nor one that replaces a whole record.
+_Avoid_: Update, Set, Save, Edit (as generic verbs)
+
 ## Events
 
 **Domain Event**:

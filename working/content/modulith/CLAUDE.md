@@ -53,7 +53,9 @@ existing feature has its own layout and validator rules (skill: `adding-a-comman
 Signals a rule sits in the wrong place: a handler decides whether something is *valid* rather than
 reacting to the domain's answer; the same rule is written on both the create and the update path
 (duplication means it belongs in the entity, enforced once for all callers); an entity has public
-setters and no methods while a handler mutates it property by property; a Blazor component enforces a
+setters and no methods while a handler mutates it property by property, or its commands mirror its
+fields — one per field, or one `Update<Entity>` for the whole record — rather than business operations
+(skill: `adding-a-command-or-query`); a Blazor component enforces a
 rule nothing else does; an entity injects a repository — entities do not reach for data, a domain
 service does.
 

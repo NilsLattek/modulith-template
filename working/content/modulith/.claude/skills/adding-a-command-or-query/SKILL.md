@@ -1,11 +1,36 @@
 ---
 name: adding-a-command-or-query
-description: Add a CQRS command or query to an existing feature — the message, its handler, its validator and the DTO it returns. Use when adding a write operation or a read to a feature, wiring a Blazor page or endpoint to the application layer, or deciding where a FluentValidation validator belongs.
+description: Add a CQRS command or query to an existing feature — sizing it to one business operation, then the message, its handler, its validator and the DTO it returns. Use when adding a write operation or a read to a feature, when choosing between per-field commands and one update-everything command, wiring a Blazor page or endpoint to the application layer, or deciding where a FluentValidation validator belongs.
 ---
 
 # Adding a command or query
 
 Every operation is a message plus its handler, in a folder of its own.
+
+## Sizing the command
+
+Decide the size before creating a folder — once `UpdateXCommand/` exists, the size is settled. A
+command is one **business operation**, not a data change. Check three things:
+
+1. **A domain expert would say it.** "Confirm the order", "change the shipping address". A name that
+   reduces to `Update<Field>`, `Set<Field>` or `Update<Entity>` describes data, not intent.
+2. **It maps to one entity method.** `ConfirmOrder` → `order.Confirm()`, ideally raising
+   `OrderConfirmed`. One verb from the command, through the method, to the event.
+3. **It changes one aggregate.** Needing a second one means splitting it, reacting to a domain or
+   integration event, or a domain service.
+
+Both failure modes follow the data instead of the intent:
+
+- **Too small:** one command per field. The operation the user performed is split across several
+  commands, and the rule tying the fields together has nowhere to live.
+- **Too big:** one `Update<Entity>Command` carrying the whole DTO. The handler diffs old against new
+  to guess what happened, and every rule has to run on every save.
+
+Size follows intent, not field count. One field is fine when the name says why it changes
+(`ChangeShippingAddress`). A single `Update<Thing>Details` backed by one `UpdateDetails(...)` method
+is fine only where no business rule tells the fields apart — reference data, admin screens, a draft
+filled in across wizard steps. Creation is named after the business event too: `PlaceOrder`,
+`RegisterCustomer`, not `CreateOrder`.
 
 ## Layout
 

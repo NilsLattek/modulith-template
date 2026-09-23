@@ -5,7 +5,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- For the error types FormFeedback renders. -->
     <ProjectReference Include="../ModulithTemplate.SharedKernel.Application/ModulithTemplate.SharedKernel.Application.csproj" />
   </ItemGroup>
 </Project>

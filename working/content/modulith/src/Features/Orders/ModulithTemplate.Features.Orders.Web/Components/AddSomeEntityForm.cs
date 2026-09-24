@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
+
 namespace ModulithTemplate.Features.Orders.Web.Components;
 
 /// <summary>The add form's model: instant feedback while typing, before a command is sent.</summary>
@@ -14,12 +16,14 @@ public sealed class AddSomeEntityForm : IValidatableObject
 
     [Required(ErrorMessage = "Enter a name.")]
     [StringLength(200, ErrorMessage = "A name may be at most 200 characters.")]
-    public string? Name { get; set; }
+    public string Name { get; set; } = "";
 
     [Required(ErrorMessage = "Enter an amount.")]
     [Range(typeof(decimal), "0.01", "9999999999999999.99", ParseLimitsInInvariantCulture = true,
         ErrorMessage = "The amount must be between 0.01 and 9,999,999,999,999,999.99.")]
     public decimal? Amount { get; set; }
+
+    public AddSomeEntityCommand ToCommand() => new(Name, Amount.GetValueOrDefault());
 
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

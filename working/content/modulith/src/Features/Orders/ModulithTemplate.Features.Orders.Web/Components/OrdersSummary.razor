@@ -1,5 +1,4 @@
 @using ModulithTemplate.Features.Orders.Application.Queries.GetSomeEntityCount
-@using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity
 
 @inject IScopedMediator Mediator
 
@@ -86,7 +85,7 @@ else
 
         try
         {
-            var result = await Mediator.Send(new AddSomeEntityCommand(_form.Name!, _form.Amount!.Value));
+            var result = await Mediator.Send(_form.ToCommand());
 
             if (result.IsSuccess)
             {

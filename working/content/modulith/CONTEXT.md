@@ -35,7 +35,8 @@ _Avoid_: Update, Set, Save, Edit (as generic verbs)
 
 **Form Model**:
 The shape of what a user types into a form to send one Command, checked as they type. It copies the
-entity's rules for feedback only; the entity stays the guarantee. One per Command, never one per entity.
+entity's rules for feedback only; the entity stays the guarantee. Shared by Commands only when the
+user types the same fields for each; never one per entity.
 _Avoid_: ViewModel, input model, DTO
 
 ## Events

@@ -82,8 +82,7 @@ inject a repository into a validator.**
 
 Failures come back as a failed `Result` carrying one `ValidationError` per broken rule
 (`ModulithTemplate.SharedKernel.Application/Errors/ValidationError.cs`), each with the `PropertyName`
-it was declared on — so a Blazor form can group `result.Errors.OfType<ValidationError>()` by
-property and bind the messages to their fields.
+it was declared on.
 
 ## Calling it from Blazor
 

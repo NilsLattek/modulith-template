@@ -21,7 +21,7 @@ else
 {
     <p>Entities recorded: <strong>@_count</strong></p>
 
-    <EditForm EditContext="_editContext" OnValidSubmit="AddAsync" FormName="add-some-entity">
+    <EditForm Model="_form" OnValidSubmit="AddAsync" FormName="add-some-entity">
         <DataAnnotationsValidator />
 
         <div class="mb-3">
@@ -47,18 +47,12 @@ else
 
 @code {
     private AddSomeEntityForm _form = new();
-    private EditContext _editContext = null!;
-    private ValidationMessageStore _serverErrors = null!;
     private int? _count;
     private bool _failed;
     private bool _submitting;
     private string? _submitError;
 
-    protected override async Task OnInitializedAsync()
-    {
-        ResetForm();
-        await LoadCountAsync();
-    }
+    protected override Task OnInitializedAsync() => LoadCountAsync();
 
     private async Task LoadCountAsync()
     {
@@ -89,39 +83,17 @@ else
 
             if (result.IsSuccess)
             {
-                ResetForm();
+                _form = new AddSomeEntityForm();
                 await LoadCountAsync();
-                return;
             }
-
-            // The command validator is authoritative; its errors land on the matching fields.
-            var validationErrors = result.Errors.OfType<ValidationError>().ToList();
-            foreach (var error in validationErrors)
-            {
-                _serverErrors.Add(_editContext.Field(error.PropertyName), error.Message);
-            }
-
-            if (validationErrors.Count == 0)
+            else
             {
                 _submitError = "The entity could not be added.";
             }
-
-            _editContext.NotifyValidationStateChanged();
         }
         finally
         {
             _submitting = false;
         }
-    }
-
-    private void ResetForm()
-    {
-        _form = new AddSomeEntityForm();
-        _editContext = new EditContext(_form);
-        _serverErrors = new ValidationMessageStore(_editContext);
-
-        // Server errors describe the value that was sent; editing a field makes them stale.
-        _editContext.OnFieldChanged += (_, e) => _serverErrors.Clear(e.FieldIdentifier);
-        _editContext.OnValidationRequested += (_, _) => _serverErrors.Clear();
     }
 }

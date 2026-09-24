@@ -15,7 +15,7 @@ using NSubstitute;
 
 namespace ModulithTemplate.WebTests;
 
-/// <summary>Tests the Orders add form: client-side rules, server errors and the count refresh.</summary>
+/// <summary>Tests the Orders add form: client-side rules, a failed send and the count refresh.</summary>
 public sealed class OrdersSummaryTests : IDisposable
 {
     private readonly BunitContext _context = new();
@@ -61,7 +61,7 @@ public sealed class OrdersSummaryTests : IDisposable
     }
 
     [Fact]
-    public async Task Server_validation_errors_are_shown_on_their_field()
+    public async Task A_failed_command_shows_an_error_and_keeps_the_input()
     {
         _mediator.Send(Arg.Any<GetSomeEntityCountQuery>(), Arg.Any<CancellationToken>()).Returns(Result.Ok(0));
         _mediator.Send(Arg.Any<AddSomeEntityCommand>(), Arg.Any<CancellationToken>())
@@ -72,7 +72,8 @@ public sealed class OrdersSummaryTests : IDisposable
         await component.Find("#amount").ChangeAsync(new ChangeEventArgs { Value = "1" });
         await component.Find("form").SubmitAsync();
 
-        Assert.Equal("Name is taken.", component.Find(".validation-message").TextContent);
+        Assert.Equal("The entity could not be added.", component.Find("p.text-danger").TextContent);
+        Assert.Equal("Widget", component.Find("#name").GetAttribute("value"));
         Assert.Equal("0", component.Find("strong").TextContent);
     }
 }

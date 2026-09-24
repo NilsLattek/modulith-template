@@ -6,8 +6,8 @@ namespace ModulithTemplate.Features.Orders.Web.Components;
 
 /// <summary>The add form's model: instant feedback while typing, before a command is sent.</summary>
 /// <remarks>
-/// Copies <c>SomeEntity</c>'s invariants by value, since Web cannot see the domain. The copy is for
-/// the user's convenience only.
+/// Copies <c>SomeEntity</c>'s invariants by value, since Web cannot see the domain. The command has
+/// no validator because of this check; the entity still enforces the rules if the copy drifts.
 /// </remarks>
 [ValidatableType]
 public sealed class AddSomeEntityForm : IValidatableObject

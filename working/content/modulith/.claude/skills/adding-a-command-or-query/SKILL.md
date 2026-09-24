@@ -39,7 +39,7 @@ Application/
   Commands/PlaceOrder/
     PlaceOrderCommand.cs           public sealed record ... : ICommand<OrderDto>
     PlaceOrderCommandHandler.cs    public sealed class
-    PlaceOrderCommandValidator.cs  public sealed class : AbstractValidator<PlaceOrderCommand>
+    PlaceOrderCommandValidator.cs  public sealed class : AbstractValidator<PlaceOrderCommand> (only if needed, below)
   Queries/GetOrderById/
     ...
   Dtos/                            the shapes returned
@@ -71,6 +71,22 @@ Two rules that fail in non-obvious ways:
 
 Validation is opt-in: a message with no validator passes straight through. The pipeline runs it
 before the handler.
+
+**Add one only when the message has a caller without a form** — a minimal API endpoint, an
+integration-event consumer, a background job. For those, the validator is the boundary: without it
+malformed input reaches the entity, throws, and is logged as an error and returned as an
+`ExceptionalError` with no field name.
+
+**A command sent only from a Blazor form gets none.** Every rule would otherwise be written three
+times — form model, validator, entity:
+
+- The form model (DataAnnotations, `[ValidatableType]`) gives instant feedback, and under the
+  interactive render mode it runs on the server, so a client cannot skip it.
+- The entity enforces the same rules as invariants — the real guarantee, for every caller.
+
+The form model copies the entity's limits by value, since `Web` cannot see `Domain`. If they drift,
+the entity still rejects the input; the user gets the component's generic failure message. When a
+second caller appears later, add the validator then.
 
 **Validators check the shape of incoming values, not business rules** — required, length, range,
 format, "these two fields must both be set". That is the whole remit: a malformed DTO is rejected

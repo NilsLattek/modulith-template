@@ -34,4 +34,5 @@ export PATH="$HOME/.local/bin:$PATH"
 # `|| true` keeps container creation from failing if the network isn't ready yet.
 claude plugin marketplace add anthropics/claude-plugins-official || true
 claude plugin install csharp-lsp@claude-plugins-official || true
-claude plugin install superpowers@claude-plugins-official || true
+# claude plugin install superpowers@claude-plugins-official || true
+claude plugin install mattpocock-skills@claude-plugins-official || true

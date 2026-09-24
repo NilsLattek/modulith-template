@@ -1,0 +1,35 @@
+@* Input and validation only: the consuming component sends the command, so create and edit can share this form. *@
+
+<EditForm Model="Model" OnValidSubmit="() => OnValidSubmit.InvokeAsync(Model)">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <InputText id="name" class="form-control" @bind-Value="Model.Name" />
+        <ValidationMessage For="() => Model.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label for="amount" class="form-label">Amount</label>
+        <InputNumber id="amount" class="form-control" @bind-Value="Model.Amount" step="0.01" />
+        <ValidationMessage For="() => Model.Amount" />
+    </div>
+
+    <button type="submit" class="btn btn-primary" disabled="@Busy">@SubmitLabel</button>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public SomeEntityFormModel Model { get; set; } = null!;
+
+    /// <summary>Raised with the model once every field has validated.</summary>
+    [Parameter]
+    public EventCallback<SomeEntityFormModel> OnValidSubmit { get; set; }
+
+    /// <summary>Disables the submit button while the consumer's command is in flight.</summary>
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = "Save";
+}

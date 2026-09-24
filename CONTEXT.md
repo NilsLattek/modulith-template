@@ -29,6 +29,11 @@ A request to carry out one business operation, named in the business's own words
 aggregate. Sized by intent, not by field: neither one per field nor one that replaces a whole record.
 _Avoid_: Update, Set, Save, Edit (as generic verbs)
 
+**Form Model**:
+The shape of what a user types into a form to send one Command, checked as they type. It copies the
+entity's rules for feedback only; the entity stays the guarantee. One per Command, never one per entity.
+_Avoid_: ViewModel, input model, DTO
+
 ## Events
 
 **Domain Event**:

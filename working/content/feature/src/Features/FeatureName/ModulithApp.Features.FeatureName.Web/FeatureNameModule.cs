@@ -13,6 +13,8 @@ public static class FeatureNameModule
         builder.Services.ConfigureFeatureNameInfrastructure(builder.Configuration);
         builder.Services.ConfigureFeatureNameApplication();
 
+        builder.Services.AddValidation();
+
         return builder;
     }
 }

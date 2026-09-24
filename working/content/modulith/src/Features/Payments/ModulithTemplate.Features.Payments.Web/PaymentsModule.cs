@@ -13,6 +13,10 @@ public static class PaymentsModule
         builder.Services.ConfigurePaymentsInfrastructure(builder.Configuration);
         builder.Services.ConfigurePaymentsApplication();
 
+        // Here, not only in the host: the validation source generator emits metadata for the
+        // [ValidatableType] form models of the assembly that calls AddValidation.
+        builder.Services.AddValidation();
+
         return builder;
     }
 }

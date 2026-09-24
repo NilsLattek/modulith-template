@@ -10,6 +10,7 @@ namespace ModulithTemplate.Features.Orders.Web.Components;
 /// the user's convenience only; the command validator and the entity stay authoritative, and their
 /// errors still land on these fields if the two drift apart.
 /// </remarks>
+[ValidatableType]
 public sealed class AddSomeEntityForm : IValidatableObject
 {
     private const int AmountScale = 2;

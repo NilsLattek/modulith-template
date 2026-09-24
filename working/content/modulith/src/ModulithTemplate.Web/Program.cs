@@ -43,6 +43,9 @@ builder.Services.AddMediator(options =>
 // per message, so no DbContext outlives the operation that needed it.
 builder.Services.AddScopedMediator();
 
+// Each feature's Web project also calls AddValidation, for its own [ValidatableType] form models.
+builder.Services.AddValidation();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

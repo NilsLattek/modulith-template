@@ -1,5 +1,4 @@
 @using ModulithTemplate.Features.Orders.Application.Queries.GetSomeEntityCount
-@using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity
 
 @inject IScopedMediator Mediator
 
@@ -20,21 +19,45 @@ else if (_count is null)
 }
 else
 {
-    <p>Entities recorded (it will not refresh automatically right now): <strong>@_count</strong></p>
+    <p>Entities recorded: <strong>@_count</strong></p>
+
+    <EditForm Model="_form" OnValidSubmit="AddAsync">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="_form.Name" />
+            <ValidationMessage For="() => _form.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="amount" class="form-label">Amount</label>
+            <InputNumber id="amount" class="form-control" @bind-Value="_form.Amount" step="0.01" />
+            <ValidationMessage For="() => _form.Amount" />
+        </div>
+
+        @if (_submitError is not null)
+        {
+            <p class="text-danger">@_submitError</p>
+        }
+
+        <button type="submit" class="btn btn-primary" disabled="@_submitting">Add</button>
+    </EditForm>
 }
 
-<button @onclick="AddClicked">Add</button>
-
 @code {
+    private AddSomeEntityForm _form = new();
     private int? _count;
     private bool _failed;
+    private bool _submitting;
+    private string? _submitError;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadCountAsync();
+
+    private async Task LoadCountAsync()
     {
         // IScopedMediator, never a directly injected IMediator: it gives the message a DI scope of
-        // its own, so the handler's DbContext lives and dies with it. Redundant under this page's
-        // static SSR, but the moment the component turns interactive one DbContext would otherwise
-        // stay open for the whole circuit.
+        // its own, so the handler's DbContext lives and dies with it rather than with the circuit.
         var result = await Mediator.Send(new GetSomeEntityCountQuery());
 
         if (result.IsSuccess)
@@ -49,8 +72,28 @@ else
         }
     }
 
-    private async Task AddClicked()
+    private async Task AddAsync()
     {
-        await Mediator.Send(new AddSomeEntityCommand("Test", 1));
+        _submitting = true;
+        _submitError = null;
+
+        try
+        {
+            var result = await Mediator.Send(_form.ToCommand());
+
+            if (result.IsSuccess)
+            {
+                _form = new AddSomeEntityForm();
+                await LoadCountAsync();
+            }
+            else
+            {
+                _submitError = "The entity could not be added.";
+            }
+        }
+        finally
+        {
+            _submitting = false;
+        }
     }
 }

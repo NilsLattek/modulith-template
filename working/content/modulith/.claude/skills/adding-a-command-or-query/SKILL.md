@@ -77,16 +77,9 @@ integration-event consumer, a background job. For those, the validator is the bo
 malformed input reaches the entity, throws, and is logged as an error and returned as an
 `ExceptionalError` with no field name.
 
-**A command sent only from a Blazor form gets none.** Every rule would otherwise be written three
-times — form model, validator, entity:
-
-- The form model (DataAnnotations, `[ValidatableType]`) gives instant feedback, and under the
-  interactive render mode it runs on the server, so a client cannot skip it.
-- The entity enforces the same rules as invariants — the real guarantee, for every caller.
-
-The form model copies the entity's limits by value, since `Web` cannot see `Domain`. If they drift,
-the entity still rejects the input; the user gets the component's generic failure message. When a
-second caller appears later, add the validator then.
+**A command sent only from a Blazor form gets none**: the form model checks the input on the server
+and the entity enforces the same rules, so a validator would write them a third time (skill:
+`adding-a-blazor-form`).
 
 **Validators check the shape of incoming values, not business rules** — required, length, range,
 format, "these two fields must both be set". That is the whole remit: a malformed DTO is rejected

@@ -4,13 +4,13 @@ using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 
 namespace ModulithTemplate.Features.Orders.Web.Components;
 
-/// <summary>The add form's model: instant feedback while typing, before a command is sent.</summary>
+/// <summary>What a user types into <c>SomeEntityForm</c>: instant feedback before a command is sent.</summary>
 /// <remarks>
 /// Copies <c>SomeEntity</c>'s invariants by value, since Web cannot see the domain. The command has
 /// no validator because of this check; the entity still enforces the rules if the copy drifts.
 /// </remarks>
 [ValidatableType]
-public sealed class AddSomeEntityForm : IValidatableObject
+public sealed class SomeEntityFormModel : IValidatableObject
 {
     private const int AmountScale = 2;
 
@@ -23,7 +23,8 @@ public sealed class AddSomeEntityForm : IValidatableObject
         ErrorMessage = "The amount must be between 0.01 and 9,999,999,999,999,999.99.")]
     public decimal? Amount { get; set; }
 
-    public AddSomeEntityCommand ToCommand() => new(Name, Amount.GetValueOrDefault());
+    /// <summary>Builds the command; call only once the form has validated, which rules out a null amount.</summary>
+    public AddSomeEntityCommand ToAddSomeEntityCommand() => new(Name, Amount.GetValueOrDefault());
 
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

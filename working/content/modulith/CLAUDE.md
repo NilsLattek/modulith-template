@@ -47,7 +47,7 @@ existing feature has its own layout and validator rules (skill: `adding-a-comman
 | Several aggregates, or a decision needing a lookup/repository | a **`*DomainService`** in `Domain/Services/` |
 | A reusable query predicate | a **`*Spec`** in `Domain/Specifications/` |
 | Sequencing: load → call domain → persist → map | the **handler** in `Application` |
-| The *shape* of input typed into a Blazor form — for instant feedback | the component's **form model** (DataAnnotations) in `Web` |
+| The *shape* of input typed into a Blazor form — for instant feedback | a **`*FormModel`** (DataAnnotations) beside its form in `Web` |
 | The *shape* of a message from a caller with no form — an endpoint, a consumer, a job | a **`*CommandValidator`** beside its command (FluentValidation) |
 | HTTP, Blazor, `DbContext`, JSON, configuration | `Web` / `Infrastructure` |
 
@@ -93,8 +93,8 @@ Components send it with `IScopedMediator` (below); anything else uses `IMediator
 Validators check the *shape* of incoming values, never business rules, and never inject a repository.
 **A command sent only from a Blazor form gets no validator.** The form model is validated on the
 server (interactive render mode), and the entity enforces the same rules again, so a validator would
-write them a third time. Add one when a caller without a form appears (skill:
-`adding-a-command-or-query`).
+write them a third time. Add one when a caller without a form appears (skills:
+`adding-a-blazor-form`, `adding-a-command-or-query`).
 
 ### Dependency injection
 

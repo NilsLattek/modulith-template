@@ -37,8 +37,8 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.34.0.3385" />
     <PackageVersion Include="TngTech.ArchUnitNET.xUnitV3" Version="0.13.4" />
-    <PackageVersion Include="Underground.Outbox" Version="0.17.0" />
-    <PackageVersion Include="Underground.Outbox.SourceGenerator" Version="0.17.0" />
+    <PackageVersion Include="Underground.Outbox" Version="0.19.0" />
+    <PackageVersion Include="Underground.Outbox.SourceGenerator" Version="0.19.0" />
     <PackageVersion Include="xunit.analyzers" Version="2.1.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>

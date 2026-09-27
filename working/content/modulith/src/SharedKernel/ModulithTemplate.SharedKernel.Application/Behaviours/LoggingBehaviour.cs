@@ -6,6 +6,8 @@ using Mediator;
 
 using Microsoft.Extensions.Logging;
 
+using ModulithTemplate.SharedKernel.Application.Errors;
+
 namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
 /// <summary>
@@ -56,7 +58,7 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
 
         if (response is IResultBase { IsFailed: true } failed)
         {
-            var errors = string.Join("; ", failed.Errors.Select(error => error.Message));
+            var errors = string.Join("; ", failed.Errors.Select(Describe));
             BehaviourLog.Failed(logger, messageType, elapsedMilliseconds, errors);
             activity?.SetStatus(ActivityStatusCode.Error, errors);
         }
@@ -68,4 +70,8 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
 
         return response;
     }
+
+    // A business error's code is what a translation, and a search of the logs, keys on.
+    private static string Describe(IError error) =>
+        error is BusinessError business ? $"{business.Code}: {business.Message}" : error.Message;
 }

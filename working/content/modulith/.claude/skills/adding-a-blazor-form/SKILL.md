@@ -111,7 +111,11 @@ failure look like:
         {
             var result = await Mediator.Send(model.ToChangeOrderDetailsCommand(OrderId));
             if (result.IsSuccess) { Navigation.NavigateTo($"/orders/{OrderId}"); }
-            else { _error = "The order could not be saved."; }
+            else
+            {
+                _error = result.Errors.OfType<BusinessError>().FirstOrDefault()?.Message
+                    ?? "The order could not be saved.";
+            }
         }
         finally { _saving = false; }
     }
@@ -120,6 +124,8 @@ failure look like:
 
 - **Success:** navigate away, or replace the model with a fresh one to clear the form.
 - **Failure:** one form-level message. The model stays as it was, so the user's input survives.
+  Show a `BusinessError`'s message, which is written for the user; any other error gets fixed text,
+  because an `ExceptionalError`'s message can leak SQL or internals.
 
 ## Tests
 

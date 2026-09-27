@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 
 using ModulithTemplate.SharedKernel.Application.Behaviours;
+using ModulithTemplate.SharedKernel.Application.Errors;
+using ModulithTemplate.SharedKernel.Domain.Exceptions;
 
 namespace ModulithTemplate.SharedKernel.ApplicationTests;
 
@@ -67,6 +69,22 @@ public class LoggingBehaviourTests
         // Assert
         var warning = Assert.Single(logger.Collector.GetSnapshot(), record => record.Level == LogLevel.Warning);
         Assert.Contains("nope", warning.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Handle_when_the_result_carries_a_business_error_logs_its_code()
+    {
+        // Arrange
+        var logger = new FakeLogger<LoggingBehaviour<TestQuery, Result<int>>>();
+        var behaviour = new LoggingBehaviour<TestQuery, Result<int>>(logger);
+        var error = new BusinessError(new BusinessException("Orders:Refused", "Refused."));
+
+        // Act
+        await behaviour.Handle(new TestQuery(), (_, _) => ValueTask.FromResult(Result.Fail<int>(error)), TestContext.Current.CancellationToken);
+
+        // Assert
+        var warning = Assert.Single(logger.Collector.GetSnapshot(), record => record.Level == LogLevel.Warning);
+        Assert.Contains("Orders:Refused: Refused.", warning.Message, StringComparison.Ordinal);
     }
 
     [Fact]

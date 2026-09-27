@@ -69,9 +69,9 @@ Entities are rich, not data bags:
 - **`internal` constructor + private parameterless ctor for EF.** Application obtains instances
   through a `public static` factory method or a domain service — never `new`.
 - **Invariants are enforced in the constructor and in every mutator**, so no call path can produce an
-  invalid entity. The domain throws rather than returning `Result` (it takes no dependency on
-  FluentResults); unhandled handler exceptions become a failed `Result` centrally. An *expected*
-  failure should still be checked by the handler and returned as an explicit `Result.Fail`.
+  invalid entity.
+- **A rule the user can break and should be told about throws `BusinessException`** with a
+  `"Feature:Name"` code, not `ArgumentException`.
 
 **When you add or change an invariant, cover it with a `<Name>.DomainTests` test on the entity**, not
 only through a handler test — the domain is where the guarantee lives.

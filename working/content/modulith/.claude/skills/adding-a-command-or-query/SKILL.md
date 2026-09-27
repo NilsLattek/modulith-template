@@ -52,8 +52,8 @@ The validator lives **in the message's own folder**, not a `Validators/` directo
 ## The handler
 
 Orchestrates and nothing more. It acts as the ApplicationService in a DDD architecture: load entities via the repository, call entity methods or a domain
-service, persist, map to a DTO. The happy path plus explicit `Result.Fail` for expected domain
-failures. **No `try`/`catch`** — unhandled exceptions become a failed `Result` centrally.
+service, persist, map to a DTO. **No `try`/`catch`** — unhandled exceptions become a failed
+`Result` centrally, and a `BusinessException` becomes a `BusinessError` the user sees (below).
 
 A handler that decides whether something is *valid*, rather than reacting to the domain's answer,
 has taken work that belongs in the entity.
@@ -92,6 +92,39 @@ inject a repository into a validator.**
 Failures come back as a failed `Result` carrying one `ValidationError` per broken rule
 (`ModulithTemplate.SharedKernel.Application/Errors/ValidationError.cs`), each with the `PropertyName`
 it was declared on.
+
+## Refusing an operation: `BusinessException`
+
+When a business rule says no to something the user was entitled to try — the name is taken, the
+order is already shipped — throw a `BusinessException`. Throw it from the entity or domain service
+that owns the rule; the handler throws one only for a check that needs a lookup.
+
+```csharp
+// Domain/OrdersErrorCodes.cs — one per feature, "Feature:Name", never renamed once shipped
+public static class OrdersErrorCodes
+{
+    public const string NameAlreadyTaken = "Orders:NameAlreadyTaken";
+}
+
+// In the handler, before creating the entity
+if (await repository.AnyAsync(new SomeEntityByNameSpec(command.Name), cancellationToken))
+{
+    throw new BusinessException(OrdersErrorCodes.NameAlreadyTaken, $"The name '{command.Name}' is already taken.")
+        .WithParameter("Name", command.Name);
+}
+```
+
+- **The code** is the key a translation is looked up by; the English message is what shows until
+  one exists. Parameters fill the translation's placeholders (`{Name}`).
+- **The pipeline** turns it into a failed `Result` carrying a `BusinessError` (`Code`, `Parameters`,
+  `Message`), logged as a warning with no stack trace. A component shows that message (skill:
+  `adding-a-blazor-form`); every other error stays generic.
+- **Not for malformed input.** A blank name or out-of-range amount is an `ArgumentException` guard in
+  the entity: the form model stops it first, so reaching the guard means a bug.
+- **A check-then-insert races.** Two requests can both pass the lookup above; a unique index is the
+  real guarantee, and the check only turns the common case into a friendly message.
+- Derive a subclass (`NameAlreadyTakenException : BusinessException`) only when a caller must `catch`
+  that one case.
 
 ## Calling it from Blazor
 

@@ -39,6 +39,12 @@ entity's rules for feedback only; the entity stays the guarantee. Shared by Comm
 user types the same fields for each; never one per entity.
 _Avoid_: ViewModel, input model, DTO
 
+**Business Rule Violation**:
+A refusal by the business to carry out an operation the user was entitled to attempt, such as a
+name already taken. Shown to the user and identified by a stable code, so it can be put into
+their language. Not malformed input, which the Form Model stops first, and not a fault.
+_Avoid_: Domain error, user-friendly error, validation error
+
 ## Events
 
 **Domain Event**:

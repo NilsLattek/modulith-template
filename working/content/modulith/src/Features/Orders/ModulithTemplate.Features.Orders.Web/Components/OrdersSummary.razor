@@ -72,7 +72,9 @@ else
             }
             else
             {
-                _submitError = "The entity could not be added.";
+                // Only a business error's message is meant for the user; any other may leak internals.
+                _submitError = result.Errors.OfType<BusinessError>().FirstOrDefault()?.Message
+                    ?? "The entity could not be added.";
             }
         }
         finally

@@ -4,6 +4,9 @@ using Mediator;
 
 using Microsoft.Extensions.Logging;
 
+using ModulithTemplate.SharedKernel.Application.Errors;
+using ModulithTemplate.SharedKernel.Domain.Exceptions;
+
 namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 
 /// <summary>
@@ -17,6 +20,11 @@ namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 /// parameterises each result type by itself, so <c>WithError</c> returns the concrete type it was
 /// called on — and also decides which messages are covered at all: a handler returning anything
 /// other than a result is not wrapped, and its exceptions propagate.
+/// <para>
+/// A <see cref="BusinessException"/> is an expected outcome, not a fault: it becomes a
+/// <see cref="BusinessError"/> without an error log, and <c>LoggingBehaviour</c> records it as a
+/// failed result.
+/// </para>
 /// </remarks>
 public sealed class ExceptionBehaviour<TMessage, TResponse>(
     ILogger<ExceptionBehaviour<TMessage, TResponse>> logger)
@@ -38,6 +46,10 @@ public sealed class ExceptionBehaviour<TMessage, TResponse>(
         {
             // Cancellation is not a failure — let the caller observe it as cancellation.
             throw;
+        }
+        catch (BusinessException ex)
+        {
+            return new TResponse().WithError(new BusinessError(ex));
         }
         catch (Exception ex)
         {

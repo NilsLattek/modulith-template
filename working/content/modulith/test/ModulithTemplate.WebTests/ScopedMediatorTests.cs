@@ -54,8 +54,8 @@ public class ScopedMediatorTests
         var mediator = provider.GetRequiredService<IScopedMediator>();
 
         // Act
-        var first = await mediator.Send(new ProbeQuery(), TestContext.Current.CancellationToken);
-        var second = await mediator.Send(new ProbeQuery(), TestContext.Current.CancellationToken);
+        var first = await mediator.SendAsync(new ProbeQuery(), TestContext.Current.CancellationToken);
+        var second = await mediator.SendAsync(new ProbeQuery(), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(7, first);

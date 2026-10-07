@@ -39,13 +39,13 @@ public class DomainEventDispatcherTests
 
         /// <inheritdoc />
         public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-            where TNotification : INotification => PublishCore(notification);
+            where TNotification : INotification => PublishCoreAsync(notification);
 
         /// <inheritdoc />
         public ValueTask Publish(object notification, CancellationToken cancellationToken = default) =>
-            PublishCore(notification);
+            PublishCoreAsync(notification);
 
-        private ValueTask PublishCore(object notification)
+        private ValueTask PublishCoreAsync(object notification)
         {
             Published.Add(notification);
             OnPublish?.Invoke(notification);

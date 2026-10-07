@@ -14,19 +14,19 @@ namespace ModulithTemplate.SharedKernel.Web;
 internal sealed class ScopedMediator(IServiceScopeFactory scopeFactory) : IScopedMediator
 {
     /// <inheritdoc />
-    public ValueTask<TResponse> Send<TResponse>(
+    public ValueTask<TResponse> SendAsync<TResponse>(
         IRequest<TResponse> message, CancellationToken cancellationToken = default) =>
         scopeFactory.WithNewScopeAsync(services =>
             services.GetRequiredService<IMediator>().Send(message, cancellationToken));
 
     /// <inheritdoc />
-    public ValueTask<TResponse> Send<TResponse>(
+    public ValueTask<TResponse> SendAsync<TResponse>(
         ICommand<TResponse> message, CancellationToken cancellationToken = default) =>
         scopeFactory.WithNewScopeAsync(services =>
             services.GetRequiredService<IMediator>().Send(message, cancellationToken));
 
     /// <inheritdoc />
-    public ValueTask<TResponse> Send<TResponse>(
+    public ValueTask<TResponse> SendAsync<TResponse>(
         IQuery<TResponse> message, CancellationToken cancellationToken = default) =>
         scopeFactory.WithNewScopeAsync(services =>
             services.GetRequiredService<IMediator>().Send(message, cancellationToken));

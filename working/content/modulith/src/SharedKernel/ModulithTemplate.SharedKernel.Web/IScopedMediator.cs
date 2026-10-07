@@ -27,7 +27,7 @@ public interface IScopedMediator
     /// <see cref="ICommand{TResponse}"/> and <see cref="IQuery{TResponse}"/> from
     /// <c>IMessage</c> as siblings — none is assignable to another.
     /// </remarks>
-    ValueTask<TResponse> Send<TResponse>(
+    ValueTask<TResponse> SendAsync<TResponse>(
         IRequest<TResponse> message, CancellationToken cancellationToken = default);
 
     /// <summary>Sends a command in a new scope.</summary>
@@ -35,7 +35,7 @@ public interface IScopedMediator
     /// <param name="message">The command to send.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The handler's response.</returns>
-    ValueTask<TResponse> Send<TResponse>(
+    ValueTask<TResponse> SendAsync<TResponse>(
         ICommand<TResponse> message, CancellationToken cancellationToken = default);
 
     /// <summary>Sends a query in a new scope.</summary>
@@ -43,6 +43,6 @@ public interface IScopedMediator
     /// <param name="message">The query to send.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The handler's response.</returns>
-    ValueTask<TResponse> Send<TResponse>(
+    ValueTask<TResponse> SendAsync<TResponse>(
         IQuery<TResponse> message, CancellationToken cancellationToken = default);
 }

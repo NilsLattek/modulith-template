@@ -63,16 +63,19 @@ public class DomainEventDispatchInterceptorTests
 
         /// <inheritdoc />
         public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-            where TNotification : INotification => PublishCore(notification);
+            where TNotification : INotification => PublishCoreAsync(notification);
 
         /// <inheritdoc />
         public ValueTask Publish(object notification, CancellationToken cancellationToken = default) =>
-            PublishCore(notification);
+            PublishCoreAsync(notification);
 
-        private ValueTask PublishCore(object notification)
+        private async ValueTask PublishCoreAsync(object notification)
         {
             Published.Add(notification);
-            return OnPublish?.Invoke(notification) ?? ValueTask.CompletedTask;
+            if (OnPublish is not null)
+            {
+                await OnPublish(notification);
+            }
         }
     }
 

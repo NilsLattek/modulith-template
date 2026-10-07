@@ -42,7 +42,7 @@ else
     {
         // IScopedMediator, never a directly injected IMediator: it gives the message a DI scope of
         // its own, so the handler's DbContext lives and dies with it rather than with the circuit.
-        var result = await Mediator.Send(new GetSomeEntityCountQuery());
+        var result = await Mediator.SendAsync(new GetSomeEntityCountQuery());
 
         if (result.IsSuccess)
         {
@@ -63,7 +63,7 @@ else
 
         try
         {
-            var result = await Mediator.Send(form.ToAddSomeEntityCommand());
+            var result = await Mediator.SendAsync(form.ToAddSomeEntityCommand());
 
             if (result.IsSuccess)
             {

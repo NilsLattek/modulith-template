@@ -40,6 +40,8 @@ public class ContractIsolationTests
 
     // SharedKernel.Application carries the mediator pipeline behaviours, so FluentResults, FluentValidation,
     // and Microsoft.Extensions.Logging.Abstractions arrive in Contracts projects transitively — an accepted cost.
+    // Matching no types passes: a freshly scaffolded Contracts project is empty, and the guard below
+    // already fails if no Contracts assembly exists at all.
     [Fact]
     public void Contracts_do_not_depend_on_any_feature_internal_layer()
     {
@@ -52,7 +54,8 @@ public class ContractIsolationTests
             .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers)))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
                 + "Shared.Application abstractions, so a consumer referencing it does not transitively gain access "
-                + "to the owning feature's internals.");
+                + "to the owning feature's internals.")
+            .WithoutRequiringPositiveResults();
 
         rule.Check(SolutionAssemblies.Architecture);
     }

@@ -12,6 +12,10 @@ namespace ModulithTemplate.ArchitectureTests;
 /// Keeps an Integration Event in the one place a sibling feature may reference: its owning
 /// feature's <c>Contracts</c> project.
 /// </summary>
+/// <remarks>
+/// Matching nothing passes: a solution whose features never need to talk — or that has only one —
+/// rightly declares no Integration Event, so these rules opt out via <c>WithoutRequiringPositiveResults()</c>.
+/// </remarks>
 public class IntegrationEventTests
 {
     private const string ContractsLayer = "Contracts";
@@ -22,14 +26,13 @@ public class IntegrationEventTests
     [Fact]
     public void Integration_events_are_declared_in_a_Contracts_project()
     {
-        AssertAnyIntegrationEventDiscovered();
-
         IArchRule rule = IntegrationEvents()
             .Should().ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
             .Because("an Integration Event is the publishing feature's announcement to its siblings, so it must "
                 + "live in the one project they may reference. Declared in Domain or Application it still works, "
                 + "but every consumer of it takes a dependency on the publisher's internals — and the cross-feature "
-                + "rules cannot catch that, because they exempt Contracts types by design.");
+                + "rules cannot catch that, because they exempt Contracts types by design.")
+            .WithoutRequiringPositiveResults();
 
         rule.Check(SolutionAssemblies.Architecture);
     }
@@ -37,12 +40,11 @@ public class IntegrationEventTests
     [Fact]
     public void Integration_events_are_named_for_what_they_are()
     {
-        AssertAnyIntegrationEventDiscovered();
-
         IArchRule rule = IntegrationEvents()
             .Should().HaveNameMatching(IntegrationEventNamePattern)
             .Because("an Integration Event is read by features that never see the code publishing it, so its name "
-                + "must say what it is at the reference site.");
+                + "must say what it is at the reference site.")
+            .WithoutRequiringPositiveResults();
 
         rule.Check(SolutionAssemblies.Architecture);
     }
@@ -50,15 +52,14 @@ public class IntegrationEventTests
     [Fact]
     public void Types_named_as_integration_events_implement_the_contract()
     {
-        AssertAnyIntegrationEventDiscovered();
-
         IArchRule rule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
             .And().HaveNameMatching(IntegrationEventNamePattern)
             .Should().ImplementInterface(typeof(IIntegrationEvent))
             .Because($"a record named *IntegrationEvent that does not implement {nameof(IIntegrationEvent)} cannot "
                 + "carry its own EventId or GroupKey, so it can neither be staged in the outbox nor ordered against "
-                + "its siblings — and the rules above would never look at it.");
+                + "its siblings — and the rules above would never look at it.")
+            .WithoutRequiringPositiveResults();
 
         rule.Check(SolutionAssemblies.Architecture);
     }
@@ -68,14 +69,4 @@ public class IntegrationEventTests
         Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
             .And().ImplementInterface(typeof(IIntegrationEvent));
-
-    /// <summary>
-    /// Fails loudly when the solution declares no Integration Event, so deleting the sample one
-    /// silently disarms these rules rather than leaving them to pass on an empty set.
-    /// </summary>
-    private static void AssertAnyIntegrationEventDiscovered() =>
-        Assert.True(
-            IntegrationEvents().GetObjects(SolutionAssemblies.Architecture).Any(),
-            $"No type implementing {nameof(IIntegrationEvent)} was found; the Integration Event placement and "
-                + "naming rules would pass vacuously.");
 }

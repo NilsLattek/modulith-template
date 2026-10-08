@@ -15,9 +15,7 @@ Web/Components/
   ChangeOrderDetails.razor   consumer: sends ChangeOrderDetailsCommand
 ```
 
-The form and its model are named after **what is typed**; each consumer after **its command**. The
-Orders feature has a working example: `SomeEntityForm`, `SomeEntityFormModel`, and `OrdersSummary`
-as the consumer.
+The form and its model are named after **what is typed**; each consumer after **its command**.
 
 Every component renders in interactive server mode, so the form model is validated on the server — a
 client cannot skip it.

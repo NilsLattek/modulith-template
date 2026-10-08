@@ -115,6 +115,13 @@ returned entity is attached to a dead `DbContext` and reading a navigation prope
 
 `ServiceScopeExtensions.WithNewScopeAsync(...)` remains for scoped UI work that is not a message.
 
+### Render mode
+
+**Interactivity is global with prerendering off** (`App.razor`), so `OnInitializedAsync` runs once.
+Don't add `@rendermode` to pages or components, and don't read `HttpContext` in a component — in a
+circuit it is null, silently. A page that needs it, or must render without a circuit, gets
+`[ExcludeFromInteractiveRouting]`, as `Error` and `NotFound` do.
+
 ## Conventions
 
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for

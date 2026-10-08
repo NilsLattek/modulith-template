@@ -23,7 +23,8 @@ public static class Configuration
 
         // Source-generated, one method per assembly and named after it: it registers every
         // IOutboxMessageHandler<T> under OutboxHandlers/, so a second published event costs a
-        // handler class and no change here.
+        // handler class and no change here. It exists only while this assembly declares a handler,
+        // so removing the last one means removing this call too.
         services.AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers();
 
         return services;

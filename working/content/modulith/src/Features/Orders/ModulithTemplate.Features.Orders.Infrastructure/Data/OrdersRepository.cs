@@ -1,8 +1,7 @@
-using Ardalis.Specification.EntityFrameworkCore;
-
 using ModulithTemplate.Features.Orders.Domain;
+using ModulithTemplate.SharedKernel.Infrastructure;
 
 namespace ModulithTemplate.Features.Orders.Infrastructure.Data;
 
 internal sealed class OrdersRepository<T>(OrdersContext dbContext)
-    : RepositoryBase<T>(dbContext), IOrdersRepository<T> where T : class;
+    : FeatureRepository<T>(dbContext), IOrdersRepository<T> where T : class;

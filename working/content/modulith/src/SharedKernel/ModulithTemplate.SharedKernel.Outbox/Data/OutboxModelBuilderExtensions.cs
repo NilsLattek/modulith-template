@@ -12,7 +12,7 @@ public static class OutboxModelBuilderExtensions
     /// migrations.
     /// </summary>
     /// <remarks>
-    /// Every feature context implementing <c>IOutboxDbContext</c> calls this; <see cref="OutboxContext"/>
+    /// Every feature context reaches this through <c>ApplySharedModel()</c>; <see cref="OutboxContext"/>
     /// does not, because it owns the DDL. Omitting it compiles and starts, then maps the
     /// entity into the feature's own schema and tries to create a second outbox table — which is what
     /// <c>OutboxMappingTests</c> in the architecture tests exists to catch.

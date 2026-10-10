@@ -1,6 +1,6 @@
 ---
 name: adding-a-command-or-query
-description: Add a CQRS command or query to an existing feature — sizing it to one business operation, then the message, its handler, its validator and the DTO it returns. Use when adding a write operation or a read to a feature, when choosing between per-field commands and one update-everything command, wiring a Blazor page or endpoint to the application layer, deciding where a FluentValidation validator belongs, or mapping an entity to a DTO with Mapperly.
+description: Add a CQRS command or query to an existing feature — sizing it to one business operation, then the message, its handler, its validator and the DTO it returns. Use when adding a write operation or a read to a feature, when choosing between per-field commands and one update-everything command, wiring a Blazor page or endpoint to the application layer, deciding where a FluentValidation validator belongs, mapping an entity to a DTO with Mapperly, or refusing changes made from a stale copy (optimistic concurrency, row version).
 ---
 
 # Adding a command or query
@@ -159,6 +159,41 @@ if (await repository.AnyAsync(new SomeEntityByNameSpec(command.Name), cancellati
   real guarantee, and the check only turns the common case into a friendly message.
 - Derive a subclass (`NameAlreadyTakenException : BusinessException`) only when a caller must `catch`
   that one case.
+
+## Optional: refusing changes made from a stale copy
+
+**Most entities need no version.** Without one, the last save wins, which is right for insert-only
+data, rows only their owner edits, logs and reference data. Version an entity only when two users
+or tabs may change the same row and silently losing one of the changes is wrong. When you do, this
+is the way:
+
+- **The entity implements `IVersioned`** with `public uint Version { get; }`. No column, no
+  `[Timestamp]`, no configuration: `ApplySharedModel()` maps it to Postgres's `xmin`, which every row
+  already has, so it needs no migration.
+- **Changing or removing an existing item carries its `Version`** as the caller last saw it. The
+  handler hands it to the repository, and the save refuses it if the row has moved on:
+
+  ```csharp
+  var order = await repository.FirstOrDefaultAsync(new OrderByIdSpec(command.OrderId), cancellationToken);
+  order.ChangeShippingAddress(command.Address);
+  repository.ExpectVersion(order, command.Version);
+  await repository.SaveChangesAsync(cancellationToken);
+  ```
+
+  Call `ExpectVersion` **before** any repository method that saves by itself (`UpdateAsync`,
+  `DeleteAsync`); set after it, the expectation checks nothing.
+- **Adding carries no version** — an insert overwrites nothing.
+- **The DTO carries `Version`**, and a change returns the item with its new one, for the caller's
+  next change to it.
+- **No version check in the entity.** The database is the one check. A stale save becomes a failed
+  `Result` carrying a `ConcurrencyError` — not a `BusinessError`, because there is no rule to show,
+  only a copy to reload. What the UI does about it (say so, reload, offer to reapply) is the app's
+  decision; detect it with `result.HasError<ConcurrencyError>()`.
+
+**The check is per row.** A child entity implementing `IVersioned` has its own version, and changing
+it does not move the root's, so two people editing different children never conflict. If a rule
+spans the whole aggregate, version the root instead and have every change write to the root's row.
+If you cannot tell which the operation needs, ask the user before choosing.
 
 ## Calling it from Blazor
 

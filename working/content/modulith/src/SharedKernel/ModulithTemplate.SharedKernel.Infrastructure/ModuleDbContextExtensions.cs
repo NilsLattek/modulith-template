@@ -24,7 +24,7 @@ public static class ModuleDbContextExtensions
     /// <see cref="DomainEventDispatchInterceptor{TContext}"/>.
     /// <para>
     /// The outbox's save-time interceptor is attached here; its table mapping is not, and each
-    /// feature context calls <c>MapSharedOutbox()</c> in its own <c>OnModelCreating</c>.
+    /// feature context calls <c>ApplySharedModel()</c> in its own <c>OnModelCreating</c>.
     /// </para>
     /// </remarks>
     /// <typeparam name="TContext">The feature's context type.</typeparam>

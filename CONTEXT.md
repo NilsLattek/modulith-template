@@ -41,6 +41,12 @@ name already taken. Shown to the user and identified by a stable code, so it can
 their language. Not malformed input, which the Form Model stops first, and not a fault.
 _Avoid_: Domain error, user-friendly error, validation error
 
+**Concurrency Conflict**:
+A refusal of a change made from a stale copy: the item changed after the user read it. The user
+reloads and decides again, rather than reading a rule's message. Only items that opt into a version
+can have one; a change to any other item is last-write-wins.
+_Avoid_: Business Rule Violation, stale data error, optimistic lock failure
+
 ## Events
 
 **Domain Event**:

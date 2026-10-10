@@ -1,8 +1,7 @@
-using Ardalis.Specification.EntityFrameworkCore;
-
 using ModulithTemplate.Features.Payments.Domain;
+using ModulithTemplate.SharedKernel.Infrastructure;
 
 namespace ModulithTemplate.Features.Payments.Infrastructure.Data;
 
 internal sealed class PaymentsRepository<T>(PaymentsContext dbContext)
-    : RepositoryBase<T>(dbContext), IPaymentsRepository<T> where T : class;
+    : FeatureRepository<T>(dbContext), IPaymentsRepository<T> where T : class;

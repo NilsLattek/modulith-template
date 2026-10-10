@@ -1,6 +1,6 @@
 ---
 name: adding-a-command-or-query
-description: Add a CQRS command or query to an existing feature — sizing it to one business operation, then the message, its handler, its validator and the DTO it returns. Use when adding a write operation or a read to a feature, when choosing between per-field commands and one update-everything command, wiring a Blazor page or endpoint to the application layer, or deciding where a FluentValidation validator belongs.
+description: Add a CQRS command or query to an existing feature — sizing it to one business operation, then the message, its handler, its validator and the DTO it returns. Use when adding a write operation or a read to a feature, when choosing between per-field commands and one update-everything command, wiring a Blazor page or endpoint to the application layer, deciding where a FluentValidation validator belongs, or mapping an entity to a DTO with Mapperly.
 ---
 
 # Adding a command or query
@@ -43,7 +43,7 @@ Application/
   Queries/GetOrderById/
     ...
   Dtos/                            the shapes returned
-  Mappers/                         Mapperly [Mapper] partials
+  Mappers/                         <Entity>Mapper: entity → DTO (below)
 ```
 
 The validator lives **in the message's own folder**, not a `Validators/` directory. Each feature's
@@ -66,6 +66,40 @@ Two rules that fail in non-obvious ways:
   reference into the host's compilation, so `internal` breaks the host build with `CS0122`.
 
 `Web` reaches `Application` only through `IMediator` — never by calling a handler directly.
+
+## Mapping to a DTO
+
+Every entity → DTO conversion is a Mapperly mapper: one `internal static partial class
+<Entity>Mapper` per entity in `Mappers/`, whose extension methods the handler calls.
+
+```csharp
+// Application/Mappers/SomeEntityMapper.cs
+[Mapper]
+internal static partial class SomeEntityMapper
+{
+    public static partial SomeEntityDto ToDto(this SomeEntity entity);
+}
+
+// In the handler, after loading the entity through a spec
+return Result.Ok(entity.ToDto());
+```
+
+- **Mappers read entities; they never build them.** A command reaches its entity through a factory
+  or entity method (`SomeEntity.Create(...)`, `order.Confirm()`), where the invariants live. A
+  DTO → entity mapper failing to compile against a `private` or `internal` constructor is that rule
+  holding — keep the constructor as it is.
+- **Every DTO property needs a source.** `Mappers/MapperDefaults.cs` sets
+  `RequiredMappingStrategy.Target` and `RMG012` is a build error, so a DTO property with nothing to
+  map from fails the build. Entity members the DTO leaves out are fine.
+- **Members that don't match by name:**
+  - a rename: `[MapProperty(nameof(SomeEntity.Amount), nameof(SomeEntityDto.Total))]` on the method;
+  - a type conversion (value object → primitive, enum → string): a `private static` method in the
+    mapper, which Mapperly uses wherever its parameter and return types match;
+  - name each DTO property for its reader and rename with `[MapProperty]`, rather than naming it to
+    trigger Mapperly's flattening (`AmountValue`).
+- **Map in memory:** load with a spec, then `ToDto()`. A list too large to load whole uses an Ardalis
+  `Specification<T, TResult>` with `Select(...)` instead.
+- A published `Contracts.Api` DTO is mapped the same way, by another method on the same mapper.
 
 ## The validator
 
@@ -142,3 +176,6 @@ feature's `Domain` is referenced with `PrivateAssets="all"` and never reaches th
 A command or query that enforces a domain rule gets its test on the **entity**, in
 `<Name>.DomainTests` — not only through a handler test. Handler tests cover orchestration:
 that the right entity method was called and the right `Result` came back.
+
+Mappers get no tests of their own: the handler test asserting the returned DTO covers them, and a
+DTO property with no source already fails the build.

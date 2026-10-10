@@ -406,6 +406,7 @@ dotnet_diagnostic.CA1873.severity = None # Evaluation of this argument may be ex
 dotnet_diagnostic.MA0004.severity = None # Use Task.ConfigureAwait
 dotnet_diagnostic.CA1848.severity = None # Use the LoggerMessage delegates — these are one-off error-path log calls; delegates would add noise without meaningful perf benefit
 dotnet_diagnostic.MA0026.severity = None # TODO
+dotnet_diagnostic.RMG012.severity = error # Mapperly: a DTO property has no source member
 
 # Enable IDE1006 as error (required for code naming conventions)
 dotnet_diagnostic.IDE1006.severity = error

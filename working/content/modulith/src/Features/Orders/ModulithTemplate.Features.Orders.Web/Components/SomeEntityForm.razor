@@ -1,4 +1,4 @@
-@* Input and validation only: the screen component sends the command, so create and edit can share this form. *@
+@* Input and validation only: the consuming component sends the command, so create and edit can share this form. *@
 
 <EditForm Model="Model" OnValidSubmit="() => OnValidSubmit.InvokeAsync(Model)">
     <DataAnnotationsValidator />

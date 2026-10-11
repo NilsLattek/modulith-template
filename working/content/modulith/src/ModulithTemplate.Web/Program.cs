@@ -26,7 +26,7 @@ builder.Services.AddMediator(options =>
 {
     // Scoped, not the library default of Singleton: handlers inject repositories bound to a scoped
     // DbContext. That makes an @injected IMediator resolve from the Blazor circuit scope, which
-    // would hold one DbContext open for the connection — hence IScopedMediator for screen components.
+    // would hold one DbContext open for the connection — hence IScopedMediator for components.
     options.ServiceLifetime = ServiceLifetime.Scoped;
 
     // Outermost first, so LoggingBehaviour sees a uniform Result outcome (ExceptionBehaviour below
@@ -39,7 +39,7 @@ builder.Services.AddMediator(options =>
     ];
 });
 
-// Screen components send database work through this, never a directly-injected IMediator: it opens a scope
+// Components send database work through this, never a directly-injected IMediator: it opens a scope
 // per message, so no DbContext outlives the operation that needed it.
 builder.Services.AddScopedMediator();
 

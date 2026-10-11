@@ -96,7 +96,7 @@ Two rules that fail in non-obvious ways:
   Do not "tidy" them.
 
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
-A screen component sends it with `IScopedMediator` (below); anything else uses `IMediator`.
+Blazor sends it with `IScopedMediator` (below); anything else uses `IMediator`.
 Validators check the *shape* of incoming values, never business rules, and never inject a repository.
 **A command sent only from a Blazor form gets no validator.** The form model is validated on the
 server (interactive render mode), and the entity enforces the same rules again, so a validator would
@@ -110,24 +110,17 @@ feature's composition root.
 
 ### Blazor components
 
-**Load the `dotnet-blazor` skills before writing or changing a `.razor` file** — `plan-ui-change`
-for a screen with several regions, `author-component` for any component, `collect-user-input` beside
-`adding-a-blazor-form` for a form. What follows only adds this project's rules; it does not replace them.
-
-**Data flows down, events flow up; only the screen component sends.** Host pages are thin, so the
-feature component a page renders (`OrdersSummary`) is the *screen component*: it plays the
-skills' "page", owning the screen's state and sending every message. Each component below it takes
-`[Parameter]`s, raises `EventCallback`s, and injects no `IScopedMediator` — not even "just to save
-its own row". When a screen's state is shared by many components, it creates one state-owning
-editor class, cascades it, and still sends every message itself. State purely visual to one
-component (text being typed, a picker open) stays in it.
+**Load the `dotnet-blazor` skills before writing or changing a `.razor` file**: `plan-ui-change`
+for a page with several regions, `author-component` for any component, `collect-user-input` beside
+`adding-a-blazor-form` for a form. They decide which component owns state and sends messages; the
+sections below only add this project's specifics.
 
 ### Database access from Blazor components
 
 Scoped services live for the whole SignalR circuit in Blazor Server, so a directly-injected scoped
 dependency — `IMediator` included — shares one long-lived, non-thread-safe `DbContext` for the entire
-user session. **A screen component must not `@inject` `IMediator` for database work**: inject
-`IScopedMediator` and `await Mediator.Send(message)`. It gives each message a DI scope of its own and
+user session. **Never `@inject` `IMediator` for database work**: inject `IScopedMediator` and
+`await Mediator.Send(message)`. It gives each message a DI scope of its own and
 disposes it when the message completes.
 
 **Handlers return DTOs, never entities.** That scope is disposed before the component renders, so a

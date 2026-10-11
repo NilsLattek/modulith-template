@@ -151,7 +151,7 @@ if (await repository.AnyAsync(new SomeEntityByNameSpec(command.Name), cancellati
 - **The code** is the key a translation is looked up by; the English message is what shows until
   one exists. Parameters fill the translation's placeholders (`{Name}`).
 - **The pipeline** turns it into a failed `Result` carrying a `BusinessError` (`Code`, `Parameters`,
-  `Message`), logged as a warning with no stack trace. The screen component shows that message (skill:
+  `Message`), logged as a warning with no stack trace. A component shows that message (skill:
   `adding-a-blazor-form`); every other error stays generic.
 - **Not for malformed input.** A blank name or out-of-range amount is an `ArgumentException` guard in
   the entity: the form model stops it first, so reaching the guard means a bug.
@@ -197,10 +197,8 @@ If you cannot tell which the operation needs, ask the user before choosing.
 
 ## Calling it from Blazor
 
-Only the screen component sends messages; the components below it take parameters and raise
-`EventCallback`s (CLAUDE.md "Blazor components"). It must not `@inject IMediator` for database work —
-scoped services live for the whole SignalR circuit. Inject `IScopedMediator` and
-`await Mediator.Send(message)`; it gives each message a scope of its own.
+Never `@inject IMediator` for database work — scoped services live for the whole SignalR circuit.
+Inject `IScopedMediator` and `await Mediator.Send(message)`; it gives each message a scope of its own.
 
 That scope is gone by the time the component renders, so **the handler must return a DTO, never an
 entity** — a returned entity's navigation properties throw `ObjectDisposedException` at render time.

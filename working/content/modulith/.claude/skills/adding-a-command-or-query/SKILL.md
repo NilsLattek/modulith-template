@@ -52,7 +52,7 @@ The validator lives **in the message's own folder**, not a `Validators/` directo
 ## The handler
 
 Orchestrates and nothing more. It acts as the ApplicationService in a DDD architecture: load entities via the repository, call entity methods or a domain
-service, persist, map to a DTO. **No `try`/`catch`** — unhandled exceptions become a failed
+service, persist, map to a DTO. The loading is the handler's alone: a domain service is handed the loaded entities, never ids. **No `try`/`catch`** — unhandled exceptions become a failed
 `Result` centrally, and a `BusinessException` becomes a `BusinessError` the user sees (below).
 
 A handler that decides whether something is *valid*, rather than reacting to the domain's answer,

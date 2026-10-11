@@ -13,7 +13,7 @@ namespace ModulithTemplate.ArchitectureTests;
 /// <c>OnModelCreating</c>.
 /// </summary>
 /// <remarks>
-/// A feature that omits <see cref="OutboxModelBuilderExtensions.MapSharedOutbox"/> compiles and
+/// A feature that omits <c>ApplySharedModel()</c>, which maps the outbox, compiles and
 /// starts: the entity lands in that feature's own schema and its next migration creates a second
 /// outbox table, which only surfaces as a failed claim at run time. Asserted against the model each
 /// context builds, not against a call site, because a call that maps the wrong thing fails the same

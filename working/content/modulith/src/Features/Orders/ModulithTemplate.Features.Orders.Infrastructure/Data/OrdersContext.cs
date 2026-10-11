@@ -2,7 +2,7 @@ using System.Reflection;
 
 using Microsoft.EntityFrameworkCore;
 
-using ModulithTemplate.SharedKernel.Outbox.Data;
+using ModulithTemplate.SharedKernel.Infrastructure;
 
 using Underground.Outbox.Data;
 
@@ -13,7 +13,7 @@ public class OrdersContext(DbContextOptions<OrdersContext> options) : DbContext(
     /// <summary>The integration events this feature has staged, in the one shared outbox table.</summary>
     /// <remarks>
     /// Implementing <see cref="IOutboxDbContext"/> is what lets this feature stage an event in the
-    /// save that persists its aggregate. <see cref="OutboxModelBuilderExtensions.MapSharedOutbox"/>
+    /// save that persists its aggregate. <see cref="SharedModelBuilderExtensions.ApplySharedModel"/>
     /// below is what maps it onto <c>shared.outbox</c> and keeps it out of this feature's migrations.
     /// </remarks>
     public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
@@ -23,6 +23,6 @@ public class OrdersContext(DbContextOptions<OrdersContext> options) : DbContext(
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("orders");
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-        modelBuilder.MapSharedOutbox();
+        modelBuilder.ApplySharedModel();
     }
 }

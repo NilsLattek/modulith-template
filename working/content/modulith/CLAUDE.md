@@ -44,7 +44,7 @@ existing feature has its own layout and validator rules (skill: `adding-a-comman
 | One entity's own state and invariants | the **entity** — constructor + mutator methods |
 | A concept with no identity, defined only by its values (`Money`, `Address`, `EmailAddress`) | a **value object** — `record` in `Domain/ValueObjects/` |
 | Consistency between entities inside one aggregate | the **aggregate root**'s methods |
-| Several aggregates, or a decision needing a lookup/repository | a **`*DomainService`** in `Domain/Services/` |
+| A rule spanning several aggregates | a **`*DomainService`** in `Domain/Services/`, given the entities its handler loaded |
 | A reusable query predicate | a **`*Spec`** in `Domain/Specifications/` |
 | Sequencing: load → call domain → persist → map | the **handler** in `Application` |
 | The *shape* of input typed into a Blazor form — for instant feedback | a **`*FormModel`** (DataAnnotations) beside its form in `Web` |
@@ -57,8 +57,8 @@ reacting to the domain's answer; the same rule is written on both the create and
 setters and no methods while a handler mutates it property by property, or its commands mirror its
 fields — one per field, or one `Update<Entity>` for the whole record — rather than business operations
 (skill: `adding-a-command-or-query`); a Blazor component enforces a
-rule nothing else does; an entity injects a repository — entities do not reach for data, a domain
-service does.
+rule nothing else does; an entity or a domain service injects a repository — neither reaches for data,
+the handler loads it and passes it down.
 
 ### Writing entities
 
@@ -80,7 +80,14 @@ only through a handler test — the domain is where the guarantee lives.
 
 Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`) plus its
 `public sealed` handler, in a folder of its own. A handler orchestrates and nothing more, with no
-`try`/`catch`. Two rules that fail in non-obvious ways:
+`try`/`catch`.
+
+**The handler loads, the domain decides.** The handler is the application service: it resolves the
+command's ids into entities through repositories and specs — refusing what is missing — and passes
+those entities to the entity or domain service. A domain service takes entities, never ids, and
+injects no repository.
+
+Two rules that fail in non-obvious ways:
 
 - **Handlers always return `Result` / `Result<T>`.** Both the exception-to-`Result` and the validation
   behaviour are constrained to result responses, and are silently skipped otherwise.

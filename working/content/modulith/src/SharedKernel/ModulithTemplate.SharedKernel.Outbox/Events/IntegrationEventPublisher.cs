@@ -11,7 +11,7 @@ namespace ModulithTemplate.SharedKernel.Outbox.Events;
 /// Stages a feature's integration events into the shared outbox using that feature's own context.
 /// </summary>
 /// <remarks>
-/// Derived from the way <c>RepositoryBase&lt;T&gt;</c> is: a feature declares a body-less
+/// Derived from the way <c>FeatureRepository&lt;T&gt;</c> is: a feature declares a body-less
 /// <c>&lt;Name&gt;IntegrationEventPublisher</c> binding its marker interface to its own context, so
 /// the row rides that feature's save rather than a sibling's.
 /// </remarks>

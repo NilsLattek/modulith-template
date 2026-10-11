@@ -10,7 +10,7 @@ namespace ModulithTemplate.SharedKernel.Infrastructure;
 /// EF Core implementation of <see cref="IUnitOfWork"/> for a feature's own context.
 /// </summary>
 /// <remarks>
-/// The counterpart to <c>RepositoryBase&lt;T&gt;</c>, and derived from the same way: a feature
+/// The counterpart to <c>FeatureRepository&lt;T&gt;</c>, and derived from the same way: a feature
 /// declares a body-less <c>XxxUnitOfWork : UnitOfWorkBase&lt;XxxContext&gt;, IXxxUnitOfWork</c>
 /// purely to bind its marker interface to its own context, which is what keeps one feature's
 /// transactions off another's connection. Generic in the context type rather than taking a plain

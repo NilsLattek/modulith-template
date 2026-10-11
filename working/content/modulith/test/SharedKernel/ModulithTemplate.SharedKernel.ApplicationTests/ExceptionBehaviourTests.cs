@@ -84,6 +84,21 @@ public class ExceptionBehaviourTests
     }
 
     [Fact]
+    public async Task Handle_when_a_change_was_made_from_a_stale_copy_returns_a_concurrency_error_without_logging_an_error()
+    {
+        // Arrange
+        var logger = new FakeLogger<ExceptionBehaviour<TestCommand, Result>>();
+        var behaviour = new ExceptionBehaviour<TestCommand, Result>(logger);
+
+        // Act
+        var result = await behaviour.Handle(new TestCommand(), (_, _) => throw new ConcurrencyException(), TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.IsType<ConcurrencyError>(Assert.Single(result.Errors));
+        Assert.Empty(logger.Collector.GetSnapshot());
+    }
+
+    [Fact]
     public async Task Handle_when_the_handler_throws_logs_the_exception_as_an_error()
     {
         // Arrange

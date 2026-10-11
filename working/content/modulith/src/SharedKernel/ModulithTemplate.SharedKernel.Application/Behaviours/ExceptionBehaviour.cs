@@ -23,7 +23,8 @@ namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 /// <para>
 /// A <see cref="BusinessException"/> is an expected outcome, not a fault: it becomes a
 /// <see cref="BusinessError"/> without an error log, and <c>LoggingBehaviour</c> records it as a
-/// failed result.
+/// failed result. A <see cref="ConcurrencyException"/> is expected too, and becomes a
+/// <see cref="ConcurrencyError"/>.
 /// </para>
 /// </remarks>
 public sealed class ExceptionBehaviour<TMessage, TResponse>(
@@ -50,6 +51,10 @@ public sealed class ExceptionBehaviour<TMessage, TResponse>(
         catch (BusinessException ex)
         {
             return new TResponse().WithError(new BusinessError(ex));
+        }
+        catch (ConcurrencyException)
+        {
+            return new TResponse().WithError(new ConcurrencyError());
         }
         catch (Exception ex)
         {

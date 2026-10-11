@@ -96,7 +96,7 @@ Two rules that fail in non-obvious ways:
   Do not "tidy" them.
 
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
-Components send it with `IScopedMediator` (below); anything else uses `IMediator`.
+Blazor sends it with `IScopedMediator` (below); anything else uses `IMediator`.
 Validators check the *shape* of incoming values, never business rules, and never inject a repository.
 **A command sent only from a Blazor form gets no validator.** The form model is validated on the
 server (interactive render mode), and the entity enforces the same rules again, so a validator would
@@ -108,12 +108,19 @@ write them a third time. Add one when a caller without a form appears (skills:
 Register a service in the owning layer's `Configuration.cs` — not in `Program.cs`, and not in another
 feature's composition root.
 
+### Blazor components
+
+**Load the `dotnet-blazor` skills before writing or changing a `.razor` file**: `plan-ui-change`
+for a page with several regions, `author-component` for any component, `collect-user-input` beside
+`adding-a-blazor-form` for a form. They decide which component owns state and sends messages; the
+sections below only add this project's specifics.
+
 ### Database access from Blazor components
 
 Scoped services live for the whole SignalR circuit in Blazor Server, so a directly-injected scoped
 dependency — `IMediator` included — shares one long-lived, non-thread-safe `DbContext` for the entire
-user session. **Components must not `@inject` `IMediator` for database work**: inject
-`IScopedMediator` and `await Mediator.Send(message)`. It gives each message a DI scope of its own and
+user session. **Never `@inject` `IMediator` for database work**: inject `IScopedMediator` and
+`await Mediator.Send(message)`. It gives each message a DI scope of its own and
 disposes it when the message completes.
 
 **Handlers return DTOs, never entities.** That scope is disposed before the component renders, so a

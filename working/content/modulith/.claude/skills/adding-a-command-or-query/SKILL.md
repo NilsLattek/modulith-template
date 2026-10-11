@@ -197,9 +197,8 @@ If you cannot tell which the operation needs, ask the user before choosing.
 
 ## Calling it from Blazor
 
-Components must not `@inject IMediator` for database work — scoped services live for the whole
-SignalR circuit. Inject `IScopedMediator` and `await Mediator.Send(message)`; it gives each message
-a scope of its own.
+Never `@inject IMediator` for database work — scoped services live for the whole SignalR circuit.
+Inject `IScopedMediator` and `await Mediator.Send(message)`; it gives each message a scope of its own.
 
 That scope is gone by the time the component renders, so **the handler must return a DTO, never an
 entity** — a returned entity's navigation properties throw `ObjectDisposedException` at render time.

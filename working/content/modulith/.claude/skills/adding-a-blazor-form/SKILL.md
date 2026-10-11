@@ -1,6 +1,6 @@
 ---
 name: adding-a-blazor-form
-description: Add a Blazor form that sends a command — the `*FormModel` and its validation, the `*Form` component, the component that sends the command, and their bUnit tests. Use when adding a form, input screen or edit dialog, sharing one form between create and edit, or choosing between a form model and a command validator.
+description: Add a Blazor form that sends a command — the `*FormModel` and its validation, the `*Form` component, the screen component that sends the command, and their bUnit tests. Use when adding a form, input screen or edit dialog, sharing one form between create and edit, or choosing between a form model and a command validator.
 ---
 
 # Adding a Blazor form
@@ -11,14 +11,18 @@ A form is three pieces, each with one job:
 Web/Components/
   OrderDetailsFormModel.cs   what the user types: validation, To<Command>(), From(dto)
   OrderDetailsForm.razor     renders the model, raises OnValidSubmit — sends nothing
-  PlaceOrder.razor           consumer: sends PlaceOrderCommand
-  ChangeOrderDetails.razor   consumer: sends ChangeOrderDetailsCommand
+  PlaceOrder.razor           consumer (screen component): sends PlaceOrderCommand
+  ChangeOrderDetails.razor   consumer (screen component): sends ChangeOrderDetailsCommand
 ```
 
-The form and its model are named after **what is typed**; each consumer after **its command**.
+The form and its model are named after **what is typed**; each consumer after **its command**. The
+consumer is the **screen component** (CLAUDE.md "Blazor components") — never a component between it
+and the form, which only passes `OnValidSubmit` up.
 
 Every component renders in interactive server mode, so the form model is validated on the server — a
-client cannot skip it.
+client cannot skip it. Load the `dotnet-blazor` skill `collect-user-input` for input and `EditForm`
+mechanics, but skip its static-SSR patterns (`[SupplyParameterFromForm]`, `FormName`, `Enhance`):
+interactivity is global here.
 
 ## The form model
 
@@ -74,8 +78,8 @@ and `ChangeOrderDetails(OrderId, Name, Amount)` share one; the id comes from the
 
 ## The consumer
 
-Owns the model instance, sends the command with `IScopedMediator`, and decides what success and
-failure look like:
+The screen component owns the model instance, sends the command with `IScopedMediator`, and decides
+what success and failure look like:
 
 ```razor
 @inject IScopedMediator Mediator
@@ -131,7 +135,7 @@ Two bUnit test classes in `<Feature>.WebTests`, with NSubstitute for `IScopedMed
 
 - **Form:** invalid input shows the field's message and does not invoke `OnValidSubmit`; valid input
   invokes it with the model.
-- **Consumer:** it sends the command built from the model; on success it resets or navigates; on a
+- **Screen component:** it sends the command built from the model; on success it resets or navigates; on a
   failed `Result` it shows the message and keeps the input.
 
 Test the copied limits on the entity, in `<Feature>.DomainTests`, not rule by rule through the form.

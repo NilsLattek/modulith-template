@@ -1,3 +1,6 @@
+@* The Orders screen component: owns the screen's state and sends every message. Components below it,
+   like SomeEntityForm, take parameters and raise events — they inject no mediator. *@
+
 @using ModulithTemplate.Features.Orders.Application.Queries.GetSomeEntityCount
 
 @inject IScopedMediator Mediator

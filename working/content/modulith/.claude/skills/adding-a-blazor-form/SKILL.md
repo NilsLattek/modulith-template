@@ -76,9 +76,10 @@ and `ChangeOrderDetails(OrderId, Name, Amount)` share one; the id comes from the
 
 ## The consumer
 
-The component that owns the page's state (see the `dotnet-blazor` skills). It owns the model instance,
-sends the command with `IScopedMediator`, and decides what success and failure look like; a component
-between it and the form only passes `OnValidSubmit` up:
+The top-level component a page renders — the one that owns the page's state (see the `dotnet-blazor`
+skills). It owns the model instance, sends the command with `IScopedMediator`, and decides what
+success and failure look like; a component between it and the form only passes `OnValidSubmit` up.
+Here the page renders `<ChangeOrderDetails OrderId="@OrderId" />` with the id from its route:
 
 ```razor
 @inject IScopedMediator Mediator
@@ -127,6 +128,11 @@ between it and the form only passes `OnValidSubmit` up:
 - **Failure:** one form-level message. The model stays as it was, so the user's input survives.
   Show a `BusinessError`'s message, which is written for the user; any other error gets fixed text,
   because an `ExceptionalError`'s message can leak SQL or internals.
+
+**In a list, a row is never the consumer.** A row that shows a form for inline editing raises an
+`EventCallback` with the item's id and the model; the component that owns the list sends the command
+and replaces the item from the result. A row that sends its own command keeps a copy of the item that
+drifts from the list's.
 
 ## Tests
 

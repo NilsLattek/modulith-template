@@ -16,8 +16,6 @@ its children versions the root and has each change write to it. We also rejected
 the entities: the database is the one check, so a stale copy cannot pass the entity and lose the
 race at the save anyway.
 
-Ported from a generated project (user-story-map) that needed it.
-
 ## Consequences
 
 - Ties the template to Postgres; another provider needs its own row-version mapping in

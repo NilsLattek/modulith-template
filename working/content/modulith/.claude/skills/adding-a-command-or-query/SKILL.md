@@ -175,12 +175,12 @@ is the way:
 
   ```csharp
   var order = await repository.FirstOrDefaultAsync(new OrderByIdSpec(command.OrderId), cancellationToken);
-  order.ChangeShippingAddress(command.Address);
   repository.ExpectVersion(order, command.Version);
+  order.ChangeShippingAddress(command.Address);
   await repository.SaveChangesAsync(cancellationToken);
   ```
 
-  Call `ExpectVersion` **before** any repository method that saves by itself (`UpdateAsync`,
+  Call `ExpectVersion` **immediately** after loading the entity or **before** any repository method that saves by itself (`UpdateAsync`,
   `DeleteAsync`); set after it, the expectation checks nothing.
 - **Adding carries no version** — an insert overwrites nothing.
 - **The DTO carries `Version`**, and a change returns the item with its new one, for the caller's

@@ -38,9 +38,11 @@ jobs:
         # discover the contexts from the host's DI container instead of hard-coding a list
         # that new features would fall out of. One script per context; they touch disjoint
         # schemas, so they can be applied in any order.
-        contexts=$(dotnet ef dbcontext list --no-build --json \
+        # --prefix-output tags the JSON lines with "data:", keeping EF's info/warn lines out of it.
+        contexts=$(dotnet ef dbcontext list --no-build --json --prefix-output \
           --project src/ModulithTemplate.Web \
-          --startup-project src/ModulithTemplate.Web | jq -r '.[].name')
+          --startup-project src/ModulithTemplate.Web \
+          | sed -n 's/^data: *"name": *"\([^"]*\)".*/\1/p')
         test -n "$contexts" || { echo "No DbContext was discovered in the host" >&2; exit 1; }
         mkdir -p migrations
         for ctx in $contexts; do

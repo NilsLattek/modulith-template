@@ -15,8 +15,12 @@ host=src/ModulithTemplate.Web
 # Build once up front so the EF commands below can skip their own builds.
 dotnet build "$host"
 
-contexts=$(dotnet ef dbcontext list --no-build --json \
-  --project "$host" --startup-project "$host" | jq -r '.[].name')
+# --prefix-output tags the JSON lines with "data:", so EF's own info/warn lines (e.g. the
+# tools-older-than-runtime warning) can't corrupt it; tr strips Windows' CRLF. sed rather
+# than jq, which Git Bash on Windows doesn't ship.
+contexts=$(dotnet ef dbcontext list --no-build --json --prefix-output \
+  --project "$host" --startup-project "$host" \
+  | tr -d '\r' | sed -n 's/^data: *"name": *"\([^"]*\)".*/\1/p')
 test -n "$contexts" || { echo "No DbContext was discovered in the host" >&2; exit 1; }
 
 for ctx in $contexts; do

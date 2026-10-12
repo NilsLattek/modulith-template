@@ -1,0 +1,2 @@
+# Bash scripts must keep LF endings even when Git converts to CRLF on Windows checkout.
+*.sh text eol=lf

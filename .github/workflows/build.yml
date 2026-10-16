@@ -37,6 +37,8 @@ jobs:
         dotnet-version: 10.0.x
     - name: Build
       run: dotnet build working/content/modulith/ModulithTemplate.slnx -warnaserror
+    # --coverage rewrites the assemblies under test, which once broke the architecture tests;
+    # running it here keeps them honest under the instrumentation a generated project may use.
     - name: Test
-      run: dotnet test
+      run: dotnet test --coverage
       working-directory: working/content/modulith

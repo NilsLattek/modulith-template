@@ -1,8 +1,6 @@
 using ArchUnitNET.Fluent;
 using ArchUnitNET.xUnitV3;
 
-using static ArchUnitNET.Fluent.ArchRuleDefinition;
-
 namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
@@ -47,11 +45,9 @@ public class FeatureLayerTests
         Assert.True(SolutionAssemblies.HasFeatureLayer(rule.Suffix),
             $"No assembly for the '{rule.Name}' feature layer was found; the layering rule would pass vacuously.");
 
-        IArchRule layerRule = Types().That()
-            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(rule.Suffix))
-            .And().DoNotResideInNamespaceMatching(SolutionAssemblies.InstrumentationNamespacePattern)
-            .Should().NotDependOnAnyTypesThat()
-            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(rule.Forbidden)))
+        IArchRule layerRule = SolutionAssemblies.FeatureLayerTypes(SolutionAssemblies.FeatureLayerPattern(rule.Suffix))
+            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(
+                SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(rule.Forbidden))))
             .Because($"a feature's {rule.Name} layer must not depend on its {string.Join("/", rule.Forbidden)} layer(s).");
 
         layerRule.Check(SolutionAssemblies.Architecture);

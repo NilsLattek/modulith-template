@@ -1,8 +1,6 @@
 using ArchUnitNET.Fluent;
 using ArchUnitNET.xUnitV3;
 
-using static ArchUnitNET.Fluent.ArchRuleDefinition;
-
 namespace ModulithTemplate.ArchitectureTests;
 
 /// <summary>
@@ -47,11 +45,9 @@ public class ContractIsolationTests
     {
         AssertLayerDiscovered(ContractsLayer, "contract purity");
 
-        IArchRule rule = Types().That()
-            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
-            .And().DoNotResideInNamespaceMatching(SolutionAssemblies.InstrumentationNamespacePattern)
-            .Should().NotDependOnAnyTypesThat()
-            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers)))
+        IArchRule rule = SolutionAssemblies.FeatureLayerTypes(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
+            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(
+                SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers))))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
                 + "Shared.Application abstractions, so a consumer referencing it does not transitively gain access "
                 + "to the owning feature's internals.")
@@ -69,11 +65,9 @@ public class ContractIsolationTests
             AssertLayerDiscovered(layer, "contract consumption");
         }
 
-        IArchRule rule = Types().That()
-            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(NonConsumingLayers)))
-            .And().DoNotResideInNamespaceMatching(SolutionAssemblies.InstrumentationNamespacePattern)
-            .Should().NotDependOnAnyTypesThat()
-            .ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
+        IArchRule rule = SolutionAssemblies.FeatureLayerTypes(
+                SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(NonConsumingLayers)))
+            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(SolutionAssemblies.FeatureLayerPattern(ContractsLayer)))
             .Because($"only an {ConsumingLayer} layer may consume any Contracts project — its own, which implements "
                 + "the module API, or a neighbouring feature's, which calls it. A "
                 + $"{string.Join("/", NonConsumingLayers)} layer reaching for one is a cross-feature dependency "
@@ -99,12 +93,10 @@ public class ContractIsolationTests
             return;
         }
 
-        IArchRule rule = Types().That()
-            .ResideInAssemblyMatching(SolutionAssemblies.NamedFeatureLayerPattern(feature, OwnContractsOnlyLayer))
-            .And().DoNotResideInNamespaceMatching(SolutionAssemblies.InstrumentationNamespacePattern)
-            .Should().NotDependOnAnyTypesThat()
-            .ResideInAssemblyMatching(
-                SolutionAssemblies.NamedFeatureLayerPattern(SolutionAssemblies.Alternation(siblings), ContractsLayer))
+        IArchRule rule = SolutionAssemblies.FeatureLayerTypes(
+                SolutionAssemblies.NamedFeatureLayerPattern(feature, OwnContractsOnlyLayer))
+            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(
+                SolutionAssemblies.NamedFeatureLayerPattern(SolutionAssemblies.Alternation(siblings), ContractsLayer)))
             .Because($"{feature}'s {OwnContractsOnlyLayer} layer may name its own published contract — an outbox "
                 + "handler has to — but reaching a sibling's is exactly the cross-feature dependency an "
                 + $"{ConsumingLayer} layer is the only one allowed to take on purpose.")

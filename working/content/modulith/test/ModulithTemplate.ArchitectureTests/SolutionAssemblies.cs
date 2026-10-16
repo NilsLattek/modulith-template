@@ -1,4 +1,6 @@
 using ArchUnitNET.Domain;
+using ArchUnitNET.Fluent;
+using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using ArchUnitNET.Loader;
 
 using Assembly = System.Reflection.Assembly;
@@ -48,13 +50,20 @@ internal static class SolutionAssemblies
         @".*\.Features\..*\." + suffixExpression + @"(,.*)?$";
 
     /// <summary>Namespace of the tracker type a code-coverage run injects into every assembly.</summary>
+    private const string InstrumentationNamespacePattern = @"^Microsoft\.CodeCoverage\..*";
+
+    /// <summary>The types of the feature layer(s) an assembly-name pattern matches, minus coverage instrumentation.</summary>
     /// <remarks>
-    /// <c>dotnet test --coverage</c> rewrites the assemblies in place, adding one identically-named
-    /// tracker type to each. ArchUnitNET resolves those by name across the whole architecture, so
-    /// the copies appear to depend on each other and every layering rule fails. Excluding the
-    /// namespace from a rule's source set is enough.
+    /// <c>dotnet test --coverage</c> adds one identically-named tracker type to every assembly, and
+    /// ArchUnitNET resolves all the copies to whichever assembly it met first, so every instrumented
+    /// type appears to depend on that one layer. Use this on <i>both</i> sides of a dependency rule.
     /// </remarks>
-    public const string InstrumentationNamespacePattern = @"^Microsoft\.CodeCoverage\..*";
+    /// <param name="assemblyPattern">An assembly-name pattern, e.g. from <see cref="FeatureLayerPattern"/>.</param>
+    /// <returns>The matching types, usable as a rule's subject or as its forbidden dependency set.</returns>
+    public static GivenTypesConjunction FeatureLayerTypes(string assemblyPattern) =>
+        ArchRuleDefinition.Types().That()
+            .ResideInAssemblyMatching(assemblyPattern)
+            .And().DoNotResideInNamespaceMatching(InstrumentationNamespacePattern);
 
     /// <summary>
     /// Builds an assembly-name regex matching one named feature's layer, e.g. Orders' Infrastructure.

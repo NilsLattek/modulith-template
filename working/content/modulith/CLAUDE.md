@@ -27,7 +27,7 @@ glossary for the terms used throughout.
 `Domain` has no outbound dependencies and is the only place business rules live. **Features must not
 depend on each other** — `Contracts` is the only crossing point, reached through a Module API or an
 Integration Event (skill: `reaching-another-feature`). `ModulithTemplate.ArchitectureTests` enforces
-the layer rules.
+the layer rules and the entity, value object and event shapes below.
 
 **A feature is a transaction boundary, sized like a bounded context — not a folder, a screen or a
 CRUD table.** Two features share no transaction, so the split cannot be undone cheaply. The default
@@ -62,12 +62,15 @@ the handler loads it and passes it down.
 
 ### Writing entities
 
-Entities are rich, not data bags:
+Entities are rich, not data bags, and live in `Domain/Entities/`:
 
 - **Private setters**, and collections exposed as `IReadOnlyList<T>` over a private backing list.
   State changes only through named methods that say what happened (`AddLine`, `Confirm`, `Cancel`).
 - **`internal` constructor + private parameterless ctor for EF.** Application obtains instances
   through a `public static` factory method or a domain service — never `new`.
+- **Reference another aggregate by its id**, never by a navigation property; a child may point back at
+  its own root.
+- **Value objects and domain events are immutable records** — positional, with readonly collections.
 - **Invariants are enforced in the constructor and in every mutator**, so no call path can produce an
   invalid entity.
 - **A rule the user can break and should be told about throws `BusinessException`** with a

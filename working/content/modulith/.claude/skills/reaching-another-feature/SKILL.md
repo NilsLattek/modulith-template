@@ -36,7 +36,7 @@ Modelled on the shipped `Orders` → `Payments` example:
 | `SomeEntityAddedDomainEvent`, raised by the aggregate's mutator | `Orders.Domain/Events/` |
 | `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
 | The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
-| `SomeEntityAddedOutboxHandler : IOutboxMessageHandler<T>` — takes the delivered row to the mediator | `Orders.Infrastructure/OutboxHandlers/` |
+| `SomeEntityAddedOutboxHandler : IntegrationEventMediatorTransport<T>` — a body-less class that takes the delivered row to the mediator | `Orders.Infrastructure/OutboxHandlers/` |
 | `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` — the consumer | `Payments.Application/IntegrationEventHandlers/` |
 
 The publisher binding (`OrdersIntegrationEventPublisher` in `Orders.Infrastructure/Events/`) and its
@@ -58,6 +58,11 @@ The outbox handler belongs to the feature whose `Contracts` declares the event, 
 `Infrastructure` layer: delivery is infrastructure, and it is the reading counterpart to the
 publisher that staged the row. It is the one thing an `Infrastructure` layer may name a `Contracts`
 type for, and only its own feature's — `ContractIsolationTests` still fails it for a sibling's.
+
+`IntegrationEventMediatorTransport<T>` is only a shortcut for the in-process case. To deliver an
+event elsewhere, such as Kafka, implement `IOutboxMessageHandler<T>` directly. An event type gets
+**one** outbox handler, so if it must reach both the mediator and an external system, that one
+handler does both; a second handler for the same type fails the build (`OUTBOX001`) or startup.
 
 ### Group keys
 

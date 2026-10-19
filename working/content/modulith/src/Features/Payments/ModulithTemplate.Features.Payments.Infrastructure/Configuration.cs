@@ -20,7 +20,8 @@ public static class Configuration
         services.AddScoped<IPaymentsIntegrationEventPublisher, PaymentsIntegrationEventPublisher>();
 
         // This feature publishes no Integration Event yet. The first one is a record in Contracts, a
-        // SomethingHappenedOutboxHandler : IOutboxMessageHandler<T> under OutboxHandlers/, and then
+        // body-less SomethingHappenedOutboxHandler : IntegrationEventMediatorTransport<T> under
+        // OutboxHandlers/, and then
         // services.AddModulithTemplateFeaturesPaymentsInfrastructureMessageHandlers() here — the
         // source generator emits that method only once this assembly declares a handler.
         return services;

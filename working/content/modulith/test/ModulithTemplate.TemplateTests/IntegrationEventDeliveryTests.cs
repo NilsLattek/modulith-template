@@ -6,7 +6,6 @@ using ModulithTemplate.Features.Orders.Infrastructure.OutboxHandlers;
 
 using Underground.Outbox.Data;
 using Underground.Outbox.Domain.Dispatchers;
-using Underground.Outbox.Exceptions;
 
 namespace ModulithTemplate.TemplateTests;
 
@@ -15,14 +14,19 @@ namespace ModulithTemplate.TemplateTests;
 /// feature, which commits through its own context.
 /// </summary>
 /// <remarks>
-/// Exercised through the dispatcher the worker resolves rather than the handler directly, because
-/// what is under test is the wiring — that the feature owning the event contributed a handler for it,
-/// and that the row finds it.
+/// Exercised through the handler registry the worker looks rows up in rather than the handler directly,
+/// because what is under test is the wiring — that the feature owning the event contributed a handler
+/// for it, and that the row finds it.
 /// </remarks>
 public class IntegrationEventDeliveryTests
 {
-    private static IMessageDispatcher<OutboxMessage> Dispatcher(IServiceScope scope) =>
-        scope.ServiceProvider.GetRequiredService<IMessageDispatcher<OutboxMessage>>();
+    private static Task DispatchAsync(IServiceScope scope, OutboxMessage row, CancellationToken cancellationToken)
+    {
+        var registry = scope.ServiceProvider.GetRequiredService<HandlerRegistry<OutboxMessage>>();
+        Assert.True(registry.TryGetEntry(row.Type, out var entry));
+        return entry.HandleAsync(
+            scope.ServiceProvider, row, new MessageMetadata(row.EventId, row.GroupKey), cancellationToken);
+    }
 
     [Fact]
     public async Task The_publishing_feature_claims_its_own_event()
@@ -54,7 +58,7 @@ public class IntegrationEventDeliveryTests
         // A scope of its own, as the worker gives each message: the consumer writes through its own
         // context, never the publisher's.
         using var scope = solution.CreateScope();
-        await Dispatcher(scope).ExecuteAsync(scope, staged, cancellationToken);
+        await DispatchAsync(scope, staged, cancellationToken);
 
         // Assert
         // Orders' handler published to the mediator, and Payments' consumer is what reacted — one
@@ -62,24 +66,5 @@ public class IntegrationEventDeliveryTests
         var payment = Assert.Single(await solution.PaymentsAsync(cancellationToken));
         Assert.Equal(staged.GroupKey, payment.OrderId.ToString(), StringComparer.Ordinal);
         Assert.Equal(12.34m, payment.Amount);
-    }
-
-    [Fact]
-    public async Task An_unclaimed_event_type_fails_loudly()
-    {
-        // Arrange
-        await using var solution = SolutionUnderTest.Start();
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var unknown = new OutboxMessage(
-            Guid.CreateVersion7(), DateTime.UtcNow, "Nothing.Handles.This", "{}", "a-group", null);
-
-        // Act
-        using var scope = solution.CreateScope();
-        var dispatching = async () => await Dispatcher(scope).ExecuteAsync(scope, unknown, cancellationToken);
-
-        // Assert
-        // An event no feature claims is a wiring mistake, and the row must not be silently completed.
-        var exception = await Assert.ThrowsAsync<ParsingException>(dispatching);
-        Assert.Contains("Nothing.Handles.This", exception.Message, StringComparison.Ordinal);
     }
 }

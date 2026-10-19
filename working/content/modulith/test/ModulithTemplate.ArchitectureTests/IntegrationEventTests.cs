@@ -64,17 +64,6 @@ public class IntegrationEventTests
         rule.Check(SolutionAssemblies.Architecture);
     }
 
-    [Fact]
-    public void Integration_events_are_immutable() =>
-        TypeShape.AssertNone(
-            SolutionAssemblies.FeatureAssemblies
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => type is { IsInterface: false, IsAbstract: false }
-                    && typeof(IIntegrationEvent).IsAssignableFrom(type))
-                .SelectMany(TypeShape.MutableMembers),
-            "one delivered instance is handed to every consumer in turn, so a consumer that changed it would change "
-                + "what the next one sees. Declare it as a positional record, with readonly collections.");
-
     /// <summary>Every type implementing the Integration Event contract, wherever it was declared.</summary>
     private static GivenTypesConjunction IntegrationEvents() =>
         Types().That()

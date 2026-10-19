@@ -1,9 +1,10 @@
+using System.Collections;
+using System.Collections.ObjectModel;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 using ModulithTemplate.SharedKernel.Domain.Entities;
 using ModulithTemplate.SharedKernel.Domain.Events;
-
-using static ModulithTemplate.ArchitectureTests.TypeShape;
 
 namespace ModulithTemplate.ArchitectureTests;
 
@@ -20,6 +21,18 @@ public class DomainModelTests
 {
     private const BindingFlags DeclaredInstance =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+
+    /// <summary>Collection types a caller can read but not change.</summary>
+    private static readonly Type[] ReadOnlyCollections =
+    [
+        typeof(IEnumerable<>),
+        typeof(IReadOnlyCollection<>),
+        typeof(IReadOnlyList<>),
+        typeof(IReadOnlySet<>),
+        typeof(IReadOnlyDictionary<,>),
+        typeof(ReadOnlyCollection<>),
+        typeof(ReadOnlyDictionary<,>),
+    ];
 
     [Fact]
     public void Entities_change_state_only_through_their_own_methods() =>
@@ -176,5 +189,77 @@ public class DomainModelTests
         }
 
         return held;
+    }
+
+    /// <summary>Whether a member of this type lets its reader add, remove or replace elements.</summary>
+    /// <remarks><c>byte[]</c> is exempt: EF Core maps it as one scalar column, not a collection of children.</remarks>
+    private static bool IsMutableCollection(Type type)
+    {
+        if (type == typeof(string) || type == typeof(byte[]) || type == typeof(IEnumerable)
+            || !typeof(IEnumerable).IsAssignableFrom(type)
+            || type.Namespace is "System.Collections.Immutable" or "System.Collections.Frozen")
+        {
+            return false;
+        }
+
+        return !(type.IsGenericType && ReadOnlyCollections.Contains(type.GetGenericTypeDefinition()));
+    }
+
+    /// <summary>Everything that lets a constructed instance of <paramref name="type"/> change.</summary>
+    /// <remarks>Backing fields are skipped; their property's setter is reported under the name the author wrote.</remarks>
+    private static IEnumerable<string> MutableMembers(Type type)
+    {
+        const BindingFlags instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        foreach (var property in type.GetProperties(instance))
+        {
+            if (property.SetMethod is { } setter
+                && !setter.ReturnParameter.GetRequiredCustomModifiers().Contains(typeof(IsExternalInit)))
+            {
+                yield return $"{type.Name}.{property.Name} has a setter";
+            }
+
+            if (property.GetMethod is { IsPublic: true } && IsMutableCollection(property.PropertyType))
+            {
+                yield return $"{type.Name}.{property.Name} is a mutable {Describe(property.PropertyType)}";
+            }
+        }
+
+        foreach (var field in type.GetFields(instance))
+        {
+            if (!field.IsInitOnly && !field.IsDefined(typeof(CompilerGeneratedAttribute)))
+            {
+                yield return $"{type.Name}.{field.Name} is a field that is not readonly";
+            }
+        }
+    }
+
+    /// <summary>The type and, recursively, its array element and generic arguments.</summary>
+    private static IEnumerable<Type> NamedTypes(Type type)
+    {
+        yield return type;
+
+        var inner = type.IsArray ? [type.GetElementType()!] : type.GetGenericArguments();
+        foreach (var named in inner.SelectMany(NamedTypes))
+        {
+            yield return named;
+        }
+    }
+
+    /// <summary>A readable type name: <c>List&lt;OrderLine&gt;</c> rather than <c>List`1</c>.</summary>
+    private static string Describe(Type type) =>
+        type.IsGenericType
+            ? $"{type.Name[..type.Name.IndexOf('`', StringComparison.Ordinal)]}<{string.Join(", ", type.GetGenericArguments().Select(Describe))}>"
+            : type.Name;
+
+    /// <summary>Fails with every violation listed, then the reason the rule exists.</summary>
+    private static void AssertNone(IEnumerable<string> violations, string because)
+    {
+        var found = violations.Distinct(StringComparer.Ordinal).ToArray();
+
+        Assert.True(
+            found.Length == 0,
+            string.Join(Environment.NewLine, found.Select(violation => "  - " + violation))
+                + Environment.NewLine + Environment.NewLine + because);
     }
 }

@@ -107,4 +107,40 @@ public class UnitOfWorkTests
         var names = entities.Select(entity => entity.Name).Order(StringComparer.Ordinal);
         Assert.Equal(["first", "second"], names, StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task Under_a_retrying_strategy_a_broken_connection_replays_the_action()
+    {
+        // Arrange
+        // 57P01 is the error a killed backend reports; Npgsql does not count it as transient itself.
+        await using var solution = SolutionUnderTest.Start(options => options
+            .UseNpgsql(pg => pg.EnableRetryOnFailure(1, TimeSpan.FromMilliseconds(10), errorCodesToAdd: ["57P01"])));
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var scope = solution.CreateScope();
+        var orders = scope.ServiceProvider.GetRequiredService<OrdersContext>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IOrdersUnitOfWork>();
+        var attempts = 0;
+
+        // Act
+        // A broken connection leaves its transaction unusable, so the failed attempt must end without
+        // an error of its own hiding the transient one from the strategy.
+        await unitOfWork.ExecuteInTransactionAsync(
+            async () =>
+            {
+                attempts++;
+                orders.Add(AnEntity());
+                await orders.SaveChangesAsync(cancellationToken);
+
+                if (attempts == 1)
+                {
+                    await orders.Database.ExecuteSqlRawAsync(
+                        "SELECT pg_terminate_backend(pg_backend_pid())", cancellationToken);
+                }
+            },
+            cancellationToken: cancellationToken);
+
+        // Assert
+        Assert.Equal(2, attempts);
+        Assert.Single(await solution.SomeEntitiesAsync(cancellationToken));
+    }
 }

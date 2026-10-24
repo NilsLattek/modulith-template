@@ -65,25 +65,15 @@ public abstract class UnitOfWorkBase<TContext>(TContext dbContext) : IUnitOfWork
 
                 replay = true;
 
+                // Rolled back by disposal, not RollbackAsync: on a broken connection that throws and
+                // hides the transient failure from the strategy. Disposal also ignores cancellation.
                 await using var transaction = isolationLevel is null
                     ? await dbContext.Database.BeginTransactionAsync(ct)
                     : await dbContext.Database.BeginTransactionAsync(isolationLevel.Value, ct);
 
-                try
-                {
-                    var result = await action();
-                    await transaction.CommitAsync(ct);
-                    return result;
-                }
-                catch
-                {
-                    // Rolled back explicitly rather than left to disposal, so the transaction is finished
-                    // before the exception reaches the caller. CancellationToken.None on purpose: the usual
-                    // reason to land here is that the token was cancelled, and passing it on would
-                    // abandon the rollback and replace the original exception with a cancellation.
-                    await transaction.RollbackAsync(CancellationToken.None);
-                    throw;
-                }
+                var result = await action();
+                await transaction.CommitAsync(ct);
+                return result;
             },
             cancellationToken);
     }

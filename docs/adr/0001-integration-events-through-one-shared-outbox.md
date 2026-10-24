@@ -1,5 +1,7 @@
 # Integration events travel through one shared outbox, written by the publishing feature's own context
 
+_Superseded by ADR 0006: integration events now travel through the shared inbox._
+
 Features must not share tables, but an integration event has to commit *atomically* with the domain
 change that caused it, and an outbox row committed in its own transaction is a dual write with all
 the failure modes the outbox exists to remove. So the outbox is the one deliberate exception to

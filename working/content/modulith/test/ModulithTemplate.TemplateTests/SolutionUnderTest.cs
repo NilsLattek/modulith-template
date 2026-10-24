@@ -2,13 +2,13 @@ using Mediator;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+using ModulithTemplate.Features.Orders.Domain.Entities;
 using ModulithTemplate.Features.Orders.Infrastructure.Data;
 using ModulithTemplate.Features.Orders.Web;
 using ModulithTemplate.Features.Payments.Domain.Entities;
@@ -49,8 +49,9 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     }
 
     /// <summary>Builds the solution's services over a fresh database.</summary>
+    /// <param name="configureOrders">Applied to the Orders context's options after the solution's own.</param>
     /// <returns>The composed solution.</returns>
-    public static SolutionUnderTest Start()
+    public static SolutionUnderTest Start(Action<DbContextOptionsBuilder>? configureOrders = null)
     {
         var database = TestDatabase.Create();
         ServiceProvider? provider = null;
@@ -58,7 +59,7 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         try
         {
             var ordersSaves = new SaveRecorder();
-            provider = Compose(database.ConnectionString, ordersSaves);
+            provider = Compose(database.ConnectionString, ordersSaves, configureOrders);
             CreateSchema(provider);
 
             return new SolutionUnderTest(database, provider, ordersSaves);
@@ -75,8 +76,10 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// <summary>Registers the solution's services against this test's database.</summary>
     /// <param name="connectionString">The test's own database.</param>
     /// <param name="ordersSaves">Records the saves made through the Orders context.</param>
+    /// <param name="configureOrders">The test's own additions to the Orders context's options.</param>
     /// <returns>The built container.</returns>
-    private static ServiceProvider Compose(string connectionString, SaveRecorder ordersSaves)
+    private static ServiceProvider Compose(
+        string connectionString, SaveRecorder ordersSaves, Action<DbContextOptionsBuilder>? configureOrders)
     {
         var builder = WebApplication.CreateEmptyBuilder(new WebApplicationOptions());
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
@@ -105,7 +108,13 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         // Added to the registered options rather than rebuilt into them, so the recorder runs after
         // the interceptors AddModuleDbContext attached and sees what their handlers staged.
         builder.Services.AddSingleton<IDbContextOptionsConfiguration<OrdersContext>>(
-            new AttachInterceptor<OrdersContext>(ordersSaves));
+            new ConfigureOptions<OrdersContext>(options => options.AddInterceptors(ordersSaves)));
+
+        if (configureOrders is not null)
+        {
+            builder.Services.AddSingleton<IDbContextOptionsConfiguration<OrdersContext>>(
+                new ConfigureOptions<OrdersContext>(configureOrders));
+        }
 
         return builder.Services.BuildServiceProvider();
     }
@@ -134,6 +143,16 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         using var scope = CreateScope();
         return await scope.ServiceProvider.GetRequiredService<OutboxContext>()
             .OutboxMessages.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    /// <summary>The entities the publishing feature has recorded.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The entities.</returns>
+    public async Task<IReadOnlyList<SomeEntity>> SomeEntitiesAsync(CancellationToken cancellationToken)
+    {
+        using var scope = CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<OrdersContext>()
+            .Set<SomeEntity>().AsNoTracking().ToListAsync(cancellationToken);
     }
 
     /// <summary>The payments the consuming feature has recorded.</summary>
@@ -173,15 +192,15 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
             context.GetService<IRelationalDatabaseCreator>().CreateTables();
     }
 
-    /// <summary>Adds an interceptor to a context the solution has already registered.</summary>
-    /// <typeparam name="TContext">The context to attach to.</typeparam>
-    /// <param name="interceptor">The interceptor to add, after the registered ones.</param>
-    private sealed class AttachInterceptor<TContext>(IInterceptor interceptor)
+    /// <summary>Adds to the options of a context the solution has already registered.</summary>
+    /// <typeparam name="TContext">The context to configure.</typeparam>
+    /// <param name="configure">Applied after the registered configuration.</param>
+    private sealed class ConfigureOptions<TContext>(Action<DbContextOptionsBuilder> configure)
         : IDbContextOptionsConfiguration<TContext>
         where TContext : DbContext
     {
         /// <inheritdoc />
         public void Configure(IServiceProvider serviceProvider, DbContextOptionsBuilder optionsBuilder) =>
-            optionsBuilder.AddInterceptors(interceptor);
+            configure(optionsBuilder);
     }
 }

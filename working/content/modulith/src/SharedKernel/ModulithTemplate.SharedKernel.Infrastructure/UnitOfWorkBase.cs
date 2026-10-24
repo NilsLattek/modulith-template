@@ -43,7 +43,7 @@ public abstract class UnitOfWorkBase<TContext>(TContext dbContext) : IUnitOfWork
         IsolationLevel? isolationLevel = null,
         CancellationToken cancellationToken = default)
     {
-        // Commit, rollback and retries belong to whoever opened it.
+        // Commit, rollback and retries belong to whoever opened the transaction.
         if (dbContext.Database.CurrentTransaction is not null)
         {
             return await action();

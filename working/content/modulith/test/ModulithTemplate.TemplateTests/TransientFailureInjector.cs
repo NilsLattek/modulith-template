@@ -7,15 +7,15 @@ using Npgsql;
 namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
-/// Fails one write command with a serialization failure, which a retrying execution strategy
+/// Fails one insert with a serialization failure, which a retrying execution strategy
 /// treats as transient and answers by replaying the whole operation.
 /// </summary>
-/// <param name="failingWrite">Which write fails, counting from 1; every later one runs normally.</param>
-internal sealed class TransientFailureInjector(int failingWrite) : DbCommandInterceptor
+/// <param name="failingInsert">Which insert fails, counting from 1; every later one runs normally.</param>
+internal sealed class TransientFailureInjector(int failingInsert) : DbCommandInterceptor
 {
     private const string SerializationFailure = "40001";
 
-    private int _writes;
+    private int _inserts;
 
     /// <inheritdoc />
     public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
@@ -42,7 +42,7 @@ internal sealed class TransientFailureInjector(int failingWrite) : DbCommandInte
     private void FailIfDue(DbCommand command)
     {
         if (command.CommandText.Contains("INSERT", StringComparison.Ordinal)
-            && Interlocked.Increment(ref _writes) == failingWrite)
+            && Interlocked.Increment(ref _inserts) == failingInsert)
         {
             throw new PostgresException("injected", "ERROR", "ERROR", SerializationFailure);
         }

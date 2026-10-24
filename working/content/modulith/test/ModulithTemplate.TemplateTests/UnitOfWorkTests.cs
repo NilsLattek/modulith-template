@@ -38,10 +38,12 @@ public class UnitOfWorkTests
                 await orders.SaveChangesAsync(cancellationToken);
             },
             cancellationToken: cancellationToken);
+
+        // The owner decides: rolling back discards what the action wrote.
         await transaction.RollbackAsync(cancellationToken);
 
         // Assert
-        Assert.Empty(await EntitiesAsync(solution, cancellationToken));
+        Assert.Empty(await solution.SomeEntitiesAsync(cancellationToken));
     }
 
     [Fact]
@@ -69,7 +71,7 @@ public class UnitOfWorkTests
         await transaction.CommitAsync(cancellationToken);
 
         // Assert
-        Assert.Single(await EntitiesAsync(solution, cancellationToken));
+        Assert.Single(await solution.SomeEntitiesAsync(cancellationToken));
     }
 
     [Fact]
@@ -80,7 +82,7 @@ public class UnitOfWorkTests
         // reused the tracker would skip the first entity's re-insert and repeat the second's.
         await using var solution = SolutionUnderTest.Start(options => options
             .UseNpgsql(pg => pg.EnableRetryOnFailure(1, TimeSpan.FromMilliseconds(10), errorCodesToAdd: null))
-            .AddInterceptors(new TransientFailureInjector(failingWrite: 2)));
+            .AddInterceptors(new TransientFailureInjector(failingInsert: 2)));
         var cancellationToken = TestContext.Current.CancellationToken;
         using var scope = solution.CreateScope();
         var orders = scope.ServiceProvider.GetRequiredService<OrdersContext>();
@@ -101,15 +103,8 @@ public class UnitOfWorkTests
 
         // Assert
         Assert.Equal(2, attempts);
-        var names = (await EntitiesAsync(solution, cancellationToken)).Select(entity => entity.Name).Order(StringComparer.Ordinal);
+        var entities = await solution.SomeEntitiesAsync(cancellationToken);
+        var names = entities.Select(entity => entity.Name).Order(StringComparer.Ordinal);
         Assert.Equal(["first", "second"], names, StringComparer.Ordinal);
-    }
-
-    private static async Task<IReadOnlyList<SomeEntity>> EntitiesAsync(
-        SolutionUnderTest solution, CancellationToken cancellationToken)
-    {
-        using var scope = solution.CreateScope();
-        return await scope.ServiceProvider.GetRequiredService<OrdersContext>()
-            .Set<SomeEntity>().AsNoTracking().ToListAsync(cancellationToken);
     }
 }

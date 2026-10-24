@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+using ModulithTemplate.Features.Orders.Domain.Entities;
 using ModulithTemplate.Features.Orders.Infrastructure.Data;
 using ModulithTemplate.Features.Orders.Web;
 using ModulithTemplate.Features.Payments.Domain.Entities;
@@ -142,6 +143,16 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         using var scope = CreateScope();
         return await scope.ServiceProvider.GetRequiredService<OutboxContext>()
             .OutboxMessages.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    /// <summary>The entities the publishing feature has recorded.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The entities.</returns>
+    public async Task<IReadOnlyList<SomeEntity>> SomeEntitiesAsync(CancellationToken cancellationToken)
+    {
+        using var scope = CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<OrdersContext>()
+            .Set<SomeEntity>().AsNoTracking().ToListAsync(cancellationToken);
     }
 
     /// <summary>The payments the consuming feature has recorded.</summary>

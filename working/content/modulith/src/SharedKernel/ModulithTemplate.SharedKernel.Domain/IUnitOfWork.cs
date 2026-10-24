@@ -20,8 +20,10 @@ public interface IUnitOfWork
     /// </summary>
     /// <remarks>
     /// The exception is rethrown unchanged after the rollback, for the host's exception behaviour
-    /// to turn into a failed result. Calls must not be nested — the context refuses to begin a
-    /// transaction while one is already open.
+    /// to turn into a failed result. A retrying execution strategy may run <paramref name="action"/>
+    /// again from an empty change tracker, so it must be re-runnable: load and stage everything
+    /// inside it. When a transaction is already open, it is joined, and committing, rolling back and
+    /// retrying are left to whoever opened it.
     /// </remarks>
     /// <param name="action">The work to execute transactionally.</param>
     /// <param name="isolationLevel">
@@ -38,6 +40,10 @@ public interface IUnitOfWork
     /// Runs <paramref name="action"/> inside a transaction and returns its result, committing when
     /// it returns and rolling back if it throws.
     /// </summary>
+    /// <remarks>
+    /// <paramref name="action"/> must be re-runnable, for the reasons given on the overload without
+    /// a result.
+    /// </remarks>
     /// <typeparam name="T">The type <paramref name="action"/> produces.</typeparam>
     /// <param name="action">The work to execute transactionally.</param>
     /// <param name="isolationLevel">

@@ -17,24 +17,6 @@ exactly one handler, so delivery takes two hops:
 The mediator's generator is the Consumer registry: the Publisher names no Consumer, and nothing reads
 the outbox library's handler registrations.
 
-## Considered options
-
-**Fan-out at publish time** (this ADR's first version): the Publisher's save staged one inbox row per
-Consumer, found by matching the outbox generator's registered handler names against a route per feature
-context, plus an outbox row when a forwarder was registered. One hop, but the Publisher decided both
-who consumes and whether the event leaves the process, through type-name introspection that was hard
-to read.
-
-**Library-side fan-out** (Recipients in 0.22.0, or named Inboxes). Cleaner, and unreleased. It can
-replace the middle hop later without changing how a Consumer is written.
-
-**Saving every Consumer's row in one `SaveChanges` from the outbox handler.** All-or-nothing, but it
-puts the duplicate check on the outbox side, away from the row it concerns, and a Consumer added
-between two attempts would get no row.
-
-**Querying the inbox for existing rows before adding**, to make a redelivery idempotent. Catching the
-unique violation does the same without a second round trip.
-
 ## Consequences
 
 **A redelivered fan-out adds only what is missing.** The outbox delivers at least once with no

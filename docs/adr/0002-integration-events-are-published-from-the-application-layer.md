@@ -1,7 +1,5 @@
 # Integration events are published from the application layer, and delivered at least once
 
-_Delivery superseded by ADR 0006: Consumers now apply an event exactly once, each in its own transaction. Publishing from the application layer still stands._
-
 A domain event is internal and speaks the feature's own language; an integration event is a
 published contract. Translating one into the other is an application concern — the domain model
 must not know that siblings, or a delivery mechanism, exist — so an aggregate raises only a domain

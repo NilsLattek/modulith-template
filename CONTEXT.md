@@ -67,8 +67,8 @@ _Avoid_: Producer, emitter, source
 
 **Consumer**:
 A Feature that reacts to another's Integration Event. An Integration Event may have any number,
-including none — and none is a defect, not a state to rest in. Each Consumer applies an event
-exactly once and on its own: one Consumer failing neither repeats nor holds back another.
+including none — and none is a defect, not a state to rest in.
+
 _Avoid_: Subscriber, listener, receiver, handler
 
 **Group**:

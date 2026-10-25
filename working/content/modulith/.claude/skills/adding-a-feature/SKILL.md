@@ -96,7 +96,8 @@ contexts in `add-migration.sh` and the CI migration check. Do not create a featu
 This is the one step the template cannot do for you, and nothing fails until run time if you skip
 it — the feature simply never loads.
 
-- Add a project reference from `src/ModulithTemplate.Web` to the feature's `.Web` project.
+- Add a project reference from `src/ModulithTemplate.Web` to the feature's `.Web` project. Its
+  `.Domain` is already referenced, by a wildcard, so the mediator sees its domain events.
 - Call `builder.ConfigureShippingFeature();` in `src/ModulithTemplate.Web/Program.cs`, alongside
   the existing features.
 

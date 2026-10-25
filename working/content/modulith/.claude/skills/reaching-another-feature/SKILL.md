@@ -61,8 +61,7 @@ transaction and needs no "already done?" check.
 - **Keep the Command short and inside this feature's data**: it holds the inbox transaction open. Reach
   outside the database (email, HTTP) by staging an outbox message.
 - **React only through an inbox handler.** A plain `INotificationHandler` runs at least once, outside
-  the consumer's transaction, and is for forwarding (below). `InboxHandlers/` is also the one place an
-  `Infrastructure` layer may name a sibling's `Contracts` type.
+  the consumer's transaction, and is for forwarding (below).
 
 ### Sending an event outside the process
 

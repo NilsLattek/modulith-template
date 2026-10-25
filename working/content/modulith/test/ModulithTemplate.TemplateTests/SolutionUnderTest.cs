@@ -143,10 +143,8 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// every row has been completed or has failed once.
     /// </summary>
     /// <remarks>
-    /// The processor is internal to the library, so it is reached by name; the hosted worker would drive
-    /// the same claim, pipeline and transaction, but on its own clock. A row is offered only once every
-    /// older transaction in the cluster has ended, which a parallel test can delay, hence the wait. A
-    /// failed row is out of sight for its backoff, so it ends the run rather than spinning it.
+    /// The processor is internal to the library, so it is reached by name. A row is offered only once
+    /// every older transaction in the cluster has ended, which a parallel test can delay, hence the wait.
     /// </remarks>
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>A task completing once no row awaits its first attempt.</returns>

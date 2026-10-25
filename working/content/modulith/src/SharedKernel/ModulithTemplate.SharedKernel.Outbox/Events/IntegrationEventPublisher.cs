@@ -33,12 +33,14 @@ public abstract class IntegrationEventPublisher<TContext>(
     {
         var createdAt = DateTime.UtcNow;
         var rows = subscriptions.InboxRows(integrationEvent, createdAt);
-        var forwarded = subscriptions.IsForwarded(integrationEvent.GetType());
+        // TEvent, never the runtime type, for both: the envelope a Consumer's handler is registered
+        // under is built from it, so the two decisions cannot disagree.
+        var forwarded = subscriptions.IsForwarded<TEvent>();
 
         if (rows.Count == 0 && !forwarded)
         {
             throw new InvalidOperationException(
-                $"Nothing receives {integrationEvent.GetType().Name}. A consuming feature declares an "
+                $"Nothing receives {typeof(TEvent).Name}. A consuming feature declares an "
                     + "IntegrationEventInboxTransport for it under Infrastructure/InboxHandlers/; forwarding it "
                     + "outside the process takes an IOutboxMessageHandler.");
         }

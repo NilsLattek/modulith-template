@@ -43,7 +43,7 @@ public static class ModuleDbContextExtensions
     {
         services.TryAddScoped<DomainEventDispatcher>();
         services.TryAddScoped<DomainEventDispatchInterceptor<TContext>>();
-        services.AddSingleton<IInboxRoute, InboxRoute<TContext>>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IInboxRoute, InboxRoute<TContext>>());
         services.TryAddSingleton<IntegrationEventSubscriptions>();
 
         // The (sp, options) overload, so the interceptors come from the same scope as the context

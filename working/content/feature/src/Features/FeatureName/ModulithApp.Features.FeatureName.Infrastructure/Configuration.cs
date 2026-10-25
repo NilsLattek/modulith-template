@@ -19,12 +19,9 @@ public static class Configuration
         services.AddScoped<IFeatureNameUnitOfWork, FeatureNameUnitOfWork>();
         services.AddScoped<IFeatureNameIntegrationEventPublisher, FeatureNameIntegrationEventPublisher>();
 
-        // To consume another feature's Integration Event, declare a SomethingHappenedInboxHandler :
-        // IntegrationEventInboxTransport<T, FeatureNameContext> under InboxHandlers/, mapping it to one
-        // of this feature's Commands. To send one of this feature's own events outside the process,
-        // declare an IOutboxMessageHandler<T>. Then call
-        // services.AddModulithAppFeaturesFeatureNameInfrastructureMessageHandlers() here — the source
-        // generator emits that method only once this assembly declares a handler.
+        // Consuming an event: an IntegrationEventInboxTransport<T, FeatureNameContext> under InboxHandlers/.
+        // Sending one outside the process: an IOutboxMessageHandler<T>. Either way, then call the
+        // generated services.AddModulithAppFeaturesFeatureNameInfrastructureMessageHandlers() here.
         return services;
     }
 }

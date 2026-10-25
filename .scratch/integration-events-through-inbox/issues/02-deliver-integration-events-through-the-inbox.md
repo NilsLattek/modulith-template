@@ -69,3 +69,30 @@ injecting one transient Npgsql failure mid-attempt:
 
 Plus: `-warnaserror` build clean; scaffold a solution and a feature into it, build, and confirm no
 `ModulithTemplate`, `FeatureName` or `ModulithApp` survives.
+
+## Comments
+
+**Prove-first held.** The generator registers `SomeEntityAddedInboxHandler` under
+`typeof(InboxEnvelope<PaymentsContext, SomeEntityAddedIntegrationEvent>).FullName`;
+`IntegrationEventDeliveryTests` pins it through the real composition.
+
+**Choices the ticket left open.**
+- The publisher reads the generator's registrations through an `IntegrationEventSubscriptions`
+  singleton (registered by `AddModuleDbContext`), and decides inbox and outbox by `typeof(TEvent)`.
+- The transport takes the processing scope's `IServiceProvider`, so a Consumer's subclass has one
+  constructor argument.
+- Inbox migrations land in `SharedKernel.Outbox/Data/InboxMigrations`, history table
+  `shared.__EFMigrationsHistory_Inbox`; `add-migration.sh Inbox <Name>`.
+- `ContractIsolationTests` now lets `Infrastructure.InboxHandlers` (and the generator's registration
+  class) name a sibling's Contracts; the rest of Infrastructure still may not.
+- `RecordPaymentCommand` has a validator: the generated `CLAUDE.md` asks for one on a command sent by
+  a consumer. `PaymentForOrderSpec` lost its only caller and was removed.
+- `SolutionUnderTest.DeliverAsync` reaches the library's internal `IProcessor<InboxMessage>` by name,
+  and waits for rows held back by `pg_snapshot_xmin` (parallel tests delay stability).
+
+**Found, not fixed (pre-existing, also on `main`).** In the running host, Orders' domain event is never
+dispatched, so no integration event is published at all. `Orders.Domain` is referenced with
+`PrivateAssets="all"`, so the host's mediator source generator never sees
+`SomeEntityAddedDomainEvent`, and `Publish(object)` drops it silently. TemplateTests reference
+`Orders.Domain` directly, which masks it. Seen by driving the Orders form in a scaffolded app: the entity
+is saved, no inbox row is staged.

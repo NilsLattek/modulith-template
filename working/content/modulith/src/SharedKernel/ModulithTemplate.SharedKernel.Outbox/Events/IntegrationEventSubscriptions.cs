@@ -26,7 +26,7 @@ public sealed class IntegrationEventSubscriptions(
     IEnumerable<HandlerEntry<OutboxMessage>> outboxHandlers)
 {
     private readonly IInboxRoute[] _routes = [.. routes];
-    private readonly HashSet<string> _inboxTypes = [.. inboxHandlers.Select(entry => entry.MessageTypeName)];
+    private readonly HashSet<string> _inboxTypes = new(inboxHandlers.Select(entry => entry.MessageTypeName), StringComparer.Ordinal);
     private readonly HashSet<Type> _outboxTypes = [.. outboxHandlers.Select(entry => entry.MessageType)];
 
     /// <summary>One inbox row for each Consumer with a handler for the event.</summary>
@@ -49,9 +49,11 @@ public sealed class IntegrationEventSubscriptions(
         ];
 
     /// <summary>Whether an outbox handler forwards the event outside the process.</summary>
-    /// <param name="eventType">The event's runtime type.</param>
+    /// <typeparam name="TEvent">The event's type.</typeparam>
     /// <returns><see langword="true"/> when one is registered.</returns>
-    public bool IsForwarded(Type eventType) => _outboxTypes.Contains(eventType);
+    public bool IsForwarded<TEvent>()
+        where TEvent : IIntegrationEvent =>
+        _outboxTypes.Contains(typeof(TEvent));
 
     /// <summary>The row's identity: a UUIDv5 named by the envelope type, in the event's namespace.</summary>
     /// <remarks>

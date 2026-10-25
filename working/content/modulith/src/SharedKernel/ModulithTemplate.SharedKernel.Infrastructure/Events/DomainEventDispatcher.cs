@@ -65,7 +65,8 @@ public sealed class DomainEventDispatcher(
                 // type, but the generic one reads as though it keyed on IDomainEvent. That switch
                 // covers only notification types the source generator found in the host's
                 // compilation, and its default branch neither dispatches nor throws — so an event
-                // from a feature the host does not reference is dropped in silence.
+                // from a Domain the host does not reference is dropped in silence. The host's
+                // csproj references every feature's Domain for this reason.
                 EventLog.DomainEventDispatched(logger, domainEvent.GetType().Name);
                 await publisher.Publish((object)domainEvent, cancellationToken);
             }

@@ -22,4 +22,11 @@
     <ProjectReference Include="../Features/Payments/ModulithTemplate.Features.Payments.Web/ModulithTemplate.Features.Payments.Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Every feature's Domain, so the mediator source generator sees its domain events; the
+         feature projects hide Domain with PrivateAssets, and an event the generator never saw is
+         dropped silently. The host itself may not name these types (ArchitectureTests). -->
+    <ProjectReference Include="../Features/*/*.Domain/*.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -97,6 +97,10 @@ dispatched, so no integration event is published at all. `Orders.Domain` is refe
 `Orders.Domain` directly, which masks it. Seen by driving the Orders form in a scaffolded app: the entity
 is saved, no inbox row is staged.
 
+**Fixed later, on `claude/epic-lamport-rr0rvn`.** The host references `../Features/*/*.Domain/*.csproj`
+so the generator sees every domain event. `HostTests` stops the host naming a domain type, and
+`DomainEventHandlerRegistrationTests` checks every `IDomainEventHandler<T>` against the host's real `AddMediator`.
+
 **Revised after review: fan-out moved from publish time to the outbox handler.** The publish-time
 `IntegrationEventSubscriptions` / `InboxRoute` design was hard to read and decided two things at once
 (who consumes, whether the event leaves the process). Now:

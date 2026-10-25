@@ -25,20 +25,17 @@ A vertical-slice modular monolith built on DDD. Each feature under `src/Features
 of layer projects, mirrored by test projects under `test/Features/<Name>/`. `CONTEXT.md` is the
 glossary for the terms used throughout.
 
-`Domain` has no outbound dependencies and is the only place business rules live. **Features must not
-depend on each other** — `Contracts` is the only crossing point, reached through a Module API or an
-Integration Event (skill: `reaching-another-feature`). `ModulithTemplate.ArchitectureTests` enforces
-the layer rules and the entity, value object and event shapes below.
+`Domain` is the only place business rules live. **Features never reference each other** — reach
+another one through its `Contracts` (skill: `reaching-another-feature`). `ModulithTemplate.ArchitectureTests`
+enforces the layer, naming and entity-shape rules, and its failure messages say how to fix a violation.
 
 **A feature is a transaction boundary, sized like a bounded context — not a folder, a screen or a
-CRUD table.** Two features share no transaction, so the split cannot be undone cheaply. The default
-for new work is to put it in an existing feature; creating one needs positive justification (skill:
-`adding-a-feature`, which covers the sizing test and the scaffold). Adding a command or query to an
-existing feature has its own layout and validator rules (skill: `adding-a-command-or-query`).
+CRUD table.** New work goes in an existing feature unless a new one is justified (skill:
+`adding-a-feature`); a new command or query follows `adding-a-command-or-query`.
 
 ### Where business logic goes
 
-**The default answer is: in the entity.** Push behaviour down until it has no lower place to go. Follow DDD best practices.
+**The default answer is: in the entity.** Push behaviour down until it has no lower place to go.
 
 | The rule concerns… | Put it in… |
 | --- | --- |
@@ -53,32 +50,22 @@ existing feature has its own layout and validator rules (skill: `adding-a-comman
 | HTTP, Blazor, `DbContext`, JSON, configuration | `Web` / `Infrastructure` |
 
 Signals a rule sits in the wrong place: a handler decides whether something is *valid* rather than
-reacting to the domain's answer; the same rule is written on both the create and the update path
-(duplication means it belongs in the entity, enforced once for all callers); an entity has public
-setters and no methods while a handler mutates it property by property, or its commands mirror its
-fields — one per field, or one `Update<Entity>` for the whole record — rather than business operations
-(skill: `adding-a-command-or-query`); a Blazor component enforces a
-rule nothing else does; an entity or a domain service injects a repository — neither reaches for data,
-the handler loads it and passes it down.
+reacting to the domain's answer; the same rule is written on both the create and the update path; an
+entity has public setters while a handler mutates it property by property; a Blazor component
+enforces a rule nothing else does.
 
 ### Writing entities
 
-Entities are rich, not data bags, and live in `Domain/Entities/`:
+Entities are rich, not data bags: private setters, named methods that say what happened (`Confirm`),
+a factory instead of `new`, other aggregates referenced by id. The architecture tests check that
+shape; they cannot check these:
 
-- **Private setters**, and collections exposed as `IReadOnlyList<T>` over a private backing list.
-  State changes only through named methods that say what happened (`AddLine`, `Confirm`, `Cancel`).
-- **`internal` constructor + private parameterless ctor for EF.** Application obtains instances
-  through a `public static` factory method or a domain service — never `new`.
-- **Reference another aggregate by its id**, never by a navigation property; a child may point back at
-  its own root.
-- **Value objects and domain events are immutable records** — positional, with readonly collections.
 - **Invariants are enforced in the constructor and in every mutator**, so no call path can produce an
   invalid entity.
 - **A rule the user can break and should be told about throws `BusinessException`** with a
   `"Feature:Name"` code, not `ArgumentException`.
-
-**When you add or change an invariant, cover it with a `<Name>.DomainTests` test on the entity**, not
-only through a handler test — the domain is where the guarantee lives.
+- **Cover a new or changed invariant with a test on the entity** in `<Name>.DomainTests`, not only
+  through a handler test.
 
 ### Application layer (CQRS)
 
@@ -86,32 +73,21 @@ Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`
 `public sealed` handler, in a folder of its own. A handler orchestrates and nothing more, with no
 `try`/`catch`.
 
-**The handler loads, the domain decides.** The handler is the application service: it resolves the
-command's ids into entities through repositories and specs — refusing what is missing — and passes
-those entities to the entity or domain service. A domain service takes entities, never ids, and
-injects no repository.
+**The handler loads, the domain decides.** The handler resolves ids into entities through
+repositories and specs and passes the entities down; an entity or domain service never injects a
+repository.
 
-Two rules that fail in non-obvious ways:
+**Handlers always return `Result` / `Result<T>`** — the exception and validation behaviours silently
+skip anything else. **Handlers must be `public`**: the mediator's generated code in the host references
+them, so `internal` fails with `CS0122`.
 
-- **Handlers always return `Result` / `Result<T>`.** Both the exception-to-`Result` and the validation
-  behaviour are constrained to result responses, and are silently skipped otherwise.
-- **Handlers must be `public`.** The mediator's source generator emits a hard `typeof(<Handler>)`
-  reference into the host's compilation, so marking one `internal` breaks the host build with `CS0122`.
-  Do not "tidy" them.
-
-**Inbox handlers run inside the inbox transaction:** the Command they send must stay short and touch
-only this feature's data; reach outside the database by staging an outbox message. A long one holds
-back delivery for every Consumer. React to an Integration Event only through an inbox handler — a
-plain `INotificationHandler` for one runs at least once and is for forwarding it outside the process
-(skill: `reaching-another-feature`).
+**React to an Integration Event only through an inbox handler**, whose Command stays short and inside
+this feature's data — it holds the inbox transaction open (skill: `reaching-another-feature`).
 
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
 Blazor sends it with `IScopedMediator` (below); anything else uses `IMediator`.
-Validators check the *shape* of incoming values, never business rules, and never inject a repository.
-**A command sent only from a Blazor form gets no validator.** The form model is validated on the
-server (interactive render mode), and the entity enforces the same rules again, so a validator would
-write them a third time. Add one when a caller without a form appears (skills:
-`adding-a-blazor-form`, `adding-a-command-or-query`).
+Validators check shape, never business rules, and never inject a repository. **A command sent only
+from a Blazor form gets no validator** (skills: `adding-a-blazor-form`, `adding-a-command-or-query`).
 
 ### Dependency injection
 
@@ -127,17 +103,10 @@ sections below only add this project's specifics.
 
 ### Database access from Blazor components
 
-Scoped services live for the whole SignalR circuit in Blazor Server, so a directly-injected scoped
-dependency — `IMediator` included — shares one long-lived, non-thread-safe `DbContext` for the entire
-user session. **Never `@inject` `IMediator` for database work**: inject `IScopedMediator` and
-`await Mediator.Send(message)`. It gives each message a DI scope of its own and
-disposes it when the message completes.
-
-**Handlers return DTOs, never entities.** That scope is disposed before the component renders, so a
-returned entity is attached to a dead `DbContext` and reading a navigation property throws
-`ObjectDisposedException` — at render time, long after the query passed. Value objects are fine.
-
-`ServiceScopeExtensions.WithNewScopeAsync(...)` remains for scoped UI work that is not a message.
+Scoped services live for the whole SignalR circuit, so an injected `IMediator` shares one long-lived,
+non-thread-safe `DbContext` for the user's session. **Never `@inject` `IMediator` for database work**:
+inject `IScopedMediator`, which gives each message a scope of its own. That scope is gone before the
+component renders, so handlers return DTOs, never entities.
 
 ### Render mode
 
@@ -150,7 +119,7 @@ circuit it is null, silently. A page that needs it, or must render without a cir
 
 - **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
   Blazor component tests.
-- **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.
+- **Comments: keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns its space only by recording what the code cannot say. Two tight lines beat a well-written paragraph; if a comment runs past a few lines, cut it rather than polishing it.
 
 ## MCP servers
 

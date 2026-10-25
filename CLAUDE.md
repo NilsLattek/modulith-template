@@ -78,7 +78,7 @@ its space only by recording what the code cannot say. Two tight lines beat a wel
 
 - The package version comes from the **release's git tag** (`v1.2.3` or `1.2.3`; a leading `v` is stripped, pre-release suffixes like `-beta.1` are allowed). Don't edit `<PackageVersion>` in `working/ModularMonolith.Template.csproj` — it's only the `0.0.0-dev` fallback for local packs.
 - CI (`.github/workflows/build.yml`) builds the content solution with `-warnaserror` on every push/PR to `main` — keep it warning-clean.
-- Publishing (`.github/workflows/publish.yml`) is triggered by a **published GitHub Release**: it derives the version from the tag, builds Release, `dotnet pack`s with `-p:PackageVersion=<tag>`, and pushes `Modulith.*.nupkg` to nuget.org via trusted publishing (OIDC). Creating a GitHub Release with a new tag is all it takes to ship a version.
+- Publishing a GitHub Release with a new tag is all it takes to ship: `.github/workflows/publish.yml` packs with that version and pushes to nuget.org via trusted publishing (OIDC).
 
 ## Agent skills
 

@@ -56,16 +56,8 @@ service, persist, map to a DTO. The loading is the handler's alone: a domain ser
 `Result` centrally, and a `BusinessException` becomes a `BusinessError` the user sees (below).
 
 A handler that decides whether something is *valid*, rather than reacting to the domain's answer,
-has taken work that belongs in the entity.
-
-Two rules that fail in non-obvious ways:
-
-- **Always return `Result` / `Result<T>`.** The exception-to-`Result` and validation behaviours are
-  constrained to result responses and are silently skipped otherwise.
-- **Handlers must be `public`.** The mediator's source generator emits a hard `typeof(<Handler>)`
-  reference into the host's compilation, so `internal` breaks the host build with `CS0122`.
-
-`Web` reaches `Application` only through `IMediator` — never by calling a handler directly.
+has taken work that belongs in the entity. It is `public` and returns `Result` / `Result<T>` (see
+`CLAUDE.md`).
 
 ## Mapping to a DTO
 
@@ -197,12 +189,7 @@ If you cannot tell which the operation needs, ask the user before choosing.
 
 ## Calling it from Blazor
 
-Never `@inject IMediator` for database work — scoped services live for the whole SignalR circuit.
-Inject `IScopedMediator` and `await Mediator.Send(message)`; it gives each message a scope of its own.
-
-That scope is gone by the time the component renders, so **the handler must return a DTO, never an
-entity** — a returned entity's navigation properties throw `ObjectDisposedException` at render time.
-A message typed `IQuery<Result<SomeEntity>>` will not compile where a component consumes it: the
+Send it with `IScopedMediator`, and return a DTO, never an entity (see `CLAUDE.md`). A message typed `IQuery<Result<SomeEntity>>` will not compile where a component consumes it: the
 feature's `Domain` is referenced with `PrivateAssets="all"` and never reaches the `Web` layer.
 
 ## Tests

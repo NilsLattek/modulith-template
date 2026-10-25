@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 using ModulithTemplate.SharedKernel.Infrastructure.Events;
-using ModulithTemplate.SharedKernel.Outbox.Events;
 
 using Underground.Outbox;
 
@@ -17,19 +16,15 @@ public static class ModuleDbContextExtensions
 {
     /// <summary>
     /// Registers a feature's <see cref="DbContext"/> with this solution's shared EF Core conventions,
-    /// its domain event dispatch, its half of the shared outbox, and its route into the shared inbox.
+    /// its domain event dispatch, and its half of the shared outbox.
     /// </summary>
     /// <remarks>
     /// <c>TryAdd</c> because every feature calls this. The dispatcher is solution-wide; the
     /// interceptor is per context type, for the reason given on
     /// <see cref="DomainEventDispatchInterceptor{TContext}"/>.
     /// <para>
-    /// The outbox's save-time interceptor is attached here; the table mappings are not, and each
+    /// The outbox's save-time interceptor is attached here; its table mapping is not, and each
     /// feature context calls <c>ApplySharedModel()</c> in its own <c>OnModelCreating</c>.
-    /// </para>
-    /// <para>
-    /// The inbox route lets any feature's publisher address this context's envelope without naming
-    /// it; a row is staged only once this feature declares a handler for the event.
     /// </para>
     /// </remarks>
     /// <typeparam name="TContext">The feature's context type.</typeparam>
@@ -43,8 +38,6 @@ public static class ModuleDbContextExtensions
     {
         services.TryAddScoped<DomainEventDispatcher>();
         services.TryAddScoped<DomainEventDispatchInterceptor<TContext>>();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IInboxRoute, InboxRoute<TContext>>());
-        services.TryAddSingleton<IntegrationEventSubscriptions>();
 
         // The (sp, options) overload, so the interceptors come from the same scope as the context
         // and share the scope's mediator.

@@ -60,7 +60,8 @@ public class NamingConventionTests
         // own Commands. Delivery is infrastructure; the reaction itself is the Command.
         new("inbox handler", ["InboxHandler"], ["Infrastructure.InboxHandlers"]),
 
-        // Forwarding one of the feature's own events outside the process (a broker, email, HTTP).
+        // The publishing side: one per event the feature's own Contracts declares, taking the claimed
+        // outbox row back to the mediator, where each Consumer stages its inbox row.
         new("outbox handler", ["OutboxHandler"], ["Infrastructure.OutboxHandlers"]),
     ];
 

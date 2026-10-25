@@ -2,8 +2,9 @@ using ArchUnitNET.Fluent;
 using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using ArchUnitNET.xUnitV3;
 
+using Mediator;
+
 using ModulithTemplate.SharedKernel.Application.Events;
-using ModulithTemplate.SharedKernel.Outbox.Events;
 
 using Underground.Outbox;
 
@@ -68,49 +69,50 @@ public class IntegrationEventTests
     }
 
     [Fact]
-    public void Every_integration_event_has_a_consumer_or_a_forwarder()
+    public void Every_integration_event_has_an_outbox_handler()
     {
-        var types = SolutionAssemblies.FeatureAssemblies.SelectMany(assembly => assembly.GetTypes()).ToArray();
-        var received = types
-            .Where(type => type is { IsAbstract: false, IsClass: true })
-            .SelectMany(type => type.GetInterfaces())
-            .Where(contract => contract.IsGenericType)
-            .Select(ReceivedEvent)
-            .OfType<Type>()
-            // By name: discovery loads each feature assembly from its file, so the same event can also
-            // arrive as a second Type through another assembly's reference to it.
-            .Select(type => type.FullName)
+        var handled = Implementations(typeof(IOutboxMessageHandler<>))
+            .Select(contract => contract.GetGenericArguments()[0].FullName)
             .ToHashSet(StringComparer.Ordinal);
 
-        var unheard = types
+        var undelivered = FeatureTypes()
             .Where(type => !type.IsAbstract && typeof(IIntegrationEvent).IsAssignableFrom(type))
-            .Where(type => !received.Contains(type.FullName))
+            .Where(type => !handled.Contains(type.FullName))
             .Select(type => type.FullName)
             .ToArray();
 
-        // The publisher throws for such an event, but only once something publishes it.
+        // The mediator's MSG0005 catches an event with no Consumer at all, but not one whose outbox row
+        // nothing claims: that one is published, saved, and never delivered.
         Assert.True(
-            unheard.Length == 0,
-            $"Nothing receives {string.Join(", ", unheard)}. A consuming feature declares an "
-                + "IntegrationEventInboxTransport for it under Infrastructure/InboxHandlers/, or an "
-                + "IOutboxMessageHandler forwards it outside the process; an event nobody receives should not exist.");
+            undelivered.Length == 0,
+            $"Nothing delivers {string.Join(", ", undelivered)} from the outbox. The publishing feature declares a "
+                + "body-less IntegrationEventOutboxHandler for it under Infrastructure/OutboxHandlers/.");
+    }
 
-        static Type? ReceivedEvent(Type contract)
-        {
-            var definition = contract.GetGenericTypeDefinition();
-            var message = contract.GetGenericArguments()[0];
+    [Fact]
+    public void Plain_notification_handlers_of_integration_events_live_in_Infrastructure()
+    {
+        var misplaced = FeatureTypes()
+            .Where(type => type is { IsAbstract: false, IsClass: true })
+            .Where(type => !IsInboxHandler(type))
+            .Where(type => type.GetInterfaces().Any(contract =>
+                contract.IsGenericType
+                && contract.GetGenericTypeDefinition() == typeof(INotificationHandler<>)
+                && typeof(IIntegrationEvent).IsAssignableFrom(contract.GetGenericArguments()[0])))
+            .Where(type => !type.Assembly.GetName().Name!.EndsWith(".Infrastructure", StringComparison.Ordinal))
+            .Select(type => type.FullName)
+            .ToArray();
 
-            if (definition == typeof(IOutboxMessageHandler<>))
-            {
-                return message;
-            }
+        // A plain handler runs at least once, beside every Consumer's staging; it is for forwarding the
+        // event outside the process. Written in Application, it is a Consumer that skipped its inbox.
+        Assert.True(
+            misplaced.Length == 0,
+            $"{string.Join(", ", misplaced)} handle an Integration Event outside Infrastructure. A feature reacting "
+                + "to one declares an IntegrationEventInboxHandler under Infrastructure/InboxHandlers/.");
 
-            return definition == typeof(IInboxMessageHandler<>)
-                && message.IsGenericType
-                && message.GetGenericTypeDefinition() == typeof(InboxEnvelope<,>)
-                ? message.GetGenericArguments()[1]
-                : null;
-        }
+        static bool IsInboxHandler(Type type) =>
+            type.GetInterfaces().Any(contract =>
+                contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IInboxMessageHandler<>));
     }
 
     [Fact]
@@ -130,6 +132,16 @@ public class IntegrationEventTests
             $"{string.Join(", ", drifted)} override AssemblyVersion, which Directory.Build.props pins to {pinned}. "
                 + "Version releases through Version, FileVersion or InformationalVersion instead.");
     }
+
+    private static Type[] FeatureTypes() =>
+        [.. SolutionAssemblies.FeatureAssemblies.SelectMany(assembly => assembly.GetTypes())];
+
+    /// <summary>The closed forms of a generic interface that concrete feature types implement.</summary>
+    private static IEnumerable<Type> Implementations(Type definition) =>
+        FeatureTypes()
+            .Where(type => type is { IsAbstract: false, IsClass: true })
+            .SelectMany(type => type.GetInterfaces())
+            .Where(contract => contract.IsGenericType && contract.GetGenericTypeDefinition() == definition);
 
     /// <summary>Every type implementing the Integration Event contract, wherever it was declared.</summary>
     private static GivenTypesConjunction IntegrationEvents() =>

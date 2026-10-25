@@ -96,3 +96,18 @@ dispatched, so no integration event is published at all. `Orders.Domain` is refe
 `SomeEntityAddedDomainEvent`, and `Publish(object)` drops it silently. TemplateTests reference
 `Orders.Domain` directly, which masks it. Seen by driving the Orders form in a scaffolded app: the entity
 is saved, no inbox row is staged.
+
+**Revised after review: fan-out moved from publish time to the outbox handler.** The publish-time
+`IntegrationEventSubscriptions` / `InboxRoute` design was hard to read and decided two things at once
+(who consumes, whether the event leaves the process). Now:
+- The Publisher stages one outbox row, as before this ticket. Feature contexts no longer map the inbox.
+- `IntegrationEventOutboxHandler<TEvent>` (was `IntegrationEventMediatorTransport`) publishes through the
+  mediator and saves the inbox rows once, treating a unique violation on `shared.inbox` as an already
+  delivered redelivery.
+- `IntegrationEventInboxHandler<TEvent, TContext>` (was `IntegrationEventInboxTransport`) is also the
+  notification handler that stages its own row via `InboxEnvelope.ToInboxMessage`.
+- Forwarders are plain `INotificationHandler<TEvent>`s in Infrastructure; `IIntegrationEvent` is an
+  `INotification` again, so `MSG0005` is back. Architecture tests: an outbox handler per event; plain
+  notification handlers of Integration Events only in Infrastructure.
+- TemplateTests always compose the Auditing Consumer, because its notification handler is in that
+  assembly's `AddMediator` regardless; `DeliverAsync` drains the outbox, then the inbox.

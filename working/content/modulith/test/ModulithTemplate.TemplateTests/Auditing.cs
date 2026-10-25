@@ -20,7 +20,8 @@ namespace ModulithTemplate.TemplateTests;
 /// </summary>
 /// <remarks>
 /// Lives only here, so the shipped solution keeps one Consumer. Its handler writes before refusing, so a
-/// test can tell a refusal that kept its writes from one that rolled them back.
+/// test can tell a refusal that kept its writes from one that rolled them back. Every
+/// <see cref="SolutionUnderTest"/> composes it.
 /// </remarks>
 public static class Auditing
 {
@@ -62,11 +63,9 @@ public static class Auditing
     /// <summary>The Consumer's context, shaped like a feature's.</summary>
     /// <param name="options">The context options.</param>
     public sealed class AuditContext(DbContextOptions<AuditContext> options)
-        : DbContext(options), IOutboxDbContext, IInboxDbContext
+        : DbContext(options), IOutboxDbContext
     {
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
-
-        public DbSet<InboxMessage> InboxMessages { get; set; } = null!;
 
         /// <inheritdoc />
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -100,7 +99,7 @@ public static class Auditing
     /// <summary>The Consumer's inbox handler.</summary>
     /// <param name="services">The provider of the processing scope.</param>
     public sealed class SomeEntityAddedInboxHandler(IServiceProvider services)
-        : IntegrationEventInboxTransport<SomeEntityAddedIntegrationEvent, AuditContext>(services)
+        : IntegrationEventInboxHandler<SomeEntityAddedIntegrationEvent, AuditContext>(services)
     {
         /// <inheritdoc />
         protected override ICommand<Result> ToCommand(SomeEntityAddedIntegrationEvent integrationEvent) =>

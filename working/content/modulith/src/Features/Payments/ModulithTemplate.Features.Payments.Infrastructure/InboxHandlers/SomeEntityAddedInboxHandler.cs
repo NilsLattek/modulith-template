@@ -10,9 +10,9 @@ using ModulithTemplate.SharedKernel.Infrastructure.Events;
 namespace ModulithTemplate.Features.Payments.Infrastructure.InboxHandlers;
 
 /// <summary>Payments' reaction to <see cref="SomeEntityAddedIntegrationEvent"/>: record a payment.</summary>
-/// <param name="services">The provider of the scope the inbox processes the message in.</param>
+/// <param name="services">The provider of the scope the message is processed in.</param>
 public sealed class SomeEntityAddedInboxHandler(IServiceProvider services)
-    : IntegrationEventInboxTransport<SomeEntityAddedIntegrationEvent, PaymentsContext>(services)
+    : IntegrationEventInboxHandler<SomeEntityAddedIntegrationEvent, PaymentsContext>(services)
 {
     /// <inheritdoc />
     protected override ICommand<Result> ToCommand(SomeEntityAddedIntegrationEvent integrationEvent) =>

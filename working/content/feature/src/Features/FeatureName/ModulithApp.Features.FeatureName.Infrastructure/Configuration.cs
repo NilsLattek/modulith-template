@@ -19,9 +19,10 @@ public static class Configuration
         services.AddScoped<IFeatureNameUnitOfWork, FeatureNameUnitOfWork>();
         services.AddScoped<IFeatureNameIntegrationEventPublisher, FeatureNameIntegrationEventPublisher>();
 
-        // Consuming an event: an IntegrationEventInboxTransport<T, FeatureNameContext> under InboxHandlers/.
-        // Sending one outside the process: an IOutboxMessageHandler<T>. Either way, then call the
-        // generated services.AddModulithAppFeaturesFeatureNameInfrastructureMessageHandlers() here.
+        // Publishing an event: a body-less IntegrationEventOutboxHandler<T> under OutboxHandlers/.
+        // Consuming one: an IntegrationEventInboxHandler<T, FeatureNameContext> under InboxHandlers/.
+        // Either way, then call the generated
+        // services.AddModulithAppFeaturesFeatureNameInfrastructureMessageHandlers() here.
         return services;
     }
 }

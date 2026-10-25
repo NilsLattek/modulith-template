@@ -96,6 +96,10 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         builder.Services.AddInboxServices<InboxContext>(_ => { });
         builder.ConfigureOrdersFeature();
         builder.ConfigurePaymentsFeature();
+
+        // A second Consumer, so fan-out has something to fan out to. Always composed: its notification
+        // handler is in this assembly's AddMediator whether or not a test wants it.
+        builder.ConfigureAuditing();
         builder.Services.AddMediator(options =>
         {
             options.ServiceLifetime = ServiceLifetime.Scoped;
@@ -139,21 +143,39 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     public IServiceScope CreateScope() => _provider.CreateScope();
 
     /// <summary>
-    /// Runs the library's own inbox processor, one attempt per fresh scope as its worker does, until
+    /// Runs the library's own processors as their workers do, the outbox's and then the inbox's, until
     /// every row has been completed or has failed once.
     /// </summary>
+    /// <param name="cancellationToken">Cancels the run.</param>
+    /// <returns>A task completing once no row awaits its first attempt.</returns>
+    public async Task DeliverAsync(CancellationToken cancellationToken)
+    {
+        await DrainAsync<OutboxMessage>(
+            scope => scope.GetRequiredService<OutboxContext>().OutboxMessages
+                .AnyAsync(row => row.CompletedAt == null && row.RetryCount == 0, cancellationToken),
+            cancellationToken);
+        await DrainAsync<InboxMessage>(
+            scope => scope.GetRequiredService<InboxContext>().InboxMessages
+                .AnyAsync(row => row.CompletedAt == null && row.RetryCount == 0, cancellationToken),
+            cancellationToken);
+    }
+
+    /// <summary>Runs one library processor, one attempt per fresh scope, until nothing awaits it.</summary>
     /// <remarks>
     /// The processor is internal to the library, so it is reached by name. A row is offered only once
     /// every older transaction in the cluster has ended, which a parallel test can delay, hence the wait.
     /// </remarks>
+    /// <typeparam name="TMessage">The table's message type.</typeparam>
+    /// <param name="awaiting">Whether a row still awaits its first attempt.</param>
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>A task completing once no row awaits its first attempt.</returns>
     /// <exception cref="TimeoutException">A row was never offered.</exception>
-    public async Task DeliverAsync(CancellationToken cancellationToken)
+    private async Task DrainAsync<TMessage>(
+        Func<IServiceProvider, Task<bool>> awaiting, CancellationToken cancellationToken)
     {
-        var processor = typeof(InboxMessage).Assembly
+        var processor = typeof(TMessage).Assembly
             .GetType("Underground.Outbox.Domain.IProcessor`1", throwOnError: true)!
-            .MakeGenericType(typeof(InboxMessage));
+            .MakeGenericType(typeof(TMessage));
         var tryProcess = processor.GetMethod("TryProcessHeadMessageAsync")!;
         var deadline = DateTime.UtcNow.AddSeconds(30);
 
@@ -170,16 +192,14 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
                 continue;
             }
 
-            var awaiting = await scope.ServiceProvider.GetRequiredService<InboxContext>().InboxMessages
-                .AnyAsync(row => row.CompletedAt == null && row.RetryCount == 0, cancellationToken);
-            if (!awaiting)
+            if (!await awaiting(scope.ServiceProvider))
             {
                 return;
             }
 
             if (DateTime.UtcNow > deadline)
             {
-                throw new TimeoutException("An inbox row was never offered for delivery.");
+                throw new TimeoutException($"A {typeof(TMessage).Name} row was never offered for delivery.");
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
@@ -198,7 +218,7 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
 
     /// <summary>The rows in the shared inbox table, read through the context that owns it.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>One row per Consumer of each event published.</returns>
+    /// <returns>One row per Consumer of each event delivered from the outbox.</returns>
     public async Task<IReadOnlyList<InboxMessage>> InboxRowsAsync(CancellationToken cancellationToken)
     {
         using var scope = CreateScope();

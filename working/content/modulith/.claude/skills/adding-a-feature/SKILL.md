@@ -6,7 +6,7 @@ description: Decide whether something warrants a new feature, then scaffold it a
 # Adding a feature
 
 A feature is one vertical slice owning its own domain model, database schema and layer projects.
-Scaffold it — never hand-create the projects, the sub-template wires up the outbox and inbox mappings and the
+Scaffold it — never hand-create the projects, the sub-template wires up the outbox mapping and the
 architecture tests expect its exact shape.
 
 **But first decide whether this should be a feature at all.** Most new work should not be.

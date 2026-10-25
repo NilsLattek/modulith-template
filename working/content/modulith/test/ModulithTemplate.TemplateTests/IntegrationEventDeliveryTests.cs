@@ -15,7 +15,7 @@ namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
 /// The Consumer's half: each Consumer's inbox row is applied once, by a Command of its own, inside the
-/// inbox's transaction.
+/// inbox's transaction. Every <see cref="SolutionUnderTest"/> has two Consumers, Payments and Auditing.
 /// </summary>
 public class IntegrationEventDeliveryTests
 {
@@ -30,8 +30,8 @@ public class IntegrationEventDeliveryTests
         var registry = scope.ServiceProvider.GetRequiredService<HandlerRegistry<InboxMessage>>();
 
         // Assert
-        // The one assumption the design rests on: a subclass of the abstract generic transport is
-        // registered under the closed envelope's name, the very string a staged row stores.
+        // A subclass of the abstract generic handler is registered under the closed envelope's name,
+        // the very string a staged row stores.
         var envelope = typeof(InboxEnvelope<PaymentsContext, SomeEntityAddedIntegrationEvent>).FullName!;
         Assert.True(registry.TryGetEntry(envelope, out var entry));
         Assert.Equal(typeof(SomeEntityAddedInboxHandler), entry.HandlerType);
@@ -53,14 +53,14 @@ public class IntegrationEventDeliveryTests
         var payment = Assert.Single(await solution.PaymentsAsync(cancellationToken));
         Assert.Equal(entity.Id, payment.OrderId);
         Assert.Equal(12.34m, payment.Amount);
-        Assert.NotNull(Assert.Single(await solution.InboxRowsAsync(cancellationToken)).CompletedAt);
+        Assert.All(await solution.InboxRowsAsync(cancellationToken), row => Assert.NotNull(row.CompletedAt));
     }
 
     [Fact]
     public async Task A_failing_consumer_leaves_the_other_consumer_committed_and_none_of_its_own_writes()
     {
         // Arrange
-        await using var solution = SolutionUnderTest.Start(app => app.ConfigureAuditing());
+        await using var solution = SolutionUnderTest.Start();
         var cancellationToken = TestContext.Current.CancellationToken;
         await solution.SendAsync(new AddSomeEntityCommand(Auditing.Refused, 12.34m), cancellationToken);
 
@@ -85,8 +85,8 @@ public class IntegrationEventDeliveryTests
     public async Task A_transient_failure_after_the_consumers_writes_replays_the_attempt_and_they_land_once()
     {
         // Arrange
-        // The completion fails after the Consumer has written: had those writes committed on their own,
-        // the replay would record a second payment.
+        // The first completion fails after its Consumer has written: had those writes committed on their
+        // own, the replay would record them twice.
         var completion = new TransientFailureInjector(failingCommand: 1, matching: "SET completed_at");
         await using var solution = SolutionUnderTest.Start(app => app.Services
             .ConfigureContext<InboxContext>(options => options
@@ -101,10 +101,13 @@ public class IntegrationEventDeliveryTests
         await solution.DeliverAsync(cancellationToken);
 
         // Assert
-        Assert.Equal(2, completion.Matched);
+        Assert.Equal(3, completion.Matched);
         Assert.Single(await solution.PaymentsAsync(cancellationToken));
-        var row = Assert.Single(await solution.InboxRowsAsync(cancellationToken));
-        Assert.NotNull(row.CompletedAt);
-        Assert.Equal(0, row.RetryCount);
+        Assert.Single(await solution.AuditEntriesAsync(cancellationToken));
+        Assert.All(await solution.InboxRowsAsync(cancellationToken), row =>
+        {
+            Assert.NotNull(row.CompletedAt);
+            Assert.Equal(0, row.RetryCount);
+        });
     }
 }

@@ -1,6 +1,6 @@
 # Integration events travel through one shared outbox, written by the publishing feature's own context
 
-_Narrowed by ADR 0006: integration events now fan out into the shared inbox; the outbox carries only effects that leave the process._
+_Extended by ADR 0006: the outbox handler now fans each integration event out into the shared inbox, one row per Consumer._
 
 Features must not share tables, but an integration event has to commit *atomically* with the domain
 change that caused it, and an outbox row committed in its own transaction is a dual write with all

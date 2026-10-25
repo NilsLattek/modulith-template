@@ -21,7 +21,7 @@ public static class Configuration
         services.AddScoped<IPaymentsUnitOfWork, PaymentsUnitOfWork>();
         services.AddScoped<IPaymentsIntegrationEventPublisher, PaymentsIntegrationEventPublisher>();
 
-        // Source-generated, one method per assembly and named after it: it registers every handler
+        // Source-generated, one method per assembly and named after it: it registers every inbox handler
         // under InboxHandlers/, so consuming another event costs a handler class and no change here.
         // It exists only while this assembly declares a handler.
         services.AddModulithTemplateFeaturesPaymentsInfrastructureMessageHandlers();

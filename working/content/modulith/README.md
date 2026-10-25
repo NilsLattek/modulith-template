@@ -46,8 +46,8 @@ bash add-migration.sh Orders AddSomeColumn     # <FeatureName|Outbox|Inbox> <Mig
 ```
 
 The shared outbox and inbox tables are the contexts that are not features — they live at
-SharedKernel level. The inbox holds one row per Consumer of each Integration Event; the outbox holds
-effects that leave the process:
+SharedKernel level. The outbox holds each Integration Event once, as its Publisher recorded it; the
+inbox holds one row per Consumer, fanned out from it:
 
 ```bash
 bash add-migration.sh Inbox AddSomeColumn

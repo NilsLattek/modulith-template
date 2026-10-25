@@ -1,3 +1,5 @@
+using Mediator;
+
 namespace ModulithTemplate.SharedKernel.Application.Events;
 
 /// <summary>
@@ -5,15 +7,15 @@ namespace ModulithTemplate.SharedKernel.Application.Events;
 /// </summary>
 /// <remarks>
 /// Declared as a <c>record</c> in the owning feature's <c>Contracts/Events/</c> — the only part of a
-/// feature a sibling may reference. The save that persists the aggregate stages one shared inbox row
-/// per Consumer, so it is recorded if and only if the change it describes commits.
+/// feature a sibling may reference. It is staged into the shared outbox by the same save that
+/// persists the aggregate, so it is recorded if and only if the change it describes commits.
 /// <para>
-/// Delivery is <b>exactly once per Consumer</b>: each applies the event in a transaction of its own,
-/// and one Consumer failing neither repeats nor holds back another. Not a mediator notification, so
-/// an <c>INotificationHandler</c> for one does not compile.
+/// A feature consumes it through an <c>IntegrationEventInboxHandler</c>, which applies it <b>exactly
+/// once</b> in a transaction of its own. A plain notification handler is for forwarding it outside the
+/// process, and runs <b>at least once</b>.
 /// </para>
 /// </remarks>
-public interface IIntegrationEvent
+public interface IIntegrationEvent : INotification
 {
     /// <summary>This event's identity, from which each Consumer's row identity is derived.</summary>
     /// <remarks>

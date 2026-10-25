@@ -7,6 +7,8 @@ using ModulithTemplate.Features.Orders.Infrastructure.Data;
 using ModulithTemplate.Features.Orders.Infrastructure.Events;
 using ModulithTemplate.SharedKernel.Infrastructure;
 
+using Underground.Outbox.Configuration;
+
 namespace ModulithTemplate.Features.Orders.Infrastructure;
 
 public static class Configuration
@@ -19,10 +21,12 @@ public static class Configuration
         services.AddScoped<IOrdersUnitOfWork, OrdersUnitOfWork>();
         services.AddScoped<IOrdersIntegrationEventPublisher, OrdersIntegrationEventPublisher>();
 
-        // To send one of this feature's events outside the process (a broker, email, HTTP), declare an
-        // IOutboxMessageHandler<T> for it and call the source-generated
-        // services.AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers() here; the
-        // generator emits that method only once this assembly declares a handler.
+        // Source-generated, one method per assembly and named after it: it registers every
+        // IOutboxMessageHandler<T> under OutboxHandlers/, so a second published event costs a
+        // handler class and no change here. It exists only while this assembly declares a handler,
+        // so removing the last one means removing this call too.
+        services.AddModulithTemplateFeaturesOrdersInfrastructureMessageHandlers();
+
         return services;
     }
 }

@@ -22,7 +22,7 @@ public class ContractIsolationTests
 
     /// <summary>The layer that may consume its <b>own</b> feature's <c>Contracts</c>, and a sibling's only from its inbox handlers.</summary>
     /// <remarks>
-    /// An outbox handler forwarding this feature's event names its own contract; an inbox handler under
+    /// An outbox handler delivering this feature's event names its own contract; an inbox handler under
     /// <c>Infrastructure/InboxHandlers/</c> names the sibling's event it consumes. Anywhere else in this
     /// layer a sibling's Contracts would be a cross-feature dependency with none of that justification.
     /// </remarks>

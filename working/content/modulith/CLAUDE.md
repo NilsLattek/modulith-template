@@ -101,7 +101,9 @@ Two rules that fail in non-obvious ways:
 
 **Inbox handlers run inside the inbox transaction:** the Command they send must stay short and touch
 only this feature's data; reach outside the database by staging an outbox message. A long one holds
-back delivery for every Consumer (skill: `reaching-another-feature`).
+back delivery for every Consumer. React to an Integration Event only through an inbox handler — a
+plain `INotificationHandler` for one runs at least once and is for forwarding it outside the process
+(skill: `reaching-another-feature`).
 
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
 Blazor sends it with `IScopedMediator` (below); anything else uses `IMediator`.

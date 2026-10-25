@@ -8,8 +8,7 @@ using Underground.Outbox.Data;
 
 namespace ModulithTemplate.Features.Payments.Infrastructure.Data;
 
-public class PaymentsContext(DbContextOptions<PaymentsContext> options)
-    : DbContext(options), IOutboxDbContext, IInboxDbContext
+public class PaymentsContext(DbContextOptions<PaymentsContext> options) : DbContext(options), IOutboxDbContext
 {
     /// <summary>The integration events this feature has staged, in the one shared outbox table.</summary>
     /// <remarks>
@@ -18,13 +17,6 @@ public class PaymentsContext(DbContextOptions<PaymentsContext> options)
     /// below is what maps it onto <c>shared.outbox</c> and keeps it out of this feature's migrations.
     /// </remarks>
     public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
-
-    /// <summary>The Consumers' rows of the integration events this feature has staged, in the shared inbox table.</summary>
-    /// <remarks>
-    /// Implementing <see cref="IInboxDbContext"/> is what lets this feature's save stage one row per
-    /// Consumer, and lets its inbox handlers enlist this context onto the inbox's transaction.
-    /// </remarks>
-    public DbSet<InboxMessage> InboxMessages { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

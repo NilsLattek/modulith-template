@@ -226,6 +226,18 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
             .InboxMessages.AsNoTracking().OrderBy(row => row.Id).ToListAsync(cancellationToken);
     }
 
+    /// <summary>Deletes inbox rows, as if the fan-out that added them had not got that far.</summary>
+    /// <param name="predicate">Which rows to delete.</param>
+    /// <param name="cancellationToken">Cancels the delete.</param>
+    /// <returns>A task completing once they are deleted.</returns>
+    public async Task DeleteInboxRowsAsync(
+        System.Linq.Expressions.Expression<Func<InboxMessage, bool>> predicate, CancellationToken cancellationToken)
+    {
+        using var scope = CreateScope();
+        await scope.ServiceProvider.GetRequiredService<InboxContext>()
+            .InboxMessages.Where(predicate).ExecuteDeleteAsync(cancellationToken);
+    }
+
     /// <summary>The entities the publishing feature has recorded.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The entities.</returns>

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
@@ -12,8 +13,8 @@ using Underground.Outbox.Domain.Dispatchers;
 namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
-/// The middle hop: a claimed outbox row is published in-process, and every Consumer's inbox row is saved
-/// together, once, however often the outbox delivers it.
+/// The middle hop: a claimed outbox row is published in-process, and every Consumer adds its inbox row
+/// once, however often the outbox delivers it.
 /// </summary>
 /// <remarks>
 /// Dispatched through the handler registry the outbox worker looks rows up in, so what is under test is the
@@ -80,24 +81,47 @@ public class IntegrationEventFanOutTests
         Assert.Equal(first.Select(row => row.EventId), second.Select(row => row.EventId));
     }
 
+    [Theory]
+    [InlineData(typeof(PaymentsContext))]
+    [InlineData(typeof(Auditing.AuditContext))]
+    public async Task A_consumer_whose_row_exists_leaves_the_others_to_add_theirs(Type existing)
+    {
+        // Arrange
+        // A redelivery after a partial fan-out: one Consumer added its row, the attempt then failed.
+        // Run once per Consumer, so whichever the mediator calls first is the one already done.
+        await using var solution = SolutionUnderTest.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var outboxRow = await PublishAsync(solution, cancellationToken);
+        await DispatchAsync(solution, outboxRow, cancellationToken);
+        await solution.DeleteInboxRowsAsync(
+            row => !EF.Functions.Like(row.GroupKey, existing.Name + ":%"), cancellationToken);
+
+        // Act
+        await DispatchAsync(solution, outboxRow, cancellationToken);
+
+        // Assert
+        Assert.Equal(2, (await solution.InboxRowsAsync(cancellationToken)).Count);
+    }
+
     [Fact]
-    public async Task A_failing_forwarder_saves_no_consumers_rows_and_the_row_is_retried()
+    public async Task A_failing_forwarder_retries_the_row_and_each_consumer_ends_with_one_row()
     {
         // Arrange
         var broker = new Forwarding.Broker { Down = true };
         await using var solution = SolutionUnderTest.Start(app => app.Services.AddSingleton(broker));
         var cancellationToken = TestContext.Current.CancellationToken;
-        await PublishAsync(solution, cancellationToken);
-
-        // Act
+        var outboxRow = await PublishAsync(solution, cancellationToken);
         await solution.DeliverAsync(cancellationToken);
 
+        // Act
+        broker.Down = false;
+        await DispatchAsync(solution, outboxRow, cancellationToken);
+
         // Assert
-        // All or nothing: the Consumers' rows wait for the forwarder rather than going ahead without it.
-        Assert.Empty(await solution.InboxRowsAsync(cancellationToken));
-        var outboxRow = Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
-        Assert.Null(outboxRow.CompletedAt);
-        Assert.Equal(1, outboxRow.RetryCount);
+        var retried = Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
+        Assert.Equal(1, retried.RetryCount);
+        Assert.Single(broker.Sent);
+        Assert.Equal(2, (await solution.InboxRowsAsync(cancellationToken)).Count);
     }
 
     [Fact]

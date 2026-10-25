@@ -7,7 +7,10 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.SharedKernel.Application.Events;
+using ModulithTemplate.SharedKernel.Outbox.Data;
 using ModulithTemplate.SharedKernel.Outbox.Events;
+
+using Npgsql;
 
 using Underground.Outbox;
 using Underground.Outbox.Data;
@@ -15,7 +18,7 @@ using Underground.Outbox.Data;
 namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 
 /// <summary>
-/// One Consumer's reaction to an Integration Event: stages the Consumer's own inbox row when the event
+/// One Consumer's reaction to an Integration Event: adds the Consumer's own inbox row when the event
 /// is published, then applies that row exactly once by sending one of the Consumer's Commands.
 /// </summary>
 /// <remarks>
@@ -25,8 +28,11 @@ namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 /// </remarks>
 /// <typeparam name="TEvent">The event consumed.</typeparam>
 /// <typeparam name="TContext">The consuming feature's context.</typeparam>
-/// <param name="services">The provider of the scope the message is processed in.</param>
-public abstract class IntegrationEventInboxHandler<TEvent, TContext>(IServiceProvider services)
+/// <param name="inbox">Adds the Consumer's row.</param>
+/// <param name="inboxContext">The shared inbox's context, in the scope the message is processed in.</param>
+/// <param name="scopeFactory">Opens the scope the Command runs in.</param>
+public abstract class IntegrationEventInboxHandler<TEvent, TContext>(
+    IInbox inbox, IInboxDbContext inboxContext, IServiceScopeFactory scopeFactory)
     : INotificationHandler<TEvent>, IInboxMessageHandler<InboxEnvelope<TContext, TEvent>>
     where TEvent : IIntegrationEvent
     where TContext : DbContext
@@ -36,16 +42,35 @@ public abstract class IntegrationEventInboxHandler<TEvent, TContext>(IServicePro
     /// <returns>The Command to send.</returns>
     protected abstract ICommand<Result> ToCommand(TEvent integrationEvent);
 
-    /// <summary>Stages this Consumer's row, which <see cref="IntegrationEventOutboxHandler{TEvent}"/> saves.</summary>
-    /// <param name="notification">The published event.</param>
-    /// <param name="cancellationToken">Unused: staging performs no I/O.</param>
-    /// <returns>A completed task.</returns>
-    public ValueTask Handle(TEvent notification, CancellationToken cancellationToken)
+    /// <summary>Adds this Consumer's row, unless an earlier delivery of the event already did.</summary>
+    /// <param name="notification">The event, published by its outbox handler.</param>
+    /// <param name="cancellationToken">Cancels the save.</param>
+    /// <returns>A task completing once the row is saved.</returns>
+    public async ValueTask Handle(TEvent notification, CancellationToken cancellationToken)
     {
-        services.GetRequiredService<IInbox>().StageMessage(
-            services.GetRequiredService<IInboxDbContext>(),
-            new InboxEnvelope<TContext, TEvent>(notification).ToInboxMessage(DateTime.UtcNow));
-        return ValueTask.CompletedTask;
+        var envelope = new InboxEnvelope<TContext, TEvent>(notification);
+        InboxMessage? row = null;
+
+        try
+        {
+            await inboxContext.ExecuteInTransactionAsync(
+                async token =>
+                {
+                    row = envelope.ToInboxMessage(DateTime.UtcNow);
+                    await inbox.AddMessageAsync(inboxContext, row, token);
+                },
+                cancellationToken);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+            TableName: OutboxSchema.InboxTableName,
+        })
+        {
+            // The outbox delivers at least once and the row's id is deterministic, so this Consumer's
+            // row is already there. Detached, or the next Consumer's save would insert it again.
+            inboxContext.InboxMessages.Entry(row!).State = EntityState.Detached;
+        }
     }
 
     /// <summary>Applies the row: sends the Command inside the inbox's transaction.</summary>
@@ -57,15 +82,14 @@ public abstract class IntegrationEventInboxHandler<TEvent, TContext>(IServicePro
     public async Task HandleAsync(
         InboxEnvelope<TContext, TEvent> message, MessageMetadata metadata, CancellationToken cancellationToken)
     {
-        var inbox = services.GetRequiredService<IInboxDbContext>().Database;
-        var transaction = inbox.CurrentTransaction
+        var transaction = inboxContext.Database.CurrentTransaction
             ?? throw new InvalidOperationException("An inbox row is handled only inside the inbox's transaction.");
 
         // A scope per call, not the processing scope: a retrying strategy replays the attempt in the
         // same scope, and the replay must not inherit the failed attempt's tracked entities.
-        await using var scope = services.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope();
+        await using var scope = scopeFactory.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<TContext>();
-        context.Database.SetDbConnection(inbox.GetDbConnection(), contextOwnsConnection: false);
+        context.Database.SetDbConnection(inboxContext.Database.GetDbConnection(), contextOwnsConnection: false);
         await context.Database.UseTransactionAsync(transaction.GetDbTransaction(), cancellationToken);
 
         var command = ToCommand(message.Event);

@@ -9,8 +9,8 @@ exactly one handler, so delivery takes two hops:
 2. The publishing feature's `IntegrationEventOutboxHandler<TEvent>` publishes the claimed event through
    the mediator. Each Consumer's `IntegrationEventInboxHandler<TEvent, TContext>` is also its
    notification handler, and stages one `shared.inbox` row wrapping the event in an
-   `InboxEnvelope<TConsumerContext, TEvent>`, whose type name is distinct per Consumer. The outbox
-   handler saves all the rows in one `SaveChanges`.
+   `InboxEnvelope<TConsumerContext, TEvent>`, whose type name is distinct per Consumer, and adds it
+   in a transaction of its own.
 3. The inbox worker hands each row to the same `IntegrationEventInboxHandler`, which sends the
    Consumer's Command inside the inbox's transaction.
 
@@ -28,20 +28,24 @@ to read.
 **Library-side fan-out** (Recipients in 0.22.0, or named Inboxes). Cleaner, and unreleased. It can
 replace the middle hop later without changing how a Consumer is written.
 
-**Querying the inbox for existing rows before staging**, to make a redelivered fan-out idempotent.
-Catching the unique violation does the same in one place, because the rows are saved all-or-nothing.
+**Saving every Consumer's row in one `SaveChanges` from the outbox handler.** All-or-nothing, but it
+puts the duplicate check on the outbox side, away from the row it concerns, and a Consumer added
+between two attempts would get no row.
+
+**Querying the inbox for existing rows before adding**, to make a redelivery idempotent. Catching the
+unique violation does the same without a second round trip.
 
 ## Consequences
 
-**A redelivered fan-out succeeds without writing.** The outbox delivers at least once with no
-transaction open, so a lost completion offers the event again. Row ids are UUIDv5 of the envelope type
-name and the event's `EventId`, so the save hits the inbox's unique index; the outbox handler treats
-that violation on `shared.inbox` as already delivered. A Consumer added between the two attempts gets
-no row for that event.
+**A redelivered fan-out adds only what is missing.** The outbox delivers at least once with no
+transaction open, so a failure or a lost completion offers the event again. Row ids are UUIDv5 of the
+envelope type name and the event's `EventId`, so a Consumer whose row exists hits the inbox's unique
+index; its inbox handler treats that violation on `shared.inbox` as already delivered, and detaches
+the row so a sibling's save, through the same context, does not insert it again.
 
 **Forwarding outside the process is a plain `INotificationHandler<TEvent>`**, in `Infrastructure`. It
-runs during fan-out, at least once. If it throws, no Consumer's row is saved and the outbox row is
-retried, so a down broker delays the in-process Consumers of that event too.
+runs during fan-out, at least once. If it throws, the outbox row is retried, so Consumers the mediator
+had not reached yet wait for the broker.
 
 **Two polls per event** instead of one, and an outbox row as well as the inbox rows.
 

@@ -54,9 +54,9 @@ Two hops, so each consumer gets the event exactly once without the publisher kno
    which **stages** one outbox row through the publisher's own `DbContext`, so it exists if and only if
    the aggregate's change committed.
 2. **Fan-out.** The outbox worker gives the row to the publisher's outbox handler, which publishes the
-   event through the mediator: every consuming feature's inbox handler stages its own inbox row, and the
-   rows are saved together. The outbox delivers at least once; a redelivery finds its rows already
-   saved and succeeds without adding any.
+   event through the mediator: every consuming feature's inbox handler adds its own inbox row, in a
+   transaction of its own. The outbox delivers at least once; on a redelivery, a consumer whose row is
+   already there skips it.
 3. **Inbox.** The inbox worker applies each row in a transaction of its own: the inbox handler sends its
    Command inside that transaction, so the consumer's writes and the row's completion commit together.
 
@@ -78,10 +78,10 @@ The inbox handler is the one place an `Infrastructure` layer may name a sibling'
 ### Sending an event outside the process
 
 To forward an event to a broker or another system, declare a plain `INotificationHandler<TEvent>` in an
-`Infrastructure` project that sends it. It runs during fan-out beside the consumers' staging, so it is
-delivered **at least once**, and the receiving system deduplicates on `EventId`. If it throws, no
-consumer's row is saved and the whole outbox row is retried, so a down broker delays the in-process
-consumers of that event too.
+`Infrastructure` project that sends it. It runs during fan-out beside the consumers' inbox handlers, so it is
+delivered **at least once**, and the receiving system deduplicates on `EventId`. If it throws, the
+whole outbox row is retried: consumers that already added their row skip it, but any the mediator had
+not reached yet wait, so a down broker can delay in-process consumers of that event too.
 
 An event without an outbox handler fails the architecture tests; one with no handler at all fails the
 build (`MSG0005`).

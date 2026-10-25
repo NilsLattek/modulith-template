@@ -10,6 +10,7 @@ using ModulithTemplate.Features.Orders.Contracts.Events;
 using ModulithTemplate.SharedKernel.Infrastructure;
 using ModulithTemplate.SharedKernel.Infrastructure.Events;
 
+using Underground.Outbox;
 using Underground.Outbox.Configuration;
 using Underground.Outbox.Data;
 
@@ -97,9 +98,12 @@ public static class Auditing
     }
 
     /// <summary>The Consumer's inbox handler.</summary>
-    /// <param name="services">The provider of the processing scope.</param>
-    public sealed class SomeEntityAddedInboxHandler(IServiceProvider services)
-        : IntegrationEventInboxHandler<SomeEntityAddedIntegrationEvent, AuditContext>(services)
+    /// <param name="inbox">Adds the Consumer's row.</param>
+    /// <param name="inboxContext">The shared inbox's context.</param>
+    /// <param name="scopeFactory">Opens the scope the Command runs in.</param>
+    public sealed class SomeEntityAddedInboxHandler(
+        IInbox inbox, IInboxDbContext inboxContext, IServiceScopeFactory scopeFactory)
+        : IntegrationEventInboxHandler<SomeEntityAddedIntegrationEvent, AuditContext>(inbox, inboxContext, scopeFactory)
     {
         /// <inheritdoc />
         protected override ICommand<Result> ToCommand(SomeEntityAddedIntegrationEvent integrationEvent) =>

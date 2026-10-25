@@ -101,11 +101,12 @@ is saved, no inbox row is staged.
 `IntegrationEventSubscriptions` / `InboxRoute` design was hard to read and decided two things at once
 (who consumes, whether the event leaves the process). Now:
 - The Publisher stages one outbox row, as before this ticket. Feature contexts no longer map the inbox.
-- `IntegrationEventOutboxHandler<TEvent>` (was `IntegrationEventMediatorTransport`) publishes through the
-  mediator and saves the inbox rows once, treating a unique violation on `shared.inbox` as an already
-  delivered redelivery.
+- `IntegrationEventOutboxHandler<TEvent>` (was `IntegrationEventMediatorTransport`) only publishes
+  through the mediator.
 - `IntegrationEventInboxHandler<TEvent, TContext>` (was `IntegrationEventInboxTransport`) is also the
-  notification handler that stages its own row via `InboxEnvelope.ToInboxMessage`.
+  notification handler that adds its own row via `IInbox.AddMessageAsync` in its own transaction,
+  treating a unique violation on `shared.inbox` as already delivered. Dependencies are injected, not
+  resolved from `IServiceProvider`.
 - Forwarders are plain `INotificationHandler<TEvent>`s in Infrastructure; `IIntegrationEvent` is an
   `INotification` again, so `MSG0005` is back. Architecture tests: an outbox handler per event; plain
   notification handlers of Integration Events only in Infrastructure.

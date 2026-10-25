@@ -7,8 +7,7 @@ Decision record: ADR 0006. Implementation ticket: `issues/02-deliver-integration
 ## Problem Statement
 
 A generated project's Integration Events are delivered **at least once**. The Publisher's save stages
-one outbox row; the outbox worker publishes it through the mediator to every Consumer in the same
-transaction-less fan-out. When one Consumer throws, the whole message is redelivered: Consumers that
+one outbox row; the outbox worker publishes it through the mediator to every Consumer at once. When one Consumer throws, the whole message is redelivered: Consumers that
 already succeeded run again, and Consumers after the failing one may not have run at all. Every
 Consumer therefore has to be idempotent against a *sibling's* failure, and the sample Consumer carries
 a "check first" guard to survive it. A developer writing a Consumer has to reason about every other

@@ -9,10 +9,10 @@ namespace ModulithTemplate.Features.Orders.Contracts.Events;
 /// </summary>
 /// <remarks>
 /// Orders' published language, not its domain model: a consumer compiles against this record alone
-/// and never sees <c>SomeEntity</c>. Its full type name is stored on every outbox row, so renaming
-/// or moving it orphans the rows already written.
+/// and never sees <c>SomeEntity</c>. Its full type name is part of every inbox row's stored type, so
+/// renaming or moving it orphans the rows already written.
 /// </remarks>
-/// <param name="EventId">This event's identity, for a consumer that must deduplicate.</param>
+/// <param name="EventId">This event's identity.</param>
 /// <param name="SomeEntityId">The entity Orders recorded.</param>
 /// <param name="Name">Its name.</param>
 /// <param name="Amount">The amount it was recorded for.</param>

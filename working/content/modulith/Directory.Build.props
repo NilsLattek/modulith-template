@@ -7,6 +7,11 @@
     <AnalysisLevel>latest-Recommended</AnalysisLevel>
     <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Pinned: an inbox row stores its envelope's type name, which embeds each type argument's
+         assembly version, so a bump would orphan pending rows. Version releases through Version,
+         FileVersion and InformationalVersion instead. -->
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(MSBuildProjectExtension)' != '.dcproj'">

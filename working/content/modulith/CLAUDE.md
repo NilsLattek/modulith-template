@@ -13,8 +13,9 @@ dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" 
 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`
 # is always required — these wrappers supply it.
-bash add-migration.sh Orders AddSomeColumn  # <FeatureName|Outbox> <MigrationName>
+bash add-migration.sh Orders AddSomeColumn  # <FeatureName|Outbox|Inbox> <MigrationName>
 bash add-migration.sh Outbox AddSomeColumn  # the shared outbox table, not a feature
+bash add-migration.sh Inbox AddSomeColumn   # the shared inbox table, likewise
 bash update-database.sh                     # applies every context's pending migrations
 ```
 
@@ -97,6 +98,12 @@ Two rules that fail in non-obvious ways:
 - **Handlers must be `public`.** The mediator's source generator emits a hard `typeof(<Handler>)`
   reference into the host's compilation, so marking one `internal` breaks the host build with `CS0122`.
   Do not "tidy" them.
+
+**Inbox handlers run inside the inbox transaction:** the Command they send must stay short and touch
+only this feature's data; reach outside the database by staging an outbox message. A long one holds
+back delivery for every Consumer. React to an Integration Event only through an inbox handler — a
+plain `INotificationHandler` for one runs at least once and is for forwarding it outside the process
+(skill: `reaching-another-feature`).
 
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
 Blazor sends it with `IScopedMediator` (below); anything else uses `IMediator`.

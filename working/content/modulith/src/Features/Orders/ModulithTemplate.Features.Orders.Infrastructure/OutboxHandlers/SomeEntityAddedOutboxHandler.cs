@@ -6,8 +6,8 @@ using ModulithTemplate.SharedKernel.Infrastructure.Events;
 namespace ModulithTemplate.Features.Orders.Infrastructure.OutboxHandlers;
 
 /// <summary>
-/// Delivers <see cref="SomeEntityAddedIntegrationEvent"/> from the outbox to its in-process consumers.
+/// Delivers <see cref="SomeEntityAddedIntegrationEvent"/> from the outbox to its Consumers' inbox rows.
 /// </summary>
-/// <param name="publisher">Publishes the event to this application's consumers.</param>
+/// <param name="publisher">Publishes the event to this application's Consumers.</param>
 public sealed class SomeEntityAddedOutboxHandler(IPublisher publisher)
-    : IntegrationEventMediatorTransport<SomeEntityAddedIntegrationEvent>(publisher);
+    : IntegrationEventOutboxHandler<SomeEntityAddedIntegrationEvent>(publisher);

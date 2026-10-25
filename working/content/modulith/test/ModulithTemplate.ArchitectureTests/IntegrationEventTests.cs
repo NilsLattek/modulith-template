@@ -2,7 +2,11 @@ using ArchUnitNET.Fluent;
 using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using ArchUnitNET.xUnitV3;
 
+using Mediator;
+
 using ModulithTemplate.SharedKernel.Application.Events;
+
+using Underground.Outbox;
 
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
@@ -63,6 +67,81 @@ public class IntegrationEventTests
 
         rule.Check(SolutionAssemblies.Architecture);
     }
+
+    [Fact]
+    public void Every_integration_event_has_an_outbox_handler()
+    {
+        var handled = Implementations(typeof(IOutboxMessageHandler<>))
+            .Select(contract => contract.GetGenericArguments()[0].FullName)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var undelivered = FeatureTypes()
+            .Where(type => !type.IsAbstract && typeof(IIntegrationEvent).IsAssignableFrom(type))
+            .Where(type => !handled.Contains(type.FullName))
+            .Select(type => type.FullName)
+            .ToArray();
+
+        // The mediator's MSG0005 catches an event with no Consumer at all, but not one whose outbox row
+        // nothing claims: that one is published, saved, and never delivered.
+        Assert.True(
+            undelivered.Length == 0,
+            $"Nothing delivers {string.Join(", ", undelivered)} from the outbox. The publishing feature declares a "
+                + "body-less IntegrationEventOutboxHandler for it under Infrastructure/OutboxHandlers/.");
+    }
+
+    [Fact]
+    public void Plain_notification_handlers_of_integration_events_live_in_Infrastructure()
+    {
+        var misplaced = FeatureTypes()
+            .Where(type => type is { IsAbstract: false, IsClass: true })
+            .Where(type => !IsInboxHandler(type))
+            .Where(type => type.GetInterfaces().Any(contract =>
+                contract.IsGenericType
+                && contract.GetGenericTypeDefinition() == typeof(INotificationHandler<>)
+                && typeof(IIntegrationEvent).IsAssignableFrom(contract.GetGenericArguments()[0])))
+            .Where(type => !type.Assembly.GetName().Name!.EndsWith(".Infrastructure", StringComparison.Ordinal))
+            .Select(type => type.FullName)
+            .ToArray();
+
+        // A plain handler runs at least once, beside every Consumer's staging; it is for forwarding the
+        // event outside the process. Written in Application, it is a Consumer that skipped its inbox.
+        Assert.True(
+            misplaced.Length == 0,
+            $"{string.Join(", ", misplaced)} handle an Integration Event outside Infrastructure. A feature reacting "
+                + "to one declares an IntegrationEventInboxHandler under Infrastructure/InboxHandlers/.");
+
+        static bool IsInboxHandler(Type type) =>
+            type.GetInterfaces().Any(contract =>
+                contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IInboxMessageHandler<>));
+    }
+
+    [Fact]
+    public void No_feature_assembly_overrides_the_pinned_AssemblyVersion()
+    {
+        // An inbox row stores its envelope's type name, which embeds each type argument's assembly
+        // version: a feature releasing under another one orphans every row still pending.
+        var pinned = new Version(1, 0, 0, 0);
+        var drifted = SolutionAssemblies.FeatureAssemblies
+            .Select(assembly => assembly.GetName())
+            .Where(name => name.Version != pinned)
+            .Select(name => $"{name.Name} ({name.Version})")
+            .ToArray();
+
+        Assert.True(
+            drifted.Length == 0,
+            $"{string.Join(", ", drifted)} override AssemblyVersion, which Directory.Build.props pins to {pinned}. "
+                + "Version releases through Version, FileVersion or InformationalVersion instead.");
+    }
+
+    private static Type[] FeatureTypes() =>
+        [.. SolutionAssemblies.FeatureAssemblies.SelectMany(assembly => assembly.GetTypes())];
+
+    /// <summary>The closed forms of a generic interface that concrete feature types implement.</summary>
+    private static IEnumerable<Type> Implementations(Type definition) =>
+        FeatureTypes()
+            .Where(type => type is { IsAbstract: false, IsClass: true })
+            .SelectMany(type => type.GetInterfaces())
+            .Where(contract => contract.IsGenericType && contract.GetGenericTypeDefinition() == definition);
 
     /// <summary>Every type implementing the Integration Event contract, wherever it was declared.</summary>
     private static GivenTypesConjunction IntegrationEvents() =>

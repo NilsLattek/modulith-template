@@ -25,7 +25,7 @@ public static class Configuration
         this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("PostgresConnection");
-        RequireOutboxOnSearchPath(connectionString);
+        RequireSharedSchemaOnSearchPath(connectionString);
 
         return services.AddDbContext<OutboxContext>(options => options
             .UseNpgsql(
@@ -35,7 +35,31 @@ public static class Configuration
     }
 
     /// <summary>
-    /// Fails startup when the connection cannot resolve the outbox table unqualified.
+    /// Registers the context that owns the shared inbox table's schema and migrations, and that the
+    /// library's inbox worker claims through.
+    /// </summary>
+    /// <remarks>
+    /// Its migrations history table is named apart from <see cref="OutboxContext"/>'s, which shares
+    /// the schema.
+    /// </remarks>
+    /// <param name="services">The service collection to register into.</param>
+    /// <param name="configuration">Supplies the <c>PostgresConnection</c> connection string.</param>
+    /// <returns>The same service collection, for chaining.</returns>
+    public static IServiceCollection AddInboxDbContext(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("PostgresConnection");
+        RequireSharedSchemaOnSearchPath(connectionString);
+
+        return services.AddDbContext<InboxContext>(options => options
+            .UseNpgsql(
+                connectionString,
+                pg => pg.MigrationsHistoryTable("__EFMigrationsHistory_Inbox", OutboxSchema.Name))
+            .UseSnakeCaseNamingConvention());
+    }
+
+    /// <summary>
+    /// Fails startup when the connection cannot resolve the outbox and inbox tables unqualified.
     /// </summary>
     /// <remarks>
     /// Without this the app starts and migrates cleanly, then every delivery attempt fails deep in a
@@ -44,7 +68,7 @@ public static class Configuration
     /// development is the easy way to lose the setting, so it is checked wherever it comes from.
     /// </remarks>
     /// <param name="connectionString">The configured Postgres connection string.</param>
-    private static void RequireOutboxOnSearchPath(string? connectionString)
+    private static void RequireSharedSchemaOnSearchPath(string? connectionString)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
         {
@@ -62,7 +86,7 @@ public static class Configuration
             throw new InvalidOperationException(
                 $"The 'PostgresConnection' connection string must put '{OutboxSchema.Name}' on its "
                 + $"Search Path (e.g. 'Search Path={OutboxSchema.Name},public'): the outbox library "
-                + "resolves its table unqualified.");
+                + "resolves its tables unqualified.");
         }
     }
 }

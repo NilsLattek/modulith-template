@@ -67,11 +67,13 @@ _Avoid_: Producer, emitter, source
 
 **Consumer**:
 A Feature that reacts to another's Integration Event. An Integration Event may have any number,
-including none — and none is a defect, not a state to rest in.
+including none — and none is a defect, not a state to rest in. Each Consumer receives an event
+exactly once, in a transaction of its own: one Consumer failing neither repeats nor holds back
+another.
 _Avoid_: Subscriber, listener, receiver, handler
 
 **Group**:
-The ordering boundary between Integration Events. Events in one Group are delivered one at a time in
-the order they were recorded; different Groups proceed independently. Keyed by the aggregate the
-event concerns.
+The ordering boundary between Integration Events as one Consumer receives them. Events in one Group
+reach that Consumer one at a time in the order they were recorded; different Groups, and the same
+Group at different Consumers, proceed independently. Keyed by the aggregate the event concerns.
 _Avoid_: Partition, stream, queue, channel

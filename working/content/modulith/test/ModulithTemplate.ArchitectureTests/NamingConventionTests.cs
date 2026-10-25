@@ -56,12 +56,12 @@ public class NamingConventionTests
         // IntegrationEventTests enforces the Contracts project itself, whatever the type is named.
         new("integration event", ["IntegrationEvent"], ["Contracts.Events"]),
 
-        // The consuming side stays internal — a handler is the reacting feature's own business.
-        new("integration event handler", ["IntegrationEventHandler"], ["Application.IntegrationEventHandlers"]),
+        // The consuming side: one per event the feature reacts to, mapping it to one of the feature's
+        // own Commands. Delivery is infrastructure; the reaction itself is the Command.
+        new("inbox handler", ["InboxHandler"], ["Infrastructure.InboxHandlers"]),
 
         // The publishing side: one per event the feature's own Contracts declares, taking the claimed
-        // outbox row back to the mediator. Delivery is infrastructure, so it sits opposite the
-        // publisher that staged the row rather than beside the consumers that react to it.
+        // outbox row back to the mediator, where each Consumer stages its inbox row.
         new("outbox handler", ["OutboxHandler"], ["Infrastructure.OutboxHandlers"]),
     ];
 
@@ -81,7 +81,7 @@ public class NamingConventionTests
         new("Domain.Events", ["DomainEvent"]),
         new("Application.DomainEventHandlers", ["DomainEventHandler"]),
         new("Contracts.Events", ["IntegrationEvent"]),
-        new("Application.IntegrationEventHandlers", ["IntegrationEventHandler"]),
+        new("Infrastructure.InboxHandlers", ["InboxHandler"]),
         new("Infrastructure.OutboxHandlers", ["OutboxHandler"]),
     ];
 

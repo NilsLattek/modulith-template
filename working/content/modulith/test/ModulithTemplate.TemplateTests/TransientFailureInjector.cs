@@ -7,15 +7,19 @@ using Npgsql;
 namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
-/// Fails one insert with a serialization failure, which a retrying execution strategy
+/// Fails one command with a serialization failure, which a retrying execution strategy
 /// treats as transient and answers by replaying the whole operation.
 /// </summary>
-/// <param name="failingInsert">Which insert fails, counting from 1; every later one runs normally.</param>
-internal sealed class TransientFailureInjector(int failingInsert) : DbCommandInterceptor
+/// <param name="failingCommand">Which matching command fails, counting from 1; every later one runs normally.</param>
+/// <param name="matching">Text a command must contain to be counted.</param>
+internal sealed class TransientFailureInjector(int failingCommand, string matching = "INSERT") : DbCommandInterceptor
 {
     private const string SerializationFailure = "40001";
 
-    private int _inserts;
+    private int _matched;
+
+    /// <summary>How many matching commands were seen, the failed one included.</summary>
+    public int Matched => _matched;
 
     /// <inheritdoc />
     public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
@@ -41,8 +45,8 @@ internal sealed class TransientFailureInjector(int failingInsert) : DbCommandInt
 
     private void FailIfDue(DbCommand command)
     {
-        if (command.CommandText.Contains("INSERT", StringComparison.Ordinal)
-            && Interlocked.Increment(ref _inserts) == failingInsert)
+        if (command.CommandText.Contains(matching, StringComparison.Ordinal)
+            && Interlocked.Increment(ref _matched) == failingCommand)
         {
             throw new PostgresException("injected", "ERROR", "ERROR", SerializationFailure);
         }

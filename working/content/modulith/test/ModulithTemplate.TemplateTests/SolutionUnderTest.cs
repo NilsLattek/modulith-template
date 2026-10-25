@@ -49,9 +49,9 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     }
 
     /// <summary>Builds the solution's services over a fresh database.</summary>
-    /// <param name="configureOrders">Applied to the Orders context's options after the solution's own.</param>
+    /// <param name="configure">The test's own additions, applied after the solution's registrations.</param>
     /// <returns>The composed solution.</returns>
-    public static SolutionUnderTest Start(Action<DbContextOptionsBuilder>? configureOrders = null)
+    public static SolutionUnderTest Start(Action<WebApplicationBuilder>? configure = null)
     {
         var database = TestDatabase.Create();
         ServiceProvider? provider = null;
@@ -59,8 +59,8 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         try
         {
             var ordersSaves = new SaveRecorder();
-            provider = Compose(database.ConnectionString, ordersSaves, configureOrders);
-            CreateSchema(provider);
+            (provider, var contexts) = Compose(database.ConnectionString, ordersSaves, configure);
+            CreateSchema(provider, contexts);
 
             return new SolutionUnderTest(database, provider, ordersSaves);
         }
@@ -76,10 +76,10 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// <summary>Registers the solution's services against this test's database.</summary>
     /// <param name="connectionString">The test's own database.</param>
     /// <param name="ordersSaves">Records the saves made through the Orders context.</param>
-    /// <param name="configureOrders">The test's own additions to the Orders context's options.</param>
-    /// <returns>The built container.</returns>
-    private static ServiceProvider Compose(
-        string connectionString, SaveRecorder ordersSaves, Action<DbContextOptionsBuilder>? configureOrders)
+    /// <param name="configure">The test's own additions.</param>
+    /// <returns>The built container, and the context types it registered.</returns>
+    private static (ServiceProvider Provider, Type[] Contexts) Compose(
+        string connectionString, SaveRecorder ordersSaves, Action<WebApplicationBuilder>? configure)
     {
         var builder = WebApplication.CreateEmptyBuilder(new WebApplicationOptions());
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
@@ -92,8 +92,14 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         // outbox handlers, so what the worker can deliver here is what the host can deliver.
         builder.Services.AddOutboxDbContext(builder.Configuration);
         builder.Services.AddOutboxServices<OutboxContext>(_ => { });
+        builder.Services.AddInboxDbContext(builder.Configuration);
+        builder.Services.AddInboxServices<InboxContext>(_ => { });
         builder.ConfigureOrdersFeature();
         builder.ConfigurePaymentsFeature();
+
+        // A second Consumer, so fan-out has something to fan out to. Always composed: its notification
+        // handler is in this assembly's AddMediator whether or not a test wants it.
+        builder.ConfigureAuditing();
         builder.Services.AddMediator(options =>
         {
             options.ServiceLifetime = ServiceLifetime.Scoped;
@@ -105,18 +111,19 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
             ];
         });
 
-        // Added to the registered options rather than rebuilt into them, so the recorder runs after
-        // the interceptors AddModuleDbContext attached and sees what their handlers staged.
-        builder.Services.AddSingleton<IDbContextOptionsConfiguration<OrdersContext>>(
-            new ConfigureOptions<OrdersContext>(options => options.AddInterceptors(ordersSaves)));
+        // After the interceptors AddModuleDbContext attached, so it sees what their handlers staged.
+        builder.Services.ConfigureContext<OrdersContext>(options => options.AddInterceptors(ordersSaves));
+        configure?.Invoke(builder);
 
-        if (configureOrders is not null)
-        {
-            builder.Services.AddSingleton<IDbContextOptionsConfiguration<OrdersContext>>(
-                new ConfigureOptions<OrdersContext>(configureOrders));
-        }
+        Type[] contexts =
+        [
+            .. builder.Services
+                .Select(descriptor => descriptor.ServiceType)
+                .Where(type => type.IsSubclassOf(typeof(DbContext)))
+                .Distinct(),
+        ];
 
-        return builder.Services.BuildServiceProvider();
+        return (builder.Services.BuildServiceProvider(), contexts);
     }
 
     /// <summary>Runs a command through the real mediator pipeline, in its own scope.</summary>
@@ -135,6 +142,70 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// <returns>The new scope.</returns>
     public IServiceScope CreateScope() => _provider.CreateScope();
 
+    /// <summary>
+    /// Runs the library's own processors as their workers do, the outbox's and then the inbox's, until
+    /// every row has been completed or has failed once.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the run.</param>
+    /// <returns>A task completing once no row awaits its first attempt.</returns>
+    public async Task DeliverAsync(CancellationToken cancellationToken)
+    {
+        await DrainAsync<OutboxMessage>(
+            scope => scope.GetRequiredService<OutboxContext>().OutboxMessages
+                .AnyAsync(row => row.CompletedAt == null && row.RetryCount == 0, cancellationToken),
+            cancellationToken);
+        await DrainAsync<InboxMessage>(
+            scope => scope.GetRequiredService<InboxContext>().InboxMessages
+                .AnyAsync(row => row.CompletedAt == null && row.RetryCount == 0, cancellationToken),
+            cancellationToken);
+    }
+
+    /// <summary>Runs one library processor, one attempt per fresh scope, until nothing awaits it.</summary>
+    /// <remarks>
+    /// The processor is internal to the library, so it is reached by name. A row is offered only once
+    /// every older transaction in the cluster has ended, which a parallel test can delay, hence the wait.
+    /// </remarks>
+    /// <typeparam name="TMessage">The table's message type.</typeparam>
+    /// <param name="awaiting">Whether a row still awaits its first attempt.</param>
+    /// <param name="cancellationToken">Cancels the run.</param>
+    /// <returns>A task completing once no row awaits its first attempt.</returns>
+    /// <exception cref="TimeoutException">A row was never offered.</exception>
+    private async Task DrainAsync<TMessage>(
+        Func<IServiceProvider, Task<bool>> awaiting, CancellationToken cancellationToken)
+    {
+        var processor = typeof(TMessage).Assembly
+            .GetType("Underground.Outbox.Domain.IProcessor`1", throwOnError: true)!
+            .MakeGenericType(typeof(TMessage));
+        var tryProcess = processor.GetMethod("TryProcessHeadMessageAsync")!;
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+
+        while (true)
+        {
+            await using var scope = _provider.CreateAsyncScope();
+            var attempt = (Task)tryProcess.Invoke(
+                scope.ServiceProvider.GetRequiredService(processor), [cancellationToken])!;
+            await attempt;
+
+            var claimed = attempt.GetType().GetProperty("Result")!.GetValue(attempt)!;
+            if (!string.Equals(claimed.ToString(), "NothingOffered", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!await awaiting(scope.ServiceProvider))
+            {
+                return;
+            }
+
+            if (DateTime.UtcNow > deadline)
+            {
+                throw new TimeoutException($"A {typeof(TMessage).Name} row was never offered for delivery.");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
+        }
+    }
+
     /// <summary>The rows in the shared outbox table, read through the context that owns it.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The staged messages.</returns>
@@ -143,6 +214,28 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         using var scope = CreateScope();
         return await scope.ServiceProvider.GetRequiredService<OutboxContext>()
             .OutboxMessages.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    /// <summary>The rows in the shared inbox table, read through the context that owns it.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>One row per Consumer of each event delivered from the outbox.</returns>
+    public async Task<IReadOnlyList<InboxMessage>> InboxRowsAsync(CancellationToken cancellationToken)
+    {
+        using var scope = CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<InboxContext>()
+            .InboxMessages.AsNoTracking().OrderBy(row => row.Id).ToListAsync(cancellationToken);
+    }
+
+    /// <summary>Deletes inbox rows, as if the fan-out that added them had not got that far.</summary>
+    /// <param name="predicate">Which rows to delete.</param>
+    /// <param name="cancellationToken">Cancels the delete.</param>
+    /// <returns>A task completing once they are deleted.</returns>
+    public async Task DeleteInboxRowsAsync(
+        System.Linq.Expressions.Expression<Func<InboxMessage, bool>> predicate, CancellationToken cancellationToken)
+    {
+        using var scope = CreateScope();
+        await scope.ServiceProvider.GetRequiredService<InboxContext>()
+            .InboxMessages.Where(predicate).ExecuteDeleteAsync(cancellationToken);
     }
 
     /// <summary>The entities the publishing feature has recorded.</summary>
@@ -172,35 +265,22 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
         _database.Dispose();
     }
 
-    /// <summary>Creates each context's tables, and only the ones it owns.</summary>
+    /// <summary>Creates each registered context's tables, and only the ones it owns.</summary>
     /// <remarks>
     /// Per context rather than <c>EnsureCreated</c>, which creates nothing once the database has any
-    /// table. Tables excluded from a context's migrations are skipped, so only <c>OutboxContext</c>
-    /// creates the shared outbox table — the same division of labour the migrations have. From the
-    /// model rather than by migrating, because the template ships none: the generated project's
-    /// owner adds the first.
+    /// table. Tables excluded from a context's migrations are skipped, so only <c>OutboxContext</c> and
+    /// <c>InboxContext</c> create the shared tables — the same division of labour the migrations have.
+    /// From the model rather than by migrating, because the template ships none.
     /// </remarks>
     /// <param name="provider">The built container.</param>
-    private static void CreateSchema(ServiceProvider provider)
+    /// <param name="contexts">Every context type the composition registered.</param>
+    private static void CreateSchema(ServiceProvider provider, IEnumerable<Type> contexts)
     {
         using var scope = provider.CreateScope();
-        CreateTables(scope.ServiceProvider.GetRequiredService<OutboxContext>());
-        CreateTables(scope.ServiceProvider.GetRequiredService<OrdersContext>());
-        CreateTables(scope.ServiceProvider.GetRequiredService<PaymentsContext>());
-
-        static void CreateTables(DbContext context) =>
-            context.GetService<IRelationalDatabaseCreator>().CreateTables();
-    }
-
-    /// <summary>Adds to the options of a context the solution has already registered.</summary>
-    /// <typeparam name="TContext">The context to configure.</typeparam>
-    /// <param name="configure">Applied after the registered configuration.</param>
-    private sealed class ConfigureOptions<TContext>(Action<DbContextOptionsBuilder> configure)
-        : IDbContextOptionsConfiguration<TContext>
-        where TContext : DbContext
-    {
-        /// <inheritdoc />
-        public void Configure(IServiceProvider serviceProvider, DbContextOptionsBuilder optionsBuilder) =>
-            configure(optionsBuilder);
+        foreach (var context in contexts)
+        {
+            ((DbContext)scope.ServiceProvider.GetRequiredService(context))
+                .GetService<IRelationalDatabaseCreator>().CreateTables();
+        }
     }
 }

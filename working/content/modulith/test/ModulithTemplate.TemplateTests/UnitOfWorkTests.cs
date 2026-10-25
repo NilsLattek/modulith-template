@@ -80,9 +80,9 @@ public class UnitOfWorkTests
         // Arrange
         // The second save fails, after the first was accepted by the change tracker: a replay that
         // reused the tracker would skip the first entity's re-insert and repeat the second's.
-        await using var solution = SolutionUnderTest.Start(options => options
+        await using var solution = SolutionUnderTest.Start(app => app.Services.ConfigureContext<OrdersContext>(options => options
             .UseNpgsql(pg => pg.EnableRetryOnFailure(1, TimeSpan.FromMilliseconds(10), errorCodesToAdd: null))
-            .AddInterceptors(new TransientFailureInjector(failingInsert: 2)));
+            .AddInterceptors(new TransientFailureInjector(failingCommand: 2))));
         var cancellationToken = TestContext.Current.CancellationToken;
         using var scope = solution.CreateScope();
         var orders = scope.ServiceProvider.GetRequiredService<OrdersContext>();
@@ -113,8 +113,8 @@ public class UnitOfWorkTests
     {
         // Arrange
         // 57P01 is the error a killed backend reports; Npgsql does not count it as transient itself.
-        await using var solution = SolutionUnderTest.Start(options => options
-            .UseNpgsql(pg => pg.EnableRetryOnFailure(1, TimeSpan.FromMilliseconds(10), errorCodesToAdd: ["57P01"])));
+        await using var solution = SolutionUnderTest.Start(app => app.Services.ConfigureContext<OrdersContext>(options => options
+            .UseNpgsql(pg => pg.EnableRetryOnFailure(1, TimeSpan.FromMilliseconds(10), errorCodesToAdd: ["57P01"]))));
         var cancellationToken = TestContext.Current.CancellationToken;
         using var scope = solution.CreateScope();
         var orders = scope.ServiceProvider.GetRequiredService<OrdersContext>();

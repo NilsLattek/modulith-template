@@ -7,6 +7,8 @@ using ModulithTemplate.Features.Payments.Infrastructure.Data;
 using ModulithTemplate.Features.Payments.Infrastructure.Events;
 using ModulithTemplate.SharedKernel.Infrastructure;
 
+using Underground.Outbox.Configuration;
+
 namespace ModulithTemplate.Features.Payments.Infrastructure;
 
 public static class Configuration
@@ -19,11 +21,10 @@ public static class Configuration
         services.AddScoped<IPaymentsUnitOfWork, PaymentsUnitOfWork>();
         services.AddScoped<IPaymentsIntegrationEventPublisher, PaymentsIntegrationEventPublisher>();
 
-        // This feature publishes no Integration Event yet. The first one is a record in Contracts, a
-        // body-less SomethingHappenedOutboxHandler : IntegrationEventMediatorTransport<T> under
-        // OutboxHandlers/, and then
-        // services.AddModulithTemplateFeaturesPaymentsInfrastructureMessageHandlers() here — the
-        // source generator emits that method only once this assembly declares a handler.
+        // Source-generated, one method per assembly and named after it: it registers every handler
+        // under InboxHandlers/, so consuming another event costs a handler class and no change here.
+        // It exists only while this assembly declares a handler.
+        services.AddModulithTemplateFeaturesPaymentsInfrastructureMessageHandlers();
         return services;
     }
 }

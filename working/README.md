@@ -26,7 +26,9 @@ A scaffolded feature is added to the `.slnx` but not yet wired into the host. Re
   pipeline behaviours; FluentResults for handler outcomes and FluentValidation for input.
 - Cross-feature communication that keeps the slices isolated: a read-only per-feature module API,
   published through a `Contracts` project that is the only part of a feature its neighbours may
-  reference, with architecture tests enforcing it. Within a feature, domain events dispatch inside
+  reference, with architecture tests enforcing it. Integration Events reach each consuming feature
+  exactly once through a shared transactional inbox ([Underground.Outbox](https://github.com/underground-dotnet/outbox)),
+  with an outbox for effects that leave the process. Within a feature, domain events dispatch inside
   the saving transaction.
 - xUnit v3 test projects per layer, bUnit for components, and ArchUnitNET architecture tests.
 - A devcontainer with .NET, the `dotnet-ef` CLI, and Postgres.

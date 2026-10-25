@@ -8,6 +8,9 @@ namespace ModulithApp.Features.FeatureName.Infrastructure.Events;
 
 /// <summary>Binds the FeatureName publisher marker to the FeatureName context.</summary>
 /// <param name="dbContext">The FeatureName context the event is staged in.</param>
-/// <param name="outbox">The outbox the row is staged in.</param>
-internal sealed class FeatureNameIntegrationEventPublisher(FeatureNameContext dbContext, IOutbox outbox)
-    : IntegrationEventPublisher<FeatureNameContext>(dbContext, outbox), IFeatureNameIntegrationEventPublisher;
+/// <param name="inbox">The inbox the Consumers' rows are staged in.</param>
+/// <param name="outbox">The outbox a forwarded event is staged in.</param>
+/// <param name="subscriptions">Who receives each event.</param>
+internal sealed class FeatureNameIntegrationEventPublisher(
+    FeatureNameContext dbContext, IInbox inbox, IOutbox outbox, IntegrationEventSubscriptions subscriptions)
+    : IntegrationEventPublisher<FeatureNameContext>(dbContext, inbox, outbox, subscriptions), IFeatureNameIntegrationEventPublisher;

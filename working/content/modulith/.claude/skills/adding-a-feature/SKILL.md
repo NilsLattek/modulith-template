@@ -6,7 +6,7 @@ description: Decide whether something warrants a new feature, then scaffold it a
 # Adding a feature
 
 A feature is one vertical slice owning its own domain model, database schema and layer projects.
-Scaffold it — never hand-create the projects, the sub-template wires up the outbox mapping and the
+Scaffold it — never hand-create the projects, the sub-template wires up the outbox and inbox mappings and the
 architecture tests expect its exact shape.
 
 **But first decide whether this should be a feature at all.** Most new work should not be.
@@ -88,8 +88,8 @@ This creates `src/Features/Shipping/` with `Contracts`, `Domain`, `Application`,
 and `Web` projects, the matching test projects under `test/Features/Shipping/`, and registers all
 of them in the `.slnx`.
 
-**`Outbox` is a reserved name** — it would collide with the shared outbox context in
-`add-migration.sh` and the CI migration check. Do not create a feature called that.
+**`Outbox` and `Inbox` are reserved names** — they would collide with the shared outbox and inbox
+contexts in `add-migration.sh` and the CI migration check. Do not create a feature called either.
 
 ## 2. Register it with the host
 

@@ -14,10 +14,11 @@
   <ItemGroup>
     <!-- The mediator generator emits into whichever assembly references it, so this project gets its
          own AddMediator — the same composition the host builds, minus the host. Referencing
-         ModulithTemplate.Web instead would make it ambiguous. The outbox generator is not needed:
-         this project declares no handler, and picks each feature's up through Configure*Feature. -->
+         ModulithTemplate.Web instead would make it ambiguous. The outbox generator registers the
+         second Consumer declared here (Auditing.cs). -->
     <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="Underground.Outbox" />
+    <PackageReference Include="Underground.Outbox.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 

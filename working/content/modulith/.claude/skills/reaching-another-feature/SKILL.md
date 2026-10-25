@@ -14,7 +14,7 @@ feature's **`Contracts`** project, the only part of a feature a sibling may refe
 | You need… | Use | Shape |
 | --- | --- | --- |
 | An answer, **now**, to finish the request you are in | **Module API** | synchronous, read-only, the caller's transaction |
-| Something to happen elsewhere **because** something happened here | **Integration Event** | durable, at least once, each consumer in its own transaction |
+| Something to happen elsewhere **because** something happened here | **Integration Event** | durable, exactly once per consumer, each in its own transaction |
 
 If you are about to call a Module API and ignore its return value, you wanted an event. If you are
 about to publish an event and then wait for its result, you wanted a Module API.
@@ -36,45 +36,60 @@ Modelled on the shipped `Orders` → `Payments` example:
 | `SomeEntityAddedDomainEvent`, raised by the aggregate's mutator | `Orders.Domain/Events/` |
 | `SomeEntityAddedIntegrationEvent : IIntegrationEvent` — the published contract | `Orders.Contracts/Events/` |
 | The handler translating the one into the other | `Orders.Application/DomainEventHandlers/` |
-| `SomeEntityAddedOutboxHandler : IntegrationEventMediatorTransport<T>` — a body-less class that takes the delivered row to the mediator | `Orders.Infrastructure/OutboxHandlers/` |
-| `SomeEntityAddedIntegrationEventHandler : INotificationHandler<T>` — the consumer | `Payments.Application/IntegrationEventHandlers/` |
+| `RecordPaymentCommand` and its handler — the consumer's reaction, an ordinary Command | `Payments.Application/Commands/RecordPayment/` |
+| `SomeEntityAddedInboxHandler : IntegrationEventInboxTransport<TEvent, PaymentsContext>` — maps the event to that Command | `Payments.Infrastructure/InboxHandlers/` |
 
-The publisher binding (`OrdersIntegrationEventPublisher` in `Orders.Infrastructure/Events/`) and its
-registration are already scaffolded. `Configure<Name>Infrastructure` calls the source-generated
-`Add<Assembly>MessageHandlers()`, which picks up every handler under `OutboxHandlers/` — so a second
-published event costs a record, a translating handler and an outbox handler, with **no registration
-to keep in step**.
+The publisher binding (`OrdersIntegrationEventPublisher` in `Orders.Infrastructure/Events/`) is
+already scaffolded. The consumer's `Configure<Name>Infrastructure` calls the source-generated
+`Add<Assembly>MessageHandlers()`, which registers every handler under `InboxHandlers/` — so consuming
+another event costs a Command and a one-method inbox handler, with **no registration to keep in step**.
+The publisher never names a consumer, so adding one never changes the publishing feature.
 
 ### How delivery works
 
-The translating handler hands the event to its feature's `I<Name>IntegrationEventPublisher`, which
-**stages** an outbox row through that feature's own `DbContext`. The row is written by the same save
-that persists the aggregate, so the event exists if and only if the change committed. A worker later
-claims the row and hands it, in a fresh scope, to the **one** `IOutboxMessageHandler<T>` registered
-for its type, which publishes it to the mediator — where every consumer receives it in that scope
-with its own `DbContext`. **No feature code opens a transaction.**
+The translating handler hands the event to its feature's `I<Name>IntegrationEventPublisher`. That
+**stages**, through the publisher's own `DbContext`, one row in the shared inbox for every feature
+whose inbox handler takes the event, so the rows exist if and only if the aggregate's change committed.
+The inbox worker applies each row in a transaction of its own: the inbox handler sends its Command
+inside that transaction, so the consumer's writes and the row's completion commit together. **No
+feature code opens a transaction**, and the Command needs no "already done?" check.
 
-The outbox handler belongs to the feature whose `Contracts` declares the event, in its
-`Infrastructure` layer: delivery is infrastructure, and it is the reading counterpart to the
-publisher that staged the row. It is the one thing an `Infrastructure` layer may name a `Contracts`
-type for, and only its own feature's — `ContractIsolationTests` still fails it for a sibling's.
+- **A failed `Result` is retried**, a Business Rule Violation included, with backoff. It stalls only
+  that consumer's Group for that aggregate; other consumers are unaffected. A consumer that should
+  accept a refusal models it in its Command.
+- **One reaction per feature per event**: an event gets one inbox handler per consuming feature.
+- **Keep the Command short and inside this feature's data** — it holds the inbox transaction open. An
+  effect outside the database (email, HTTP) is staged as an outbox message instead.
+- **Never an `INotificationHandler`** for an Integration Event: it is not a mediator notification,
+  and such a handler does not compile.
 
-`IntegrationEventMediatorTransport<T>` is only a shortcut for the in-process case. To deliver an
-event elsewhere, such as Kafka, implement `IOutboxMessageHandler<T>` directly. An event type gets
-**one** outbox handler, so if it must reach both the mediator and an external system, that one
-handler does both; a second handler for the same type fails the build (`OUTBOX001`) or startup.
+The inbox handler is the one place an `Infrastructure` layer may name a sibling's `Contracts` type;
+`ContractIsolationTests` fails it anywhere else in that layer.
+
+### Sending an event outside the process
+
+To forward an event to a broker or another system, the publishing feature declares an
+`IOutboxMessageHandler<TEvent>` under `Infrastructure/OutboxHandlers/`. The same publish then also
+stages an outbox row, delivered at least once, beside the in-process consumers' inbox rows. An event
+with neither an inbox handler nor an outbox handler throws when published, and fails the architecture
+tests before that.
 
 ### Group keys
 
 `EventId` and `GroupKey` live on the event itself, because delivery hands a consumer the event and
-nothing else. **The Group key is the aggregate the event concerns.** Events sharing one are
-delivered in order, one at a time, while unrelated aggregates proceed concurrently — a constant
-would serialise the whole application behind a single stuck message.
+nothing else. **The Group key is the aggregate the event concerns**; the publisher prefixes it with
+each consumer, so one consumer's stuck row holds back no other. Events sharing one are delivered in
+order, one at a time, while unrelated aggregates proceed concurrently — a constant would serialise
+the whole application behind a single stuck message.
 
-### Two things that bite
+### Things that bite
 
-- **The event's full type name is a wire contract.** Renaming or moving an integration event
-  orphans rows already stored under the old name, and they stall their Group.
+- **The inbox row's type name is a wire contract.** It names the event, its `Contracts` project and
+  the consumer's `DbContext`, so renaming any of them orphans pending rows, which stall their Group:
+  drain before renaming. `AssemblyVersion` is pinned in `Directory.Build.props` for the same reason;
+  version releases through `Version`.
+- **The consumer set is fixed when an event is recorded.** A consumer added later never sees earlier
+  events; one removing its inbox handler must let its pending rows drain first.
 - **An event with no consumer is a defect, not a resting state.** If nothing reacts to it, either
   the consumer is missing or the event should not exist.
 

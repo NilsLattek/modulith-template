@@ -18,6 +18,7 @@ its table:
 bash add-migration.sh Orders InitialOrders
 bash add-migration.sh Payments InitialPayments
 bash add-migration.sh Outbox SetupOutbox
+bash add-migration.sh Inbox SetupInbox
 bash update-database.sh
 ```
 
@@ -41,13 +42,15 @@ Each feature has its own `DbContext` and schema, so every `dotnet ef` command ne
 Create a new migration for a feature:
 
 ```bash
-bash add-migration.sh Orders AddSomeColumn     # <FeatureName|Outbox> <MigrationName>
+bash add-migration.sh Orders AddSomeColumn     # <FeatureName|Outbox|Inbox> <MigrationName>
 ```
 
-The shared outbox table is the one context that is not a feature — it lives at SharedKernel level
-and owns the single table every feature stages integration events into:
+The shared outbox and inbox tables are the contexts that are not features — they live at
+SharedKernel level. The inbox holds one row per Consumer of each Integration Event; the outbox holds
+effects that leave the process:
 
 ```bash
+bash add-migration.sh Inbox AddSomeColumn
 bash add-migration.sh Outbox AddSomeColumn
 ```
 
@@ -57,7 +60,7 @@ Apply all pending migrations of every feature to the local database:
 bash update-database.sh
 ```
 
-`update-database.sh` discovers the contexts from the host's DI container, so a new feature — and the outbox — is included as soon as it's registered in `Program.cs` — nothing to add to the script.
+`update-database.sh` discovers the contexts from the host's DI container, so a new feature — and the outbox and inbox — is included as soon as it's registered in `Program.cs` — nothing to add to the script.
 
 The equivalent raw commands, if you need to deviate:
 

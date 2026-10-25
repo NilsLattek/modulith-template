@@ -37,8 +37,8 @@ public class PerFeaturePublisherTests
 
         // Assert
         Assert.Single(scope.ServiceProvider.GetRequiredService<PaymentsContext>()
-            .ChangeTracker.Entries<OutboxMessage>());
+            .ChangeTracker.Entries<InboxMessage>());
         Assert.Empty(scope.ServiceProvider.GetRequiredService<OrdersContext>()
-            .ChangeTracker.Entries<OutboxMessage>());
+            .ChangeTracker.Entries<InboxMessage>());
     }
 }

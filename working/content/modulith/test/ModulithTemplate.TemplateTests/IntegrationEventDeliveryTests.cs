@@ -1,8 +1,12 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using ModulithTemplate.Features.Orders.Application.Commands.AddSomeEntity;
 using ModulithTemplate.Features.Orders.Contracts.Events;
-using ModulithTemplate.Features.Orders.Infrastructure.OutboxHandlers;
+using ModulithTemplate.Features.Payments.Infrastructure.Data;
+using ModulithTemplate.Features.Payments.Infrastructure.InboxHandlers;
+using ModulithTemplate.SharedKernel.Outbox.Data;
+using ModulithTemplate.SharedKernel.Outbox.Events;
 
 using Underground.Outbox.Data;
 using Underground.Outbox.Domain.Dispatchers;
@@ -10,61 +14,97 @@ using Underground.Outbox.Domain.Dispatchers;
 namespace ModulithTemplate.TemplateTests;
 
 /// <summary>
-/// The other half of the crossing: a claimed row becomes its event again and reaches the consuming
-/// feature, which commits through its own context.
+/// The Consumer's half: each Consumer's inbox row is applied once, by a Command of its own, inside the
+/// inbox's transaction.
 /// </summary>
-/// <remarks>
-/// Exercised through the handler registry the worker looks rows up in rather than the handler directly,
-/// because what is under test is the wiring — that the feature owning the event contributed a handler
-/// for it, and that the row finds it.
-/// </remarks>
 public class IntegrationEventDeliveryTests
 {
-    private static Task DispatchAsync(IServiceScope scope, OutboxMessage row, CancellationToken cancellationToken)
-    {
-        var registry = scope.ServiceProvider.GetRequiredService<HandlerRegistry<OutboxMessage>>();
-        Assert.True(registry.TryGetEntry(row.Type, out var entry));
-        return entry.HandleAsync(
-            scope.ServiceProvider, row, new MessageMetadata(row.EventId, row.GroupKey), cancellationToken);
-    }
-
     [Fact]
-    public async Task The_publishing_feature_claims_its_own_event()
+    public async Task The_generator_registers_a_consumers_transport_under_its_envelopes_type_name()
     {
         // Arrange
         await using var solution = SolutionUnderTest.Start();
 
         // Act
         using var scope = solution.CreateScope();
-        var registry = scope.ServiceProvider.GetRequiredService<HandlerRegistry<OutboxMessage>>();
+        var registry = scope.ServiceProvider.GetRequiredService<HandlerRegistry<InboxMessage>>();
 
         // Assert
-        // ConfigureOrdersApplication calls the registration method the outbox generator emitted for
-        // that assembly; without it the row below would fail as an unclaimed type.
-        Assert.True(registry.TryGetEntry(typeof(SomeEntityAddedIntegrationEvent).FullName!, out var entry));
-        Assert.Equal(typeof(SomeEntityAddedOutboxHandler), entry.HandlerType);
+        // The one assumption the design rests on: a subclass of the abstract generic transport is
+        // registered under the closed envelope's name, the very string a staged row stores.
+        var envelope = typeof(InboxEnvelope<PaymentsContext, SomeEntityAddedIntegrationEvent>).FullName!;
+        Assert.True(registry.TryGetEntry(envelope, out var entry));
+        Assert.Equal(typeof(SomeEntityAddedInboxHandler), entry.HandlerType);
     }
 
     [Fact]
-    public async Task A_staged_row_reaches_the_consuming_feature()
+    public async Task A_published_event_is_applied_by_its_consumer_and_its_row_completed()
     {
         // Arrange
         await using var solution = SolutionUnderTest.Start();
         var cancellationToken = TestContext.Current.CancellationToken;
         await solution.SendAsync(new AddSomeEntityCommand("a name", 12.34m), cancellationToken);
-        var staged = Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
+        var entity = Assert.Single(await solution.SomeEntitiesAsync(cancellationToken));
 
         // Act
-        // A scope of its own, as the worker gives each message: the consumer writes through its own
-        // context, never the publisher's.
-        using var scope = solution.CreateScope();
-        await DispatchAsync(scope, staged, cancellationToken);
+        await solution.DeliverAsync(cancellationToken);
 
         // Assert
-        // Orders' handler published to the mediator, and Payments' consumer is what reacted — one
-        // outbox handler, fan-out by notification.
         var payment = Assert.Single(await solution.PaymentsAsync(cancellationToken));
-        Assert.Equal(staged.GroupKey, payment.OrderId.ToString(), StringComparer.Ordinal);
+        Assert.Equal(entity.Id, payment.OrderId);
         Assert.Equal(12.34m, payment.Amount);
+        Assert.NotNull(Assert.Single(await solution.InboxRowsAsync(cancellationToken)).CompletedAt);
+    }
+
+    [Fact]
+    public async Task A_failing_consumer_leaves_the_other_consumer_committed_and_none_of_its_own_writes()
+    {
+        // Arrange
+        await using var solution = SolutionUnderTest.Start(app => app.ConfigureAuditing());
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await solution.SendAsync(new AddSomeEntityCommand(Auditing.Refused, 12.34m), cancellationToken);
+
+        // Act
+        await solution.DeliverAsync(cancellationToken);
+
+        // Assert
+        var rows = await solution.InboxRowsAsync(cancellationToken);
+        var payments = Assert.Single(rows, row => row.GroupKey.StartsWith("PaymentsContext:", StringComparison.Ordinal));
+        var audit = Assert.Single(rows, row => row.GroupKey.StartsWith("AuditContext:", StringComparison.Ordinal));
+
+        Assert.Single(await solution.PaymentsAsync(cancellationToken));
+        Assert.NotNull(payments.CompletedAt);
+
+        // Refused after it wrote: the write went with its savepoint, and the row waits to be retried.
+        Assert.Null(audit.CompletedAt);
+        Assert.Equal(1, audit.RetryCount);
+        Assert.Empty(await solution.AuditEntriesAsync(cancellationToken));
+    }
+
+    [Fact]
+    public async Task A_transient_failure_after_the_consumers_writes_replays_the_attempt_and_they_land_once()
+    {
+        // Arrange
+        // The completion fails after the Consumer has written: had those writes committed on their own,
+        // the replay would record a second payment.
+        var completion = new TransientFailureInjector(failingCommand: 1, matching: "SET completed_at");
+        await using var solution = SolutionUnderTest.Start(app => app.Services
+            .ConfigureContext<InboxContext>(options => options
+                .UseNpgsql(pg => pg.EnableRetryOnFailure(1, TimeSpan.FromMilliseconds(10), errorCodesToAdd: null))
+                .AddInterceptors(completion))
+            .ConfigureContext<PaymentsContext>(options => options
+                .UseNpgsql(pg => pg.EnableRetryOnFailure(1, TimeSpan.FromMilliseconds(10), errorCodesToAdd: null))));
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await solution.SendAsync(new AddSomeEntityCommand("a name", 12.34m), cancellationToken);
+
+        // Act
+        await solution.DeliverAsync(cancellationToken);
+
+        // Assert
+        Assert.Equal(2, completion.Matched);
+        Assert.Single(await solution.PaymentsAsync(cancellationToken));
+        var row = Assert.Single(await solution.InboxRowsAsync(cancellationToken));
+        Assert.NotNull(row.CompletedAt);
+        Assert.Equal(0, row.RetryCount);
     }
 }

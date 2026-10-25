@@ -3,6 +3,9 @@ using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using ArchUnitNET.xUnitV3;
 
 using ModulithTemplate.SharedKernel.Application.Events;
+using ModulithTemplate.SharedKernel.Outbox.Events;
+
+using Underground.Outbox;
 
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
@@ -62,6 +65,70 @@ public class IntegrationEventTests
             .WithoutRequiringPositiveResults();
 
         rule.Check(SolutionAssemblies.Architecture);
+    }
+
+    [Fact]
+    public void Every_integration_event_has_a_consumer_or_a_forwarder()
+    {
+        var types = SolutionAssemblies.FeatureAssemblies.SelectMany(assembly => assembly.GetTypes()).ToArray();
+        var received = types
+            .Where(type => type is { IsAbstract: false, IsClass: true })
+            .SelectMany(type => type.GetInterfaces())
+            .Where(contract => contract.IsGenericType)
+            .Select(ReceivedEvent)
+            .OfType<Type>()
+            // By name: discovery loads each feature assembly from its file, so the same event can also
+            // arrive as a second Type through another assembly's reference to it.
+            .Select(type => type.FullName)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var unheard = types
+            .Where(type => !type.IsAbstract && typeof(IIntegrationEvent).IsAssignableFrom(type))
+            .Where(type => !received.Contains(type.FullName))
+            .Select(type => type.FullName)
+            .ToArray();
+
+        // The publisher throws for such an event, but only once something publishes it.
+        Assert.True(
+            unheard.Length == 0,
+            $"Nothing receives {string.Join(", ", unheard)}. A consuming feature declares an "
+                + "IntegrationEventInboxTransport for it under Infrastructure/InboxHandlers/, or an "
+                + "IOutboxMessageHandler forwards it outside the process; an event nobody receives should not exist.");
+
+        static Type? ReceivedEvent(Type contract)
+        {
+            var definition = contract.GetGenericTypeDefinition();
+            var message = contract.GetGenericArguments()[0];
+
+            if (definition == typeof(IOutboxMessageHandler<>))
+            {
+                return message;
+            }
+
+            return definition == typeof(IInboxMessageHandler<>)
+                && message.IsGenericType
+                && message.GetGenericTypeDefinition() == typeof(InboxEnvelope<,>)
+                ? message.GetGenericArguments()[1]
+                : null;
+        }
+    }
+
+    [Fact]
+    public void No_feature_assembly_overrides_the_pinned_AssemblyVersion()
+    {
+        // An inbox row stores its envelope's type name, which embeds each type argument's assembly
+        // version: a feature releasing under another one orphans every row still pending.
+        var pinned = new Version(1, 0, 0, 0);
+        var drifted = SolutionAssemblies.FeatureAssemblies
+            .Select(assembly => assembly.GetName())
+            .Where(name => name.Version != pinned)
+            .Select(name => $"{name.Name} ({name.Version})")
+            .ToArray();
+
+        Assert.True(
+            drifted.Length == 0,
+            $"{string.Join(", ", drifted)} override AssemblyVersion, which Directory.Build.props pins to {pinned}. "
+                + "Version releases through Version, FileVersion or InformationalVersion instead.");
     }
 
     /// <summary>Every type implementing the Integration Event contract, wherever it was declared.</summary>

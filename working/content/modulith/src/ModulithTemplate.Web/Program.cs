@@ -18,6 +18,9 @@ builder.AddServiceDefaults();
 // update-database.sh and CI's migration checks enumerate contexts from this container.
 builder.Services.AddOutboxDbContext(builder.Configuration);
 builder.Services.AddOutboxServices<OutboxContext>(_ => { });
+// Likewise the shared inbox, which delivers each Integration Event to each of its Consumers.
+builder.Services.AddInboxDbContext(builder.Configuration);
+builder.Services.AddInboxServices<InboxContext>(_ => { });
 
 builder.ConfigureOrdersFeature();
 builder.ConfigurePaymentsFeature();

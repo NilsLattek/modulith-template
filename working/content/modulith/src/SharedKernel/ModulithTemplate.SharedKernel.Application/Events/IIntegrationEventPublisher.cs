@@ -16,6 +16,8 @@ public interface IIntegrationEventPublisher
     /// to the change tracker. Nothing is delivered until the save carrying the business change
     /// commits, and a rollback takes the event with it.
     /// </remarks>
+    /// <typeparam name="TEvent">The event's type.</typeparam>
     /// <param name="integrationEvent">The event to record.</param>
-    void Publish(IIntegrationEvent integrationEvent);
+    void Publish<TEvent>(TEvent integrationEvent)
+        where TEvent : IIntegrationEvent;
 }

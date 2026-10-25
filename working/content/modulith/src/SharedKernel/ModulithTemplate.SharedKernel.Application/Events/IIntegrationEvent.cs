@@ -1,5 +1,3 @@
-using Mediator;
-
 namespace ModulithTemplate.SharedKernel.Application.Events;
 
 /// <summary>
@@ -7,20 +5,20 @@ namespace ModulithTemplate.SharedKernel.Application.Events;
 /// </summary>
 /// <remarks>
 /// Declared as a <c>record</c> in the owning feature's <c>Contracts/Events/</c> — the only part of a
-/// feature a sibling may reference. It is staged into the shared outbox by the same save that
-/// persists the aggregate, so it is recorded if and only if the change it describes commits.
+/// feature a sibling may reference. The save that persists the aggregate stages one shared inbox row
+/// per Consumer, so it is recorded if and only if the change it describes commits.
 /// <para>
-/// Delivery is <b>at least once</b>: one message fans out to every consumer, and a consumer that
-/// throws fails the message, so redelivery re-runs consumers that already succeeded. Write handlers
-/// that tolerate seeing an event twice.
+/// Delivery is <b>exactly once per Consumer</b>: each applies the event in a transaction of its own,
+/// and one Consumer failing neither repeats nor holds back another. Not a mediator notification, so
+/// an <c>INotificationHandler</c> for one does not compile.
 /// </para>
 /// </remarks>
-public interface IIntegrationEvent : INotification
+public interface IIntegrationEvent
 {
-    /// <summary>This event's identity, stable across redeliveries.</summary>
+    /// <summary>This event's identity, from which each Consumer's row identity is derived.</summary>
     /// <remarks>
-    /// Carried on the event rather than as transport metadata: republishing hands a consumer the
-    /// event alone, so anything not declared here is gone before any handler sees it.
+    /// Carried on the event rather than as transport metadata: delivery hands a Consumer the event
+    /// alone, so anything not declared here is gone before any handler sees it.
     /// </remarks>
     Guid EventId { get; }
 

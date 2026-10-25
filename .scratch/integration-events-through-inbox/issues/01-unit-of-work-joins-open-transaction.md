@@ -1,6 +1,6 @@
 # UnitOfWorkBase joins an open transaction and runs under the execution strategy
 
-Status: ready-for-agent
+Status: resolved
 
 ## What
 
@@ -34,3 +34,5 @@ which replaced the transient error, so the strategy gave up. Disposal rolls back
 leaves the attempt, ignores cancellation, and does not throw on a broken connection, as the outbox
 library's version relies on. `UnitOfWorkTests.Under_a_retrying_strategy_a_broken_connection_replays_the_action`
 covers it.
+
+**Resolved.** Shipped in #64.

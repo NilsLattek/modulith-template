@@ -25,7 +25,7 @@ exactly once by sending a Command in its own context, enlisted onto the inbox's 
   `IntegrationEventPublisher<TContext>` builds, once, the set of registered
   `HandlerEntry<InboxMessage>.MessageTypeName`s and `HandlerEntry<OutboxMessage>` message types. Per
   event it stages, through the Publisher's own context:
-  - one `InboxMessage` per route whose envelope type name is in that set, with EventId = UUIDv5 of
+  - one `InboxMessage` per route whose envelope type name is in that set, with EventId = a hash of
     (envelope type name, event `EventId`) and GroupKey = Consumer context name + event `GroupKey`;
   - one `OutboxMessage` of the bare event when an outbox handler for `TEvent` is registered;
   - and throws when neither applies.

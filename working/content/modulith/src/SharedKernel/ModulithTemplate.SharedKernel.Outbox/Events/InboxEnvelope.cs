@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -29,24 +28,11 @@ public sealed record InboxEnvelope<TConsumerContext, TEvent>(TEvent Event)
     public InboxMessage ToInboxMessage(DateTime createdAt) =>
         new(RowId(), createdAt, this, $"{typeof(TConsumerContext).Name}:{Event.GroupKey}");
 
-    /// <summary>The row's identity: a UUIDv5 of this envelope's type name, in the event's namespace.</summary>
+    /// <summary>The row's identity: <c>{envelope type}_{EventId}</c>, hashed to the Guid the library stores.</summary>
     /// <remarks>
     /// Deterministic, so a redelivered event collides with its own row instead of adding a second, and
     /// distinct per Consumer. The library orders a Group by transaction and append order, never by this.
     /// </remarks>
-    [SuppressMessage("Security", "CA5350:Do Not Use Weak Cryptographic Algorithms", Justification = "RFC 9562 fixes SHA-1 for UUIDv5; nothing here is secret.")]
-    [SuppressMessage("Security", "S4790:Using weak hashing algorithms is security-sensitive", Justification = "RFC 9562 fixes SHA-1 for UUIDv5; nothing here is secret.")]
-    private Guid RowId()
-    {
-        var name = Encoding.UTF8.GetBytes(GetType().FullName!);
-        var input = new byte[16 + name.Length];
-        Event.EventId.TryWriteBytes(input, bigEndian: true, out _);
-        name.CopyTo(input, 16);
-
-        Span<byte> hash = stackalloc byte[SHA1.HashSizeInBytes];
-        SHA1.HashData(input, hash);
-        hash[6] = (byte)((hash[6] & 0x0F) | 0x50);
-        hash[8] = (byte)((hash[8] & 0x3F) | 0x80);
-        return new Guid(hash[..16], bigEndian: true);
-    }
+    private Guid RowId() =>
+        new(SHA256.HashData(Encoding.UTF8.GetBytes($"{GetType().FullName}_{Event.EventId}")).AsSpan(0, 16));
 }

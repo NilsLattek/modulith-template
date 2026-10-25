@@ -38,8 +38,8 @@ unique violation does the same without a second round trip.
 ## Consequences
 
 **A redelivered fan-out adds only what is missing.** The outbox delivers at least once with no
-transaction open, so a failure or a lost completion offers the event again. Row ids are UUIDv5 of the
-envelope type name and the event's `EventId`, so a Consumer whose row exists hits the inbox's unique
+transaction open, so a failure or a lost completion offers the event again. Row ids hash `{envelope type}_{EventId}`
+into a Guid, so a Consumer whose row exists hits the inbox's unique
 index; its inbox handler treats that violation on `shared.inbox` as already delivered, and detaches
 the row so a sibling's save, through the same context, does not insert it again.
 

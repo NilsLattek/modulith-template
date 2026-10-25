@@ -31,10 +31,8 @@ Integration Event (skill: `reaching-another-feature`). `ModulithTemplate.Archite
 the layer rules and the entity, value object and event shapes below.
 
 **A feature is a transaction boundary, sized like a bounded context — not a folder, a screen or a
-CRUD table.** Two features share no transaction, so the split cannot be undone cheaply. The default
-for new work is to put it in an existing feature; creating one needs positive justification (skill:
-`adding-a-feature`, which covers the sizing test and the scaffold). Adding a command or query to an
-existing feature has its own layout and validator rules (skill: `adding-a-command-or-query`).
+CRUD table.** New work goes in an existing feature unless a new one is justified (skill:
+`adding-a-feature`); a new command or query follows `adding-a-command-or-query`.
 
 ### Where business logic goes
 
@@ -53,13 +51,9 @@ existing feature has its own layout and validator rules (skill: `adding-a-comman
 | HTTP, Blazor, `DbContext`, JSON, configuration | `Web` / `Infrastructure` |
 
 Signals a rule sits in the wrong place: a handler decides whether something is *valid* rather than
-reacting to the domain's answer; the same rule is written on both the create and the update path
-(duplication means it belongs in the entity, enforced once for all callers); an entity has public
-setters and no methods while a handler mutates it property by property, or its commands mirror its
-fields — one per field, or one `Update<Entity>` for the whole record — rather than business operations
-(skill: `adding-a-command-or-query`); a Blazor component enforces a
-rule nothing else does; an entity or a domain service injects a repository — neither reaches for data,
-the handler loads it and passes it down.
+reacting to the domain's answer; the same rule is written on both the create and the update path; an
+entity has public setters while a handler mutates it property by property; a Blazor component
+enforces a rule nothing else does.
 
 ### Writing entities
 
@@ -86,10 +80,9 @@ Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`
 `public sealed` handler, in a folder of its own. A handler orchestrates and nothing more, with no
 `try`/`catch`.
 
-**The handler loads, the domain decides.** The handler is the application service: it resolves the
-command's ids into entities through repositories and specs — refusing what is missing — and passes
-those entities to the entity or domain service. A domain service takes entities, never ids, and
-injects no repository.
+**The handler loads, the domain decides.** The handler resolves ids into entities through
+repositories and specs and passes the entities down; an entity or domain service never injects a
+repository.
 
 Two rules that fail in non-obvious ways:
 
@@ -99,19 +92,13 @@ Two rules that fail in non-obvious ways:
   reference into the host's compilation, so marking one `internal` breaks the host build with `CS0122`.
   Do not "tidy" them.
 
-**Inbox handlers run inside the inbox transaction:** the Command they send must stay short and touch
-only this feature's data; reach outside the database by staging an outbox message. A long one holds
-back delivery for every Consumer. React to an Integration Event only through an inbox handler — a
-plain `INotificationHandler` for one runs at least once and is for forwarding it outside the process
-(skill: `reaching-another-feature`).
+**React to an Integration Event only through an inbox handler**, whose Command stays short and inside
+this feature's data — it holds the inbox transaction open (skill: `reaching-another-feature`).
 
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
 Blazor sends it with `IScopedMediator` (below); anything else uses `IMediator`.
-Validators check the *shape* of incoming values, never business rules, and never inject a repository.
-**A command sent only from a Blazor form gets no validator.** The form model is validated on the
-server (interactive render mode), and the entity enforces the same rules again, so a validator would
-write them a third time. Add one when a caller without a form appears (skills:
-`adding-a-blazor-form`, `adding-a-command-or-query`).
+Validators check shape, never business rules, and never inject a repository. **A command sent only
+from a Blazor form gets no validator** (skills: `adding-a-blazor-form`, `adding-a-command-or-query`).
 
 ### Dependency injection
 
@@ -136,8 +123,6 @@ disposes it when the message completes.
 **Handlers return DTOs, never entities.** That scope is disposed before the component renders, so a
 returned entity is attached to a dead `DbContext` and reading a navigation property throws
 `ObjectDisposedException` — at render time, long after the query passed. Value objects are fine.
-
-`ServiceScopeExtensions.WithNewScopeAsync(...)` remains for scoped UI work that is not a message.
 
 ### Render mode
 

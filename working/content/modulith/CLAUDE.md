@@ -122,7 +122,7 @@ circuit it is null, silently. A page that needs it, or must render without a cir
 - **Readability recommendations** — not hard rules; when an exception looks justified and you are
   unsure, ask the user:
   - **Prefer names that say what the code does.** A method usually starts with a verb and names its
-    subject — `FindProjectByName` over `Lookup`, `CreateCombinedId` over `CombinedId` — so a caller
+    subject — `FindProjectByName` over `Lookup` — so a caller
     understands it without opening the type; a type names what it is. A longer name is fine when it
     is clearer. Names a framework dictates (`OnModelCreating`, `Handle`) and the `To*`/`With*`
     conventions are natural exceptions. This follows the .NET

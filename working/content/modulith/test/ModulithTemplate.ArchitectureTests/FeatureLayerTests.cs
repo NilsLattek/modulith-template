@@ -45,9 +45,9 @@ public class FeatureLayerTests
         Assert.True(SolutionAssemblies.HasFeatureLayer(rule.Suffix),
             $"No assembly for the '{rule.Name}' feature layer was found; the layering rule would pass vacuously.");
 
-        IArchRule layerRule = SolutionAssemblies.FeatureLayerTypes(SolutionAssemblies.FeatureLayerPattern(rule.Suffix))
-            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(
-                SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(rule.Forbidden))))
+        IArchRule layerRule = SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern(rule.Suffix))
+            .Should().NotDependOnAny(SolutionAssemblies.SelectFeatureLayerTypes(
+                SolutionAssemblies.BuildFeatureLayerPattern(SolutionAssemblies.BuildRegexAlternation(rule.Forbidden))))
             .Because($"a feature's {rule.Name} layer must not depend on its {string.Join("/", rule.Forbidden)} layer(s).");
 
         layerRule.Check(SolutionAssemblies.Architecture);

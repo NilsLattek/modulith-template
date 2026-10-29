@@ -34,9 +34,9 @@ public class ContractIsolationTests
     {
         AssertLayerDiscovered(ContractsLayer, "contract purity");
 
-        IArchRule rule = SolutionAssemblies.FeatureLayerTypes(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
-            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(
-                SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(FeatureInternalLayers))))
+        IArchRule rule = SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern(ContractsLayer))
+            .Should().NotDependOnAny(SolutionAssemblies.SelectFeatureLayerTypes(
+                SolutionAssemblies.BuildFeatureLayerPattern(SolutionAssemblies.BuildRegexAlternation(FeatureInternalLayers))))
             .Because("a feature's Contracts project is its published API: it must depend on nothing but the shared "
                 + "Shared.Application abstractions, so a consumer referencing it does not transitively gain access "
                 + "to the owning feature's internals.")
@@ -54,9 +54,9 @@ public class ContractIsolationTests
             AssertLayerDiscovered(layer, "contract consumption");
         }
 
-        IArchRule rule = SolutionAssemblies.FeatureLayerTypes(
-                SolutionAssemblies.FeatureLayerPattern(SolutionAssemblies.Alternation(NonConsumingLayers)))
-            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(SolutionAssemblies.FeatureLayerPattern(ContractsLayer)))
+        IArchRule rule = SolutionAssemblies.SelectFeatureLayerTypes(
+                SolutionAssemblies.BuildFeatureLayerPattern(SolutionAssemblies.BuildRegexAlternation(NonConsumingLayers)))
+            .Should().NotDependOnAny(SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern(ContractsLayer)))
             .Because($"a Contracts project is consumed by {string.Join(" and ", ConsumingLayers)}: the module API is "
                 + "implemented and called from Application, and events are published and consumed through "
                 + $"Infrastructure's handlers. A {string.Join("/", NonConsumingLayers)} layer reaching for one is a "

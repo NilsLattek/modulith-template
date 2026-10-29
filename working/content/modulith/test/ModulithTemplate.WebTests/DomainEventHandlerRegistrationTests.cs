@@ -18,7 +18,7 @@ public class DomainEventHandlerRegistrationTests
     [Fact]
     public void Host_mediator_registers_every_feature_domain_event_handler()
     {
-        var handlers = FeatureAssemblies()
+        var handlers = LoadFeatureAssemblies()
             .SelectMany(assembly => assembly.GetTypes())
             .Where(type => type is { IsClass: true, IsAbstract: false }
                 && type.GetInterfaces().Any(IsDomainEventHandler))
@@ -38,7 +38,7 @@ public class DomainEventHandlerRegistrationTests
     private static bool IsDomainEventHandler(Type type) =>
         type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDomainEventHandler<>);
 
-    private static IEnumerable<Assembly> FeatureAssemblies() =>
+    private static IEnumerable<Assembly> LoadFeatureAssemblies() =>
         Directory.GetFiles(AppContext.BaseDirectory, "*.dll", SearchOption.TopDirectoryOnly)
             .Where(path => Path.GetFileNameWithoutExtension(path).Contains(".Features.", StringComparison.Ordinal))
             // Load by name, into the default context, so the types match those the mediator registered.

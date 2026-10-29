@@ -27,7 +27,7 @@ public class HostTests
         IArchRule rule = ArchRuleDefinition.Types().That()
             .ResideInAssembly(typeof(Program).Assembly)
             .And().DoNotResideInNamespaceMatching(GeneratedMediatorNamespacePattern)
-            .Should().NotDependOnAny(SolutionAssemblies.FeatureLayerTypes(SolutionAssemblies.FeatureLayerPattern("Domain")))
+            .Should().NotDependOnAny(SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern("Domain")))
             .Because("the host references each Domain only for the mediator generator; entities stay behind the feature's Application layer.");
 
         rule.Check(HostArchitecture.Value);

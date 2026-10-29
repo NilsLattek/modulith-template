@@ -4,6 +4,7 @@ using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using ArchUnitNET.Loader;
 
 using Assembly = System.Reflection.Assembly;
+using Type = System.Type;
 
 namespace ModulithTemplate.ArchitectureTests;
 
@@ -23,10 +24,14 @@ internal static class SolutionAssemblies
     private const string FeaturesKeyword = ".Features.";
 
     private static readonly Lazy<Assembly[]> LazyFeatureAssemblies = new(LoadFeatureAssemblies);
+    private static readonly Lazy<Type[]> LazyFeatureTypes = new(LoadFeatureTypes);
     private static readonly Lazy<Architecture> LazyArchitecture = new(BuildArchitecture);
 
     /// <summary>The compiled feature-layer assemblies discovered in this project's output directory.</summary>
     public static Assembly[] FeatureAssemblies => LazyFeatureAssemblies.Value;
+
+    /// <summary>Every type declared in <see cref="FeatureAssemblies"/>.</summary>
+    public static Type[] FeatureTypes => LazyFeatureTypes.Value;
 
     /// <summary>The ArchUnitNET architecture built from <see cref="FeatureAssemblies"/>.</summary>
     public static Architecture Architecture => LazyArchitecture.Value;
@@ -45,7 +50,7 @@ internal static class SolutionAssemblies
     /// </remarks>
     /// <param name="suffixExpression">A layer suffix, or a regex alternation of several.</param>
     /// <returns>The assembly-name pattern.</returns>
-    public static string FeatureLayerPattern(string suffixExpression) =>
+    public static string BuildFeatureLayerPattern(string suffixExpression) =>
         @".*\.Features\..*\." + suffixExpression + @"(,.*)?$";
 
     /// <summary>Namespace of the tracker type a code-coverage run injects into every assembly.</summary>
@@ -57,9 +62,9 @@ internal static class SolutionAssemblies
     /// ArchUnitNET resolves all the copies to whichever assembly it met first, so every instrumented
     /// type appears to depend on that one layer. Use this on <i>both</i> sides of a dependency rule.
     /// </remarks>
-    /// <param name="assemblyPattern">An assembly-name pattern, e.g. from <see cref="FeatureLayerPattern"/>.</param>
+    /// <param name="assemblyPattern">An assembly-name pattern, e.g. from <see cref="BuildFeatureLayerPattern"/>.</param>
     /// <returns>The matching types, usable as a rule's subject or as its forbidden dependency set.</returns>
-    public static GivenTypesConjunction FeatureLayerTypes(string assemblyPattern) =>
+    public static GivenTypesConjunction SelectFeatureLayerTypes(string assemblyPattern) =>
         ArchRuleDefinition.Types().That()
             .ResideInAssemblyMatching(assemblyPattern)
             .And().DoNotResideInNamespaceMatching(InstrumentationNamespacePattern);
@@ -67,7 +72,7 @@ internal static class SolutionAssemblies
     /// <summary>Combines one or more layer suffixes into a regex alternation.</summary>
     /// <param name="suffixes">The suffixes to combine.</param>
     /// <returns>A single suffix expression.</returns>
-    public static string Alternation(params string[] suffixes) =>
+    public static string BuildRegexAlternation(params string[] suffixes) =>
         suffixes.Length == 1 ? suffixes[0] : "(" + string.Join("|", suffixes) + ")";
 
     /// <summary>Whether any discovered feature assembly is the given layer.</summary>
@@ -102,6 +107,9 @@ internal static class SolutionAssemblies
             return [];
         }
     }
+
+    private static Type[] LoadFeatureTypes() =>
+        [.. FeatureAssemblies.SelectMany(assembly => assembly.GetTypes())];
 
     private static Architecture BuildArchitecture() =>
         new ArchLoader().LoadAssemblies(FeatureAssemblies).Build();

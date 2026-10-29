@@ -26,13 +26,13 @@ public sealed record InboxEnvelope<TConsumerContext, TEvent>(TEvent Event)
     /// <param name="createdAt">When the row is staged, in UTC.</param>
     /// <returns>The row to stage.</returns>
     public InboxMessage ToInboxMessage(DateTime createdAt) =>
-        new(RowId(), createdAt, this, $"{typeof(TConsumerContext).Name}:{Event.GroupKey}");
+        new(CreateCombinedId(), createdAt, this, $"{typeof(TConsumerContext).Name}:{Event.GroupKey}");
 
     /// <summary>The row's identity: <c>{envelope type}_{EventId}</c>, hashed to the Guid the library stores.</summary>
     /// <remarks>
     /// Deterministic, so a redelivered event collides with its own row instead of adding a second, and
     /// distinct per Consumer. The library orders a Group by transaction and append order, never by this.
     /// </remarks>
-    private Guid RowId() =>
+    private Guid CreateCombinedId() =>
         new(SHA256.HashData(Encoding.UTF8.GetBytes($"{GetType().FullName}_{Event.EventId}")).AsSpan(0, 16));
 }

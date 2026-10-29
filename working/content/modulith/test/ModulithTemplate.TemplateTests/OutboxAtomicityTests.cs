@@ -22,7 +22,7 @@ namespace ModulithTemplate.TemplateTests;
 /// </remarks>
 public class OutboxAtomicityTests
 {
-    private static AddSomeEntityCommand ACommand() => new("a name", 12.34m);
+    private static AddSomeEntityCommand CreateCommand() => new("a name", 12.34m);
 
     [Fact]
     public async Task One_save_writes_the_aggregate_and_its_integration_event()
@@ -32,7 +32,7 @@ public class OutboxAtomicityTests
         var cancellationToken = TestContext.Current.CancellationToken;
 
         // Act
-        var result = await solution.SendAsync(ACommand(), cancellationToken);
+        var result = await solution.SendAsync(CreateCommand(), cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -43,7 +43,7 @@ public class OutboxAtomicityTests
         Assert.Contains((nameof(SomeEntity), EntityState.Added), save);
         Assert.Contains((nameof(OutboxMessage), EntityState.Added), save);
 
-        var staged = Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
+        var staged = Assert.Single(await solution.ReadOutboxRowsAsync(cancellationToken));
         Assert.Equal(typeof(SomeEntityAddedIntegrationEvent).FullName, staged.Type, StringComparer.Ordinal);
     }
 
@@ -55,7 +55,7 @@ public class OutboxAtomicityTests
         var cancellationToken = TestContext.Current.CancellationToken;
 
         // Act
-        await solution.SendAsync(ACommand(), cancellationToken);
+        await solution.SendAsync(CreateCommand(), cancellationToken);
 
         // Assert
         // Events about one aggregate are delivered in order; unrelated aggregates proceed
@@ -63,7 +63,7 @@ public class OutboxAtomicityTests
         using var scope = solution.CreateScope();
         var entity = await scope.ServiceProvider.GetRequiredService<OrdersContext>()
             .Set<SomeEntity>().AsNoTracking().SingleAsync(cancellationToken);
-        var staged = Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
+        var staged = Assert.Single(await solution.ReadOutboxRowsAsync(cancellationToken));
         Assert.Equal(entity.Id.ToString(), staged.GroupKey, StringComparer.Ordinal);
     }
 
@@ -87,7 +87,7 @@ public class OutboxAtomicityTests
 
         // Assert
         Assert.Single(orders.ChangeTracker.Entries<OutboxMessage>());
-        Assert.Empty(await solution.OutboxRowsAsync(cancellationToken));
+        Assert.Empty(await solution.ReadOutboxRowsAsync(cancellationToken));
         Assert.Empty(solution.OrdersSaves.Saves);
     }
 }

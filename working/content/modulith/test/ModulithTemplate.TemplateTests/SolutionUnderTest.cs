@@ -209,7 +209,7 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// <summary>The rows in the shared outbox table, read through the context that owns it.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The staged messages.</returns>
-    public async Task<IReadOnlyList<OutboxMessage>> OutboxRowsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<OutboxMessage>> ReadOutboxRowsAsync(CancellationToken cancellationToken)
     {
         using var scope = CreateScope();
         return await scope.ServiceProvider.GetRequiredService<OutboxContext>()
@@ -219,7 +219,7 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// <summary>The rows in the shared inbox table, read through the context that owns it.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>One row per Consumer of each event delivered from the outbox.</returns>
-    public async Task<IReadOnlyList<InboxMessage>> InboxRowsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<InboxMessage>> ReadInboxRowsAsync(CancellationToken cancellationToken)
     {
         using var scope = CreateScope();
         return await scope.ServiceProvider.GetRequiredService<InboxContext>()
@@ -241,7 +241,7 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// <summary>The entities the publishing feature has recorded.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The entities.</returns>
-    public async Task<IReadOnlyList<SomeEntity>> SomeEntitiesAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<SomeEntity>> ReadSomeEntitiesAsync(CancellationToken cancellationToken)
     {
         using var scope = CreateScope();
         return await scope.ServiceProvider.GetRequiredService<OrdersContext>()
@@ -251,7 +251,7 @@ internal sealed class SolutionUnderTest : IAsyncDisposable
     /// <summary>The payments the consuming feature has recorded.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The payments.</returns>
-    public async Task<IReadOnlyList<Payment>> PaymentsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Payment>> ReadPaymentsAsync(CancellationToken cancellationToken)
     {
         using var scope = CreateScope();
         return await scope.ServiceProvider.GetRequiredService<PaymentsContext>()

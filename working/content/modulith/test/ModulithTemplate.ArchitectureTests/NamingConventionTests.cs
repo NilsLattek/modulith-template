@@ -101,9 +101,9 @@ public class NamingConventionTests
 
         IArchRule archRule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
-            .And().HaveNameMatching(TypeNamePattern(rule.TypeSuffixes))
+            .And().HaveNameMatching(BuildTypeNamePattern(rule.TypeSuffixes))
             .And().AreNotNested()
-            .Should().ResideInNamespaceMatching(FeatureNamespacePattern(rule.HomeNamespaces))
+            .Should().ResideInNamespaceMatching(BuildFeatureNamespacePattern(rule.HomeNamespaces))
             .Because($"a {rule.Name} must live in its feature's {string.Join(" or ", rule.HomeNamespaces)} namespace.")
             .WithoutRequiringPositiveResults();
 
@@ -120,9 +120,9 @@ public class NamingConventionTests
 
         IArchRule archRule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
-            .And().ResideInNamespaceMatching(FeatureNamespacePattern([rule.Namespace]))
+            .And().ResideInNamespaceMatching(BuildFeatureNamespacePattern([rule.Namespace]))
             .And().AreNotNested()
-            .Should().HaveNameMatching(TypeNamePattern(rule.AllowedSuffixes))
+            .Should().HaveNameMatching(BuildTypeNamePattern(rule.AllowedSuffixes))
             .Because($"every type in a feature's {rule.Namespace} namespace must be named {string.Join(" or ", rule.AllowedSuffixes.Select(suffix => "*" + suffix))}.")
             .WithoutRequiringPositiveResults();
 
@@ -134,7 +134,7 @@ public class NamingConventionTests
     /// group admits sub-namespaces while still rejecting a sibling that merely starts with the same
     /// text, since after the suffix the pattern requires end-of-string or a dot.
     /// </summary>
-    private static string FeatureNamespacePattern(string[] namespaceSuffixes) =>
+    private static string BuildFeatureNamespacePattern(string[] namespaceSuffixes) =>
         @".*\.Features\..*\.(" + string.Join("|", namespaceSuffixes.Select(Regex.Escape)) + @")(\..*)?$";
 
     /// <summary>
@@ -142,6 +142,6 @@ public class NamingConventionTests
     /// carry: <c>ByIdSpec&lt;T&gt;</c> reports its name as <c>ByIdSpec`1</c>, which a plain
     /// <c>HaveNameEndingWith</c> would both wrongly fail and fail to select.
     /// </summary>
-    private static string TypeNamePattern(string[] typeSuffixes) =>
+    private static string BuildTypeNamePattern(string[] typeSuffixes) =>
         ".*(" + string.Join("|", typeSuffixes.Select(Regex.Escape)) + @")(`\d+)?$";
 }

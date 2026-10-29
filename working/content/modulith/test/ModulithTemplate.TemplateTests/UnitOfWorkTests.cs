@@ -17,7 +17,7 @@ namespace ModulithTemplate.TemplateTests;
 /// </remarks>
 public class UnitOfWorkTests
 {
-    private static SomeEntity AnEntity() => SomeEntity.Create("a name", 12.34m);
+    private static SomeEntity CreateEntity() => SomeEntity.Create("a name", 12.34m);
 
     [Fact]
     public async Task Inside_an_open_transaction_the_action_is_not_committed_by_the_unit_of_work()
@@ -34,7 +34,7 @@ public class UnitOfWorkTests
         await unitOfWork.ExecuteInTransactionAsync(
             async () =>
             {
-                orders.Add(AnEntity());
+                orders.Add(CreateEntity());
                 await orders.SaveChangesAsync(cancellationToken);
             },
             cancellationToken: cancellationToken);
@@ -43,7 +43,7 @@ public class UnitOfWorkTests
         await transaction.RollbackAsync(cancellationToken);
 
         // Assert
-        Assert.Empty(await solution.SomeEntitiesAsync(cancellationToken));
+        Assert.Empty(await solution.ReadSomeEntitiesAsync(cancellationToken));
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class UnitOfWorkTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => unitOfWork.ExecuteInTransactionAsync(
             async () =>
             {
-                orders.Add(AnEntity());
+                orders.Add(CreateEntity());
                 await orders.SaveChangesAsync(cancellationToken);
                 throw new InvalidOperationException("the action failed");
             },
@@ -71,7 +71,7 @@ public class UnitOfWorkTests
         await transaction.CommitAsync(cancellationToken);
 
         // Assert
-        Assert.Single(await solution.SomeEntitiesAsync(cancellationToken));
+        Assert.Single(await solution.ReadSomeEntitiesAsync(cancellationToken));
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class UnitOfWorkTests
 
         // Assert
         Assert.Equal(2, attempts);
-        var entities = await solution.SomeEntitiesAsync(cancellationToken);
+        var entities = await solution.ReadSomeEntitiesAsync(cancellationToken);
         var names = entities.Select(entity => entity.Name).Order(StringComparer.Ordinal);
         Assert.Equal(["first", "second"], names, StringComparer.Ordinal);
     }
@@ -128,7 +128,7 @@ public class UnitOfWorkTests
             async () =>
             {
                 attempts++;
-                orders.Add(AnEntity());
+                orders.Add(CreateEntity());
                 await orders.SaveChangesAsync(cancellationToken);
 
                 if (attempts == 1)
@@ -141,6 +141,6 @@ public class UnitOfWorkTests
 
         // Assert
         Assert.Equal(2, attempts);
-        Assert.Single(await solution.SomeEntitiesAsync(cancellationToken));
+        Assert.Single(await solution.ReadSomeEntitiesAsync(cancellationToken));
     }
 }

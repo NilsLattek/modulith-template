@@ -25,7 +25,7 @@ public class OutboxMappingTests
     [Fact]
     public void Every_feature_context_stages_into_the_one_shared_table()
     {
-        foreach (var (_, entity) in StagedMessages())
+        foreach (var (_, entity) in FindOutboxEntityOfEachFeatureContext())
         {
             Assert.Equal(OutboxSchema.Name, entity.GetSchema(), StringComparer.Ordinal);
             Assert.Equal(OutboxSchema.TableName, entity.GetTableName(), StringComparer.Ordinal);
@@ -35,7 +35,7 @@ public class OutboxMappingTests
     [Fact]
     public void No_feature_migrates_the_shared_table()
     {
-        foreach (var (context, entity) in StagedMessages())
+        foreach (var (context, entity) in FindOutboxEntityOfEachFeatureContext())
         {
             Assert.True(
                 entity.IsTableExcludedFromMigrations(),
@@ -49,10 +49,9 @@ public class OutboxMappingTests
     /// The design-time model, not the runtime one: the migration exclusion above is a design-time
     /// concern and the read-optimized runtime model drops it.
     /// </remarks>
-    private static (Type Context, IEntityType Entity)[] StagedMessages()
+    private static (Type Context, IEntityType Entity)[] FindOutboxEntityOfEachFeatureContext()
     {
-        var contexts = SolutionAssemblies.FeatureAssemblies
-            .SelectMany(assembly => assembly.GetTypes())
+        var contexts = SolutionAssemblies.FeatureTypes
             .Where(type => type is { IsAbstract: false, IsClass: true }
                 && typeof(DbContext).IsAssignableFrom(type)
                 && typeof(IOutboxDbContext).IsAssignableFrom(type))
@@ -63,12 +62,12 @@ public class OutboxMappingTests
             $"No feature {nameof(DbContext)} implementing {nameof(IOutboxDbContext)} was found; the outbox "
                 + "mapping rules would pass vacuously.");
 
-        return [.. contexts.Select(context => (context, Mapping(context)))];
+        return [.. contexts.Select(context => (context, FindOutboxEntityType(context)))];
     }
 
-    private static IEntityType Mapping(Type context)
+    private static IEntityType FindOutboxEntityType(Type context)
     {
-        using var instance = Build(context);
+        using var instance = CreateContextWithTestOptions(context);
 
         return instance.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(OutboxMessage))
             ?? throw new InvalidOperationException(
@@ -81,7 +80,7 @@ public class OutboxMappingTests
     /// however the context was registered. The provider only decides which relational annotations the
     /// model carries; nothing connects to the string.
     /// </remarks>
-    private static DbContext Build(Type context)
+    private static DbContext CreateContextWithTestOptions(Type context)
     {
         var builder = (DbContextOptionsBuilder)Activator.CreateInstance(
             typeof(DbContextOptionsBuilder<>).MakeGenericType(context))!;

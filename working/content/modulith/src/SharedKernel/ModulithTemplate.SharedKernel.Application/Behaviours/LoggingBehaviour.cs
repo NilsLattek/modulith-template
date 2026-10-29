@@ -50,7 +50,7 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
         using var activity = ActivitySource.StartActivity(messageType);
         activity?.SetTag("mediator.message.type", typeof(TMessage).FullName);
 
-        BehaviourLog.Handling(logger, messageType);
+        BehaviourLog.LogHandling(logger, messageType);
 
         var startedAt = Stopwatch.GetTimestamp();
         var response = await next(message, cancellationToken);
@@ -58,13 +58,13 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
 
         if (response is IResultBase { IsFailed: true } failed)
         {
-            var errors = string.Join("; ", failed.Errors.Select(Describe));
-            BehaviourLog.Failed(logger, messageType, elapsedMilliseconds, errors);
+            var errors = string.Join("; ", failed.Errors.Select(FormatErrorForLog));
+            BehaviourLog.LogFailed(logger, messageType, elapsedMilliseconds, errors);
             activity?.SetStatus(ActivityStatusCode.Error, errors);
         }
         else
         {
-            BehaviourLog.Handled(logger, messageType, elapsedMilliseconds);
+            BehaviourLog.LogHandled(logger, messageType, elapsedMilliseconds);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
@@ -72,6 +72,6 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
     }
 
     // A business error's code is what a translation, and a search of the logs, keys on.
-    private static string Describe(IError error) =>
+    private static string FormatErrorForLog(IError error) =>
         error is BusinessError business ? $"{business.Code}: {business.Message}" : error.Message;
 }

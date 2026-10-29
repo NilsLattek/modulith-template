@@ -69,6 +69,21 @@ dotnet new install working/bin/Release/Modulith.*.nupkg
 - **Procedural guidance lives in skills, tripwires live in `CLAUDE.md`.** The generated project's `CLAUDE.md` is loaded every turn, so it carries only rules an agent would violate *without realising* (handlers must be `public`, no `@inject IMediator` for database work, features must not reference each other). Multi-step walkthroughs belong in `working/content/modulith/.claude/skills/`, which load on demand: `adding-a-feature`, `reaching-another-feature`, `adding-a-command-or-query`, `adding-a-blazor-form`. When you move something out, leave the one-line constraint behind and point at the skill. `NoDefaultExcludes=true` in the package project is what makes these dot-directories pack.
 - **One test project does not ship.** `test/ModulithTemplate.TemplateTests/` verifies the *template's* design — that the outbox row and the aggregate change are written by one save — rather than behaviour a generated project's owner maintains, so it builds and runs here but is removed at scaffold time by a `modifiers.exclude` in `template.json`. The gate, `includeTemplateTests`, is a **generated constant** rather than a parameter, so `dotnet new` cannot switch it on; a `<!--#if (includeTemplateTests) -->` conditional drops its `.slnx` entry. Those markers are ordinary XML comments, so the `.slnx` still works unchanged in this repository. Maintainer-only test code belongs in that project; anywhere else it ships.
 
+## Writing code
+
+These are recommendations, not hard rules. When an exception looks justified and you are unsure, ask
+the user.
+
+**Prefer names that say what the code does.** A method usually starts with a verb and names its
+subject — `FindProjectByName` over `Lookup` — so a caller
+understands it without opening the type; a type names what it is. A longer name is fine when it is
+clearer. Names a framework dictates (`OnModelCreating`, `Handle`) and the `To*`/`With*` conventions are
+natural exceptions. This follows the .NET [naming guidelines](https://learn.microsoft.com/dotnet/standard/design-guidelines/naming-guidelines).
+
+**Prefer LINQ chains that reshape data once.** `.Where(…).Select(…).ToList()` reads well; a second
+reshape (`.Select().SelectMany().Select()`) usually reads better split into named locals, a named
+method, or a `foreach`.
+
 ## Writing comments
 
 **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns

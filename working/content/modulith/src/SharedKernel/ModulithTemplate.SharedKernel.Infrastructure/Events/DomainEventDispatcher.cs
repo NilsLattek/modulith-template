@@ -67,7 +67,7 @@ public sealed class DomainEventDispatcher(
                 // compilation, and its default branch neither dispatches nor throws — so an event
                 // from a Domain the host does not reference is dropped in silence. The host's
                 // csproj references every feature's Domain for this reason.
-                EventLog.DomainEventDispatched(logger, domainEvent.GetType().Name);
+                EventLog.LogDomainEventDispatched(logger, domainEvent.GetType().Name);
                 await publisher.Publish((object)domainEvent, cancellationToken);
             }
         }

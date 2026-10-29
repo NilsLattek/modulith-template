@@ -14,20 +14,16 @@ dotnet test --no-restore --project <project> --filter-class "*SomeEntityTests*" 
 # EF Core: each feature owns its own DbContext, schema and migrations, so `--context`
 # is always required — these wrappers supply it.
 bash add-migration.sh Orders AddSomeColumn  # <FeatureName|Outbox|Inbox> <MigrationName>
-bash add-migration.sh Outbox AddSomeColumn  # the shared outbox table, not a feature
-bash add-migration.sh Inbox AddSomeColumn   # the shared inbox table, likewise
 bash update-database.sh                     # applies every context's pending migrations
 ```
 
 ## Architecture
 
 A vertical-slice modular monolith built on DDD. Each feature under `src/Features/<Name>/` owns a set
-of layer projects, mirrored by test projects under `test/Features/<Name>/`. `CONTEXT.md` is the
-glossary for the terms used throughout.
+of layer projects, mirrored by test projects under `test/Features/<Name>/`.
 
 `Domain` is the only place business rules live. **Features never reference each other** — reach
-another one through its `Contracts` (skill: `reaching-another-feature`). `ModulithTemplate.ArchitectureTests`
-enforces the layer, naming and entity-shape rules, and its failure messages say how to fix a violation.
+another one through its `Contracts` (skill: `reaching-another-feature`).
 
 **A feature is a transaction boundary, sized like a bounded context — not a folder, a screen or a
 CRUD table.** New work goes in an existing feature unless a new one is justified (skill:
@@ -50,42 +46,31 @@ CRUD table.** New work goes in an existing feature unless a new one is justified
 | HTTP, Blazor, `DbContext`, JSON, configuration | `Web` / `Infrastructure` |
 
 Signals a rule sits in the wrong place: a handler decides whether something is *valid* rather than
-reacting to the domain's answer; the same rule is written on both the create and the update path; an
-entity has public setters while a handler mutates it property by property; a Blazor component
-enforces a rule nothing else does.
+reacting to the domain's answer; the same rule is written on both the create and the update path.
 
 ### Writing entities
 
 Entities are rich, not data bags: private setters, named methods that say what happened (`Confirm`),
-a factory instead of `new`, other aggregates referenced by id. The architecture tests check that
-shape; they cannot check these:
+a factory instead of `new`, other aggregates referenced by id.
 
 - **Invariants are enforced in the constructor and in every mutator**, so no call path can produce an
   invalid entity.
 - **A rule the user can break and should be told about throws `BusinessException`** with a
   `"Feature:Name"` code, not `ArgumentException`.
-- **Cover a new or changed invariant with a test on the entity** in `<Name>.DomainTests`, not only
-  through a handler test.
 
 ### Application layer (CQRS)
 
 Every operation is a `public sealed record` message (`ICommand<T>` / `IQuery<T>`) plus its
-`public sealed` handler, in a folder of its own. A handler orchestrates and nothing more, with no
-`try`/`catch`.
+`public sealed` handler, in a folder of its own.
 
 **The handler loads, the domain decides.** The handler resolves ids into entities through
-repositories and specs and passes the entities down; an entity or domain service never injects a
-repository.
+repositories and specs and passes the entities down.
 
 **Handlers always return `Result` / `Result<T>`** — the exception and validation behaviours silently
 skip anything else. **Handlers must be `public`**: the mediator's generated code in the host references
 them, so `internal` fails with `CS0122`.
 
-**React to an Integration Event only through an inbox handler**, whose Command stays short and inside
-this feature's data — it holds the inbox transaction open (skill: `reaching-another-feature`).
-
 `Web` reaches `Application` only by sending a message — never by calling a handler directly.
-Blazor sends it with `IScopedMediator` (below); anything else uses `IMediator`.
 Validators check shape, never business rules, and never inject a repository. **A command sent only
 from a Blazor form gets no validator** (skills: `adding-a-blazor-form`, `adding-a-command-or-query`).
 
@@ -117,8 +102,7 @@ circuit it is null, silently. A page that needs it, or must render without a cir
 
 ## Conventions
 
-- **Tests**: xUnit v3 on Microsoft.Testing.Platform, **NSubstitute** for substitutes, **bUnit** for
-  Blazor component tests.
+- **Tests**: **NSubstitute** for substitutes, **bUnit** for Blazor component tests.
 - **Readability recommendations** — not hard rules; when an exception looks justified and you are
   unsure, ask the user:
   - **Prefer names that say what the code does.** A method usually starts with a verb and names its

@@ -18,7 +18,7 @@ namespace ModulithTemplate.SharedKernel.OutboxTests;
 /// </remarks>
 public class OutboxContextModelTests
 {
-    private static IEntityType MessageEntity()
+    private static IEntityType FindMessageEntity()
     {
         var options = new DbContextOptionsBuilder<OutboxContext>()
             .UseNpgsql("Host=localhost;Database=unused")
@@ -32,12 +32,12 @@ public class OutboxContextModelTests
     [Fact]
     public void OutboxMessage_is_mapped_into_the_schema_the_search_path_names()
     {
-        Assert.Equal(OutboxSchema.Name, MessageEntity().GetSchema());
+        Assert.Equal(OutboxSchema.Name, FindMessageEntity().GetSchema());
     }
 
     [Fact]
     public void OutboxMessage_is_mapped_to_the_table_the_claim_sql_names()
     {
-        Assert.Equal("outbox", MessageEntity().GetTableName());
+        Assert.Equal("outbox", FindMessageEntity().GetTableName());
     }
 }

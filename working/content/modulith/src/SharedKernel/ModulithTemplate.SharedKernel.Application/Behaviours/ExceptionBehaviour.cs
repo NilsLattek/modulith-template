@@ -58,7 +58,7 @@ public sealed class ExceptionBehaviour<TMessage, TResponse>(
         }
         catch (Exception ex)
         {
-            BehaviourLog.HandlerThrew(logger, typeof(TMessage).Name, ex);
+            BehaviourLog.LogHandlerThrew(logger, typeof(TMessage).Name, ex);
             return new TResponse().WithError(new ExceptionalError(ex));
         }
     }

@@ -44,16 +44,16 @@ public class IntegrationEventDeliveryTests
         await using var solution = SolutionUnderTest.Start();
         var cancellationToken = TestContext.Current.CancellationToken;
         await solution.SendAsync(new AddSomeEntityCommand("a name", 12.34m), cancellationToken);
-        var entity = Assert.Single(await solution.SomeEntitiesAsync(cancellationToken));
+        var entity = Assert.Single(await solution.ReadSomeEntitiesAsync(cancellationToken));
 
         // Act
         await solution.DeliverAsync(cancellationToken);
 
         // Assert
-        var payment = Assert.Single(await solution.PaymentsAsync(cancellationToken));
+        var payment = Assert.Single(await solution.ReadPaymentsAsync(cancellationToken));
         Assert.Equal(entity.Id, payment.OrderId);
         Assert.Equal(12.34m, payment.Amount);
-        Assert.All(await solution.InboxRowsAsync(cancellationToken), row => Assert.NotNull(row.CompletedAt));
+        Assert.All(await solution.ReadInboxRowsAsync(cancellationToken), row => Assert.NotNull(row.CompletedAt));
     }
 
     [Fact]
@@ -68,17 +68,17 @@ public class IntegrationEventDeliveryTests
         await solution.DeliverAsync(cancellationToken);
 
         // Assert
-        var rows = await solution.InboxRowsAsync(cancellationToken);
+        var rows = await solution.ReadInboxRowsAsync(cancellationToken);
         var payments = Assert.Single(rows, row => row.GroupKey.StartsWith("PaymentsContext:", StringComparison.Ordinal));
         var audit = Assert.Single(rows, row => row.GroupKey.StartsWith("AuditContext:", StringComparison.Ordinal));
 
-        Assert.Single(await solution.PaymentsAsync(cancellationToken));
+        Assert.Single(await solution.ReadPaymentsAsync(cancellationToken));
         Assert.NotNull(payments.CompletedAt);
 
         // Refused after it wrote: the write went with its savepoint, and the row waits to be retried.
         Assert.Null(audit.CompletedAt);
         Assert.Equal(1, audit.RetryCount);
-        Assert.Empty(await solution.AuditEntriesAsync(cancellationToken));
+        Assert.Empty(await solution.ReadAuditEntriesAsync(cancellationToken));
     }
 
     [Fact]
@@ -102,9 +102,9 @@ public class IntegrationEventDeliveryTests
 
         // Assert
         Assert.Equal(3, completion.Matched);
-        Assert.Single(await solution.PaymentsAsync(cancellationToken));
-        Assert.Single(await solution.AuditEntriesAsync(cancellationToken));
-        Assert.All(await solution.InboxRowsAsync(cancellationToken), row =>
+        Assert.Single(await solution.ReadPaymentsAsync(cancellationToken));
+        Assert.Single(await solution.ReadAuditEntriesAsync(cancellationToken));
+        Assert.All(await solution.ReadInboxRowsAsync(cancellationToken), row =>
         {
             Assert.NotNull(row.CompletedAt);
             Assert.Equal(0, row.RetryCount);

@@ -54,7 +54,7 @@ public class DomainEventDispatcherTests
     }
 
     /// <summary>Builds a dispatcher with a discard logger, for the tests that assert dispatch alone.</summary>
-    private static DomainEventDispatcher Dispatcher(IPublisher publisher) =>
+    private static DomainEventDispatcher CreateDispatcher(IPublisher publisher) =>
         new(publisher, NullLogger<DomainEventDispatcher>.Instance);
 
     [Fact]
@@ -62,7 +62,7 @@ public class DomainEventDispatcherTests
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = Dispatcher(publisher);
+        var dispatcher = CreateDispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         aggregate.DoSomething("second");
@@ -83,7 +83,7 @@ public class DomainEventDispatcherTests
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = Dispatcher(publisher);
+        var dispatcher = CreateDispatcher(publisher);
 
         // Act
         await dispatcher.DispatchAsync(() => [new TestAggregate()], TestContext.Current.CancellationToken);
@@ -99,7 +99,7 @@ public class DomainEventDispatcherTests
         // The ordering that stops a handler which triggers a nested save from seeing — and
         // re-dispatching — the very events currently in flight.
         var publisher = new RecordingPublisher();
-        var dispatcher = Dispatcher(publisher);
+        var dispatcher = CreateDispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         var bufferedDuringPublish = -1;
@@ -119,7 +119,7 @@ public class DomainEventDispatcherTests
         // A handler reacting to "first" raises "second" on the same aggregate; the dispatcher has to
         // re-read the change tracker to notice, rather than working from its first snapshot.
         var publisher = new RecordingPublisher();
-        var dispatcher = Dispatcher(publisher);
+        var dispatcher = CreateDispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         publisher.OnPublish = published =>
@@ -145,7 +145,7 @@ public class DomainEventDispatcherTests
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = Dispatcher(publisher);
+        var dispatcher = CreateDispatcher(publisher);
         var first = new TestAggregate();
         first.DoSomething("first");
         var tracked = new List<AggregateRoot> { first };
@@ -174,7 +174,7 @@ public class DomainEventDispatcherTests
     {
         // Arrange
         var publisher = new RecordingPublisher();
-        var dispatcher = Dispatcher(publisher);
+        var dispatcher = CreateDispatcher(publisher);
         var aggregate = new TestAggregate();
         aggregate.DoSomething("first");
         publisher.OnPublish = _ => aggregate.DoSomething("again");

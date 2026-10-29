@@ -37,7 +37,7 @@ public class DomainModelTests
     [Fact]
     public void Entities_change_state_only_through_their_own_methods() =>
         AssertNone(
-            from entity in Entities()
+            from entity in FindEntityTypes()
             from property in entity.GetProperties(DeclaredInstance)
             where property.SetMethod is { IsPrivate: false }
             select $"{entity.Name}.{property.Name} has a non-private setter",
@@ -48,17 +48,17 @@ public class DomainModelTests
     [Fact]
     public void Entities_expose_collections_read_only() =>
         AssertNone(
-            from entity in Entities()
+            from entity in FindEntityTypes()
             from property in entity.GetProperties(DeclaredInstance)
             where property.GetMethod is { IsPublic: true } && IsMutableCollection(property.PropertyType)
-            select $"{entity.Name}.{property.Name} is a {ReadableTypeName(property.PropertyType)}",
+            select $"{entity.Name}.{property.Name} is a {FormatReadableTypeName(property.PropertyType)}",
             "a mutable collection lets callers add or remove children without the entity's invariants running. "
                 + "Expose IReadOnlyList<T> over a private backing List<T>, changed only by the entity's methods.");
 
     [Fact]
     public void Entities_are_created_only_through_a_factory_or_domain_service() =>
         AssertNone(
-            from entity in Entities()
+            from entity in FindEntityTypes()
             where !entity.IsAbstract && entity.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Length > 0
             select $"{entity.Name} has a public constructor",
             "Application obtains an entity through a public static factory method or a domain service, never "
@@ -67,7 +67,7 @@ public class DomainModelTests
     [Fact]
     public void Entities_have_a_private_parameterless_constructor_for_EF() =>
         AssertNone(
-            from entity in Entities()
+            from entity in FindEntityTypes()
             where !entity.IsAbstract
             let constructor = entity.GetConstructor(
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, Type.EmptyTypes)
@@ -85,14 +85,14 @@ public class DomainModelTests
     [Fact]
     public void Entities_reference_other_aggregates_only_by_id()
     {
-        var entities = Entities();
+        var entities = FindEntityTypes();
         var roots = entities.Where(IsAggregateRoot).ToHashSet();
 
         AssertNone(
             from entity in entities
-            from member in StateMembers(entity)
-            from referenced in TypeAndItsTypeArguments(member.Type).Where(roots.Contains).Distinct()
-            where IsAggregateRoot(entity) || !EntitiesInsideAggregate(referenced, entities).Contains(entity)
+            from member in FindStateMembers(entity)
+            from referenced in EnumerateTypeAndItsTypeArguments(member.Type).Where(roots.Contains).Distinct()
+            where IsAggregateRoot(entity) || !FindEntitiesInsideAggregate(referenced, entities).Contains(entity)
             select $"{entity.Name}.{member.Name} holds a {referenced.Name}",
             "each aggregate is loaded, changed and saved as a unit, and a navigation into another one lets a single "
                 + "save change both. Hold the other aggregate's id instead, and have the handler load it.");
@@ -101,14 +101,14 @@ public class DomainModelTests
     [Fact]
     public void Value_objects_are_immutable() =>
         AssertNone(
-            ValueObjects().SelectMany(MutableMembers),
+            FindValueObjectTypes().SelectMany(FindMutableMembers),
             "a value object is defined only by its values, so it is replaced rather than changed. Declare it as a "
                 + "positional record, with readonly collections.");
 
     [Fact]
     public void Value_objects_compare_by_value() =>
         AssertNone(
-            from valueObject in ValueObjects()
+            from valueObject in FindValueObjectTypes()
             where valueObject.GetMethod(
                 nameof(Equals),
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly,
@@ -120,12 +120,12 @@ public class DomainModelTests
     [Fact]
     public void Domain_events_are_immutable() =>
         AssertNone(
-            DomainEvents().SelectMany(MutableMembers),
+            FindDomainEventTypes().SelectMany(FindMutableMembers),
             "a domain event records something that already happened, and every handler receives the same instance, "
                 + "so one handler changing it would change what the others see. Declare it as a positional record.");
 
     /// <summary>The top-level types of every feature's Domain layer.</summary>
-    private static Type[] DomainTypes()
+    private static Type[] FindDomainTypes()
     {
         Assert.True(
             SolutionAssemblies.HasFeatureLayer("Domain"),
@@ -141,17 +141,17 @@ public class DomainModelTests
         ];
     }
 
-    private static Type[] DomainEvents() =>
+    private static Type[] FindDomainEventTypes() =>
     [
         .. SolutionAssemblies.FeatureTypes.Where(type => type is { IsInterface: false, IsAbstract: false }
             && typeof(IDomainEvent).IsAssignableFrom(type)),
     ];
 
-    private static Type[] Entities() =>
-        [.. DomainTypes().Where(type => type.IsClass && (IsInDomainNamespace(type, "Entities") || IsAggregateRoot(type)))];
+    private static Type[] FindEntityTypes() =>
+        [.. FindDomainTypes().Where(type => type.IsClass && (IsInDomainNamespace(type, "Entities") || IsAggregateRoot(type)))];
 
-    private static Type[] ValueObjects() =>
-        [.. DomainTypes().Where(type => IsInDomainNamespace(type, "ValueObjects"))];
+    private static Type[] FindValueObjectTypes() =>
+        [.. FindDomainTypes().Where(type => IsInDomainNamespace(type, "ValueObjects"))];
 
     private static bool IsAggregateRoot(Type type) => typeof(AggregateRoot).IsAssignableFrom(type);
 
@@ -166,7 +166,7 @@ public class DomainModelTests
     }
 
     /// <summary>The members holding an entity's state: its properties, and fields the author declared.</summary>
-    private static IEnumerable<(string Name, Type Type)> StateMembers(Type type)
+    private static IEnumerable<(string Name, Type Type)> FindStateMembers(Type type)
     {
         foreach (var property in type.GetProperties(DeclaredInstance))
         {
@@ -181,7 +181,7 @@ public class DomainModelTests
     }
 
     /// <summary>The non-root entities reachable from <paramref name="root"/> through its members: its aggregate.</summary>
-    private static HashSet<Type> EntitiesInsideAggregate(Type root, Type[] entities)
+    private static HashSet<Type> FindEntitiesInsideAggregate(Type root, Type[] entities)
     {
         var children = entities.Where(entity => !IsAggregateRoot(entity)).ToHashSet();
         var held = new HashSet<Type>();
@@ -189,7 +189,7 @@ public class DomainModelTests
 
         while (pending.TryDequeue(out var current))
         {
-            foreach (var child in StateMembers(current).SelectMany(member => TypeAndItsTypeArguments(member.Type)))
+            foreach (var child in FindStateMembers(current).SelectMany(member => EnumerateTypeAndItsTypeArguments(member.Type)))
             {
                 if (children.Contains(child) && held.Add(child))
                 {
@@ -217,7 +217,7 @@ public class DomainModelTests
 
     /// <summary>Everything that lets a constructed instance of <paramref name="type"/> change.</summary>
     /// <remarks>Backing fields are skipped; their property's setter is reported under the name the author wrote.</remarks>
-    private static IEnumerable<string> MutableMembers(Type type)
+    private static IEnumerable<string> FindMutableMembers(Type type)
     {
         const BindingFlags instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
@@ -231,7 +231,7 @@ public class DomainModelTests
 
             if (property.GetMethod is { IsPublic: true } && IsMutableCollection(property.PropertyType))
             {
-                yield return $"{type.Name}.{property.Name} is a mutable {ReadableTypeName(property.PropertyType)}";
+                yield return $"{type.Name}.{property.Name} is a mutable {FormatReadableTypeName(property.PropertyType)}";
             }
         }
 
@@ -245,21 +245,21 @@ public class DomainModelTests
     }
 
     /// <summary>The type and, recursively, its array element and generic arguments.</summary>
-    private static IEnumerable<Type> TypeAndItsTypeArguments(Type type)
+    private static IEnumerable<Type> EnumerateTypeAndItsTypeArguments(Type type)
     {
         yield return type;
 
         var inner = type.IsArray ? [type.GetElementType()!] : type.GetGenericArguments();
-        foreach (var named in inner.SelectMany(TypeAndItsTypeArguments))
+        foreach (var named in inner.SelectMany(EnumerateTypeAndItsTypeArguments))
         {
             yield return named;
         }
     }
 
     /// <summary>A readable type name: <c>List&lt;OrderLine&gt;</c> rather than <c>List`1</c>.</summary>
-    private static string ReadableTypeName(Type type) =>
+    private static string FormatReadableTypeName(Type type) =>
         type.IsGenericType
-            ? $"{type.Name[..type.Name.IndexOf('`', StringComparison.Ordinal)]}<{string.Join(", ", type.GetGenericArguments().Select(ReadableTypeName))}>"
+            ? $"{type.Name[..type.Name.IndexOf('`', StringComparison.Ordinal)]}<{string.Join(", ", type.GetGenericArguments().Select(FormatReadableTypeName))}>"
             : type.Name;
 
     /// <summary>Fails with every violation listed, then the reason the rule exists.</summary>

@@ -23,7 +23,7 @@ public class ServiceDefaultsTests
         WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environmentName });
 
     /// <summary>The route patterns of every endpoint mapped on <paramref name="app"/> so far.</summary>
-    private static List<string> MappedRoutes(WebApplication app)
+    private static List<string> ReadMappedRoutes(WebApplication app)
     {
         var routeEndpoints = ((IEndpointRouteBuilder)app).DataSources
             .SelectMany(source => source.Endpoints)
@@ -102,7 +102,7 @@ public class ServiceDefaultsTests
         app.MapDefaultEndpoints();
 
         // Assert
-        var routes = MappedRoutes(app);
+        var routes = ReadMappedRoutes(app);
         Assert.Contains("/health", routes, StringComparer.Ordinal);
         Assert.Contains("/alive", routes, StringComparer.Ordinal);
     }
@@ -119,7 +119,7 @@ public class ServiceDefaultsTests
         app.MapDefaultEndpoints();
 
         // Assert
-        var routes = MappedRoutes(app);
+        var routes = ReadMappedRoutes(app);
         Assert.DoesNotContain("/health", routes, StringComparer.Ordinal);
         Assert.DoesNotContain("/alive", routes, StringComparer.Ordinal);
     }

@@ -14,5 +14,5 @@ namespace ModulithTemplate.SharedKernel.Infrastructure.Events;
 internal static partial class EventLog
 {
     [LoggerMessage(EventId = 11, Level = LogLevel.Debug, Message = "Dispatched domain event {EventType}")]
-    public static partial void DomainEventDispatched(ILogger logger, string eventType);
+    public static partial void LogDomainEventDispatched(ILogger logger, string eventType);
 }

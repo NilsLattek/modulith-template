@@ -25,7 +25,7 @@ public class OutboxMappingTests
     [Fact]
     public void Every_feature_context_stages_into_the_one_shared_table()
     {
-        foreach (var (_, entity) in OutboxEntityMappedByEachFeatureContext())
+        foreach (var (_, entity) in FindOutboxEntityOfEachFeatureContext())
         {
             Assert.Equal(OutboxSchema.Name, entity.GetSchema(), StringComparer.Ordinal);
             Assert.Equal(OutboxSchema.TableName, entity.GetTableName(), StringComparer.Ordinal);
@@ -35,7 +35,7 @@ public class OutboxMappingTests
     [Fact]
     public void No_feature_migrates_the_shared_table()
     {
-        foreach (var (context, entity) in OutboxEntityMappedByEachFeatureContext())
+        foreach (var (context, entity) in FindOutboxEntityOfEachFeatureContext())
         {
             Assert.True(
                 entity.IsTableExcludedFromMigrations(),
@@ -49,7 +49,7 @@ public class OutboxMappingTests
     /// The design-time model, not the runtime one: the migration exclusion above is a design-time
     /// concern and the read-optimized runtime model drops it.
     /// </remarks>
-    private static (Type Context, IEntityType Entity)[] OutboxEntityMappedByEachFeatureContext()
+    private static (Type Context, IEntityType Entity)[] FindOutboxEntityOfEachFeatureContext()
     {
         var contexts = SolutionAssemblies.FeatureTypes
             .Where(type => type is { IsAbstract: false, IsClass: true }

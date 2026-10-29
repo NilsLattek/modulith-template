@@ -37,7 +37,7 @@ internal sealed class TestDatabase : IDisposable
         var name = $"modulith_tests_{Guid.NewGuid():N}";
         var server = Environment.GetEnvironmentVariable(ServerVariable) ?? DefaultServer;
 
-        Execute(Server(server), $"""CREATE DATABASE "{name}" """);
+        Execute(BuildServerConnectionString(server), $"""CREATE DATABASE "{name}" """);
 
         // Search Path is not a nicety: AddOutboxDbContext refuses a connection string without the
         // outbox's schema on it, for the reason ADR 0001 gives.
@@ -55,13 +55,13 @@ internal sealed class TestDatabase : IDisposable
     {
         // The pool holds connections to a database Postgres will not drop while they are open.
         NpgsqlConnection.ClearAllPools();
-        Execute(Server(ConnectionString), $"""DROP DATABASE IF EXISTS "{_name}" WITH (FORCE)""");
+        Execute(BuildServerConnectionString(ConnectionString), $"""DROP DATABASE IF EXISTS "{_name}" WITH (FORCE)""");
     }
 
     /// <summary>The same server, on the database every cluster has.</summary>
     /// <param name="connectionString">The connection string to redirect.</param>
     /// <returns>A connection string to the maintenance database.</returns>
-    private static string Server(string connectionString) =>
+    private static string BuildServerConnectionString(string connectionString) =>
         new NpgsqlConnectionStringBuilder(connectionString) { Database = "postgres", SearchPath = null }
             .ConnectionString;
 

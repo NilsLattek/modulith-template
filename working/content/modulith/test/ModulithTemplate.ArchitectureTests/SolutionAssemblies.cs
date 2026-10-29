@@ -50,7 +50,7 @@ internal static class SolutionAssemblies
     /// </remarks>
     /// <param name="suffixExpression">A layer suffix, or a regex alternation of several.</param>
     /// <returns>The assembly-name pattern.</returns>
-    public static string FeatureLayerPattern(string suffixExpression) =>
+    public static string BuildFeatureLayerPattern(string suffixExpression) =>
         @".*\.Features\..*\." + suffixExpression + @"(,.*)?$";
 
     /// <summary>Namespace of the tracker type a code-coverage run injects into every assembly.</summary>
@@ -62,9 +62,9 @@ internal static class SolutionAssemblies
     /// ArchUnitNET resolves all the copies to whichever assembly it met first, so every instrumented
     /// type appears to depend on that one layer. Use this on <i>both</i> sides of a dependency rule.
     /// </remarks>
-    /// <param name="assemblyPattern">An assembly-name pattern, e.g. from <see cref="FeatureLayerPattern"/>.</param>
+    /// <param name="assemblyPattern">An assembly-name pattern, e.g. from <see cref="BuildFeatureLayerPattern"/>.</param>
     /// <returns>The matching types, usable as a rule's subject or as its forbidden dependency set.</returns>
-    public static GivenTypesConjunction FeatureLayerTypes(string assemblyPattern) =>
+    public static GivenTypesConjunction SelectFeatureLayerTypes(string assemblyPattern) =>
         ArchRuleDefinition.Types().That()
             .ResideInAssemblyMatching(assemblyPattern)
             .And().DoNotResideInNamespaceMatching(InstrumentationNamespacePattern);
@@ -72,7 +72,7 @@ internal static class SolutionAssemblies
     /// <summary>Combines one or more layer suffixes into a regex alternation.</summary>
     /// <param name="suffixes">The suffixes to combine.</param>
     /// <returns>A single suffix expression.</returns>
-    public static string Alternation(params string[] suffixes) =>
+    public static string BuildRegexAlternation(params string[] suffixes) =>
         suffixes.Length == 1 ? suffixes[0] : "(" + string.Join("|", suffixes) + ")";
 
     /// <summary>Whether any discovered feature assembly is the given layer.</summary>

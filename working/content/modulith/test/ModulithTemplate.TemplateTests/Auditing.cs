@@ -43,7 +43,7 @@ public static class Auditing
     /// <param name="solution">The composed solution.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The entries.</returns>
-    internal static async Task<IReadOnlyList<AuditEntry>> AuditEntriesAsync(
+    internal static async Task<IReadOnlyList<AuditEntry>> ReadAuditEntriesAsync(
         this SolutionUnderTest solution, CancellationToken cancellationToken)
     {
         using var scope = solution.CreateScope();
@@ -58,7 +58,7 @@ public static class Auditing
 
         public string Name { get; private set; } = "";
 
-        public static AuditEntry For(string name) => new() { Name = name };
+        public static AuditEntry CreateFor(string name) => new() { Name = name };
     }
 
     /// <summary>The Consumer's context, shaped like a feature's.</summary>
@@ -89,7 +89,7 @@ public static class Auditing
         /// <inheritdoc />
         public async ValueTask<Result> Handle(RecordAuditCommand command, CancellationToken cancellationToken)
         {
-            context.Add(AuditEntry.For(command.Name));
+            context.Add(AuditEntry.CreateFor(command.Name));
             await context.SaveChangesAsync(cancellationToken);
             return string.Equals(command.Name, Refused, StringComparison.Ordinal)
                 ? Result.Fail("refused")

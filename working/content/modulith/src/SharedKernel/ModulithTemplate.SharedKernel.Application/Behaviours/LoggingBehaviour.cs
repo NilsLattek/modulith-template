@@ -50,7 +50,7 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
         using var activity = ActivitySource.StartActivity(messageType);
         activity?.SetTag("mediator.message.type", typeof(TMessage).FullName);
 
-        BehaviourLog.Handling(logger, messageType);
+        BehaviourLog.LogHandling(logger, messageType);
 
         var startedAt = Stopwatch.GetTimestamp();
         var response = await next(message, cancellationToken);
@@ -59,12 +59,12 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
         if (response is IResultBase { IsFailed: true } failed)
         {
             var errors = string.Join("; ", failed.Errors.Select(FormatErrorForLog));
-            BehaviourLog.Failed(logger, messageType, elapsedMilliseconds, errors);
+            BehaviourLog.LogFailed(logger, messageType, elapsedMilliseconds, errors);
             activity?.SetStatus(ActivityStatusCode.Error, errors);
         }
         else
         {
-            BehaviourLog.Handled(logger, messageType, elapsedMilliseconds);
+            BehaviourLog.LogHandled(logger, messageType, elapsedMilliseconds);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
 

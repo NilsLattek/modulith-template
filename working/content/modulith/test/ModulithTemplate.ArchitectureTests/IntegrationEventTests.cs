@@ -30,8 +30,8 @@ public class IntegrationEventTests
     [Fact]
     public void Integration_events_are_declared_in_a_Contracts_project()
     {
-        IArchRule rule = IntegrationEvents()
-            .Should().ResideInAssemblyMatching(SolutionAssemblies.FeatureLayerPattern(ContractsLayer))
+        IArchRule rule = SelectIntegrationEvents()
+            .Should().ResideInAssemblyMatching(SolutionAssemblies.BuildFeatureLayerPattern(ContractsLayer))
             .Because("an Integration Event is the publishing feature's announcement to its siblings, so it must "
                 + "live in the one project they may reference. Declared in Domain or Application it still works, "
                 + "but every consumer of it takes a dependency on the publisher's internals — and the cross-feature "
@@ -44,7 +44,7 @@ public class IntegrationEventTests
     [Fact]
     public void Integration_events_are_named_for_what_they_are()
     {
-        IArchRule rule = IntegrationEvents()
+        IArchRule rule = SelectIntegrationEvents()
             .Should().HaveNameMatching(IntegrationEventNamePattern)
             .Because("an Integration Event is read by features that never see the code publishing it, so its name "
                 + "must say what it is at the reference site.")
@@ -71,7 +71,7 @@ public class IntegrationEventTests
     [Fact]
     public void Every_integration_event_has_an_outbox_handler()
     {
-        var handledEventNames = ClosedInterfacesImplementedByFeatureTypes(typeof(IOutboxMessageHandler<>))
+        var handledEventNames = FindClosedInterfacesImplementedByFeatureTypes(typeof(IOutboxMessageHandler<>))
             .Select(contract => contract.GetGenericArguments()[0].FullName)
             .ToHashSet(StringComparer.Ordinal);
 
@@ -137,14 +137,14 @@ public class IntegrationEventTests
     }
 
     /// <summary>The closed forms of a generic interface that concrete feature types implement.</summary>
-    private static IEnumerable<Type> ClosedInterfacesImplementedByFeatureTypes(Type definition) =>
+    private static IEnumerable<Type> FindClosedInterfacesImplementedByFeatureTypes(Type definition) =>
         SolutionAssemblies.FeatureTypes
             .Where(type => type is { IsAbstract: false, IsClass: true })
             .SelectMany(type => type.GetInterfaces())
             .Where(contract => contract.IsGenericType && contract.GetGenericTypeDefinition() == definition);
 
     /// <summary>Every type implementing the Integration Event contract, wherever it was declared.</summary>
-    private static GivenTypesConjunction IntegrationEvents() =>
+    private static GivenTypesConjunction SelectIntegrationEvents() =>
         Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
             .And().ImplementInterface(typeof(IIntegrationEvent));

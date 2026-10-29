@@ -13,14 +13,14 @@ namespace ModulithTemplate.SharedKernel.Application.Behaviours;
 internal static partial class BehaviourLog
 {
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Handling {MessageType}")]
-    public static partial void Handling(ILogger logger, string messageType);
+    public static partial void LogHandling(ILogger logger, string messageType);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Handled {MessageType} in {ElapsedMilliseconds} ms")]
-    public static partial void Handled(ILogger logger, string messageType, long elapsedMilliseconds);
+    public static partial void LogHandled(ILogger logger, string messageType, long elapsedMilliseconds);
 
     [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "{MessageType} failed in {ElapsedMilliseconds} ms: {Errors}")]
-    public static partial void Failed(ILogger logger, string messageType, long elapsedMilliseconds, string errors);
+    public static partial void LogFailed(ILogger logger, string messageType, long elapsedMilliseconds, string errors);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "{MessageType} threw an unhandled exception")]
-    public static partial void HandlerThrew(ILogger logger, string messageType, Exception exception);
+    public static partial void LogHandlerThrew(ILogger logger, string messageType, Exception exception);
 }

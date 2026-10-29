@@ -20,7 +20,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
 
     public OptimisticConcurrencyTests()
     {
-        using var context = NewContext();
+        using var context = CreateContext();
         context.Database.EnsureCreated();
     }
 
@@ -68,7 +68,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
         // Act
         var act = async () =>
         {
-            await using var context = NewContext();
+            await using var context = CreateContext();
             var repository = new NotesRepository<VersionedNote>(context);
             var note = await repository.GetByIdAsync(id, cancellationToken);
 
@@ -86,13 +86,13 @@ public sealed class OptimisticConcurrencyTests : IDisposable
     {
         // Arrange: two copies read before either saves.
         var cancellationToken = TestContext.Current.CancellationToken;
-        await using var adding = NewContext();
+        await using var adding = CreateContext();
         var note = new PlainNote("draft");
         adding.Add(note);
         await adding.SaveChangesAsync(cancellationToken);
 
-        await using var first = NewContext();
-        await using var second = NewContext();
+        await using var first = CreateContext();
+        await using var second = CreateContext();
         var firstCopy = await first.Set<PlainNote>().SingleAsync(cancellationToken);
         var secondCopy = await second.Set<PlainNote>().SingleAsync(cancellationToken);
 
@@ -106,7 +106,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
         Assert.Equal("second", (await ReadAsync<PlainNote>(note.Id, cancellationToken)).Text);
     }
 
-    private NotesContext NewContext() =>
+    private NotesContext CreateContext() =>
         new(new DbContextOptionsBuilder<NotesContext>()
             .UseNpgsql(_database.ConnectionString)
             .UseSnakeCaseNamingConvention()
@@ -114,7 +114,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
 
     private async Task<(Guid Id, uint Version)> AddAsync(VersionedNote note, CancellationToken cancellationToken)
     {
-        await using var context = NewContext();
+        await using var context = CreateContext();
         var repository = new NotesRepository<VersionedNote>(context);
         await repository.AddAsync(note, cancellationToken);
         Assert.NotEqual(0u, note.Version);
@@ -124,7 +124,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
     /// <summary>What a handler does: load, change, hand over the caller's version, save.</summary>
     private async Task<VersionedNote> RenameAsync(Guid id, uint version, string text, CancellationToken cancellationToken)
     {
-        await using var context = NewContext();
+        await using var context = CreateContext();
         var repository = new NotesRepository<VersionedNote>(context);
         var note = await repository.GetByIdAsync(id, cancellationToken);
         note!.Rename(text);
@@ -136,7 +136,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
     private async Task<T> ReadAsync<T>(Guid id, CancellationToken cancellationToken)
         where T : class
     {
-        await using var context = NewContext();
+        await using var context = CreateContext();
         return (await context.Set<T>().FindAsync([id], cancellationToken))!;
     }
 

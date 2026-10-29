@@ -50,7 +50,7 @@ public class IntegrationEventFanOutTests
 
         // Assert
         // Payments and Auditing consume it; Orders, which handles nothing, gets no row of its own.
-        var rows = await solution.InboxRowsAsync(cancellationToken);
+        var rows = await solution.ReadInboxRowsAsync(cancellationToken);
         Assert.Equal(
             [$"AuditContext:{outboxRow.GroupKey}", $"PaymentsContext:{outboxRow.GroupKey}"],
             rows.Select(row => row.GroupKey).Order(StringComparer.Ordinal).ToArray());
@@ -71,13 +71,13 @@ public class IntegrationEventFanOutTests
         var cancellationToken = TestContext.Current.CancellationToken;
         var outboxRow = await PublishAsync(solution, cancellationToken);
         await DispatchAsync(solution, outboxRow, cancellationToken);
-        var first = await solution.InboxRowsAsync(cancellationToken);
+        var first = await solution.ReadInboxRowsAsync(cancellationToken);
 
         // Act
         await DispatchAsync(solution, outboxRow, cancellationToken);
 
         // Assert
-        var second = await solution.InboxRowsAsync(cancellationToken);
+        var second = await solution.ReadInboxRowsAsync(cancellationToken);
         Assert.Equal(first.Select(row => row.EventId), second.Select(row => row.EventId));
     }
 
@@ -100,7 +100,7 @@ public class IntegrationEventFanOutTests
         await DispatchAsync(solution, outboxRow, cancellationToken);
 
         // Assert
-        Assert.Equal(2, (await solution.InboxRowsAsync(cancellationToken)).Count);
+        Assert.Equal(2, (await solution.ReadInboxRowsAsync(cancellationToken)).Count);
     }
 
     [Fact]
@@ -118,10 +118,10 @@ public class IntegrationEventFanOutTests
         await DispatchAsync(solution, outboxRow, cancellationToken);
 
         // Assert
-        var retried = Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
+        var retried = Assert.Single(await solution.ReadOutboxRowsAsync(cancellationToken));
         Assert.Equal(1, retried.RetryCount);
         Assert.Single(broker.Sent);
-        Assert.Equal(2, (await solution.InboxRowsAsync(cancellationToken)).Count);
+        Assert.Equal(2, (await solution.ReadInboxRowsAsync(cancellationToken)).Count);
     }
 
     [Fact]
@@ -138,13 +138,13 @@ public class IntegrationEventFanOutTests
 
         // Assert
         Assert.Single(broker.Sent);
-        Assert.Equal(2, (await solution.InboxRowsAsync(cancellationToken)).Count);
+        Assert.Equal(2, (await solution.ReadInboxRowsAsync(cancellationToken)).Count);
     }
 
     private static async Task<OutboxMessage> PublishAsync(SolutionUnderTest solution, CancellationToken cancellationToken)
     {
         await solution.SendAsync(new AddSomeEntityCommand("a name", 12.34m), cancellationToken);
-        return Assert.Single(await solution.OutboxRowsAsync(cancellationToken));
+        return Assert.Single(await solution.ReadOutboxRowsAsync(cancellationToken));
     }
 
     /// <summary>Hands a row to its handler in a scope of its own, as the outbox worker does.</summary>

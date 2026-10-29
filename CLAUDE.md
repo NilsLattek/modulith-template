@@ -78,7 +78,7 @@ the user.
 subject — `FindProjectByName` over `Lookup`, `CreateCombinedId` over `CombinedId` — so a caller
 understands it without opening the type; a type names what it is. A longer name is fine when it is
 clearer. Names a framework dictates (`OnModelCreating`, `Handle`) and the `To*`/`With*` conventions are
-natural exceptions.
+natural exceptions. This follows the .NET [naming guidelines](https://learn.microsoft.com/dotnet/standard/design-guidelines/naming-guidelines).
 
 **Prefer LINQ chains that reshape data once.** `.Where(…).Select(…).ToList()` reads well; a second
 reshape (`.Select().SelectMany().Select()`) usually reads better split into named locals, a named

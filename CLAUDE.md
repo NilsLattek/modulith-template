@@ -71,13 +71,18 @@ dotnet new install working/bin/Release/Modulith.*.nupkg
 
 ## Writing code
 
-**Names say what the code does.** A method starts with a verb and names its subject —
-`FindProjectByName`, not `Lookup`; `CreateCombinedId`, not `CombinedId` — so a caller understands it
-without opening the type. A type names what it is. Prefer the longer name whenever it is the clearer
-one. Names a framework dictates (`OnModelCreating`, `Handle`) and the `To*`/`With*` conventions stay.
+These are recommendations, not hard rules. When an exception looks justified and you are unsure, ask
+the user.
 
-**A LINQ chain reshapes data once.** `.Where(…).Select(…).ToList()` is fine; a second reshape
-(`.Select().SelectMany().Select()`) gets split into named locals, a named method, or a `foreach`.
+**Prefer names that say what the code does.** A method usually starts with a verb and names its
+subject — `FindProjectByName` over `Lookup`, `CreateCombinedId` over `CombinedId` — so a caller
+understands it without opening the type; a type names what it is. A longer name is fine when it is
+clearer. Names a framework dictates (`OnModelCreating`, `Handle`) and the `To*`/`With*` conventions are
+natural exceptions.
+
+**Prefer LINQ chains that reshape data once.** `.Where(…).Select(…).ToList()` reads well; a second
+reshape (`.Select().SelectMany().Select()`) usually reads better split into named locals, a named
+method, or a `foreach`.
 
 ## Writing comments
 

@@ -23,13 +23,14 @@ public class ServiceDefaultsTests
         WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environmentName });
 
     /// <summary>The route patterns of every endpoint mapped on <paramref name="app"/> so far.</summary>
-    private static List<string> MappedRoutes(WebApplication app) =>
-        ((IEndpointRouteBuilder)app).DataSources
+    private static List<string> MappedRoutes(WebApplication app)
+    {
+        var routeEndpoints = ((IEndpointRouteBuilder)app).DataSources
             .SelectMany(source => source.Endpoints)
-            .OfType<RouteEndpoint>()
-            .Select(endpoint => endpoint.RoutePattern.RawText)
-            .OfType<string>()
-            .ToList();
+            .OfType<RouteEndpoint>();
+
+        return [.. routeEndpoints.Select(endpoint => endpoint.RoutePattern.RawText).OfType<string>()];
+    }
 
     [Fact]
     public async Task AddServiceDefaults_always_registers_the_self_health_check_tagged_live()

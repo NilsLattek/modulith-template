@@ -51,7 +51,7 @@ public class DomainModelTests
             from entity in Entities()
             from property in entity.GetProperties(DeclaredInstance)
             where property.GetMethod is { IsPublic: true } && IsMutableCollection(property.PropertyType)
-            select $"{entity.Name}.{property.Name} is a {Describe(property.PropertyType)}",
+            select $"{entity.Name}.{property.Name} is a {ReadableTypeName(property.PropertyType)}",
             "a mutable collection lets callers add or remove children without the entity's invariants running. "
                 + "Expose IReadOnlyList<T> over a private backing List<T>, changed only by the entity's methods.");
 
@@ -91,8 +91,8 @@ public class DomainModelTests
         AssertNone(
             from entity in entities
             from member in StateMembers(entity)
-            from referenced in NamedTypes(member.Type).Where(roots.Contains).Distinct()
-            where IsAggregateRoot(entity) || !HeldBy(referenced, entities).Contains(entity)
+            from referenced in TypeAndItsTypeArguments(member.Type).Where(roots.Contains).Distinct()
+            where IsAggregateRoot(entity) || !EntitiesInsideAggregate(referenced, entities).Contains(entity)
             select $"{entity.Name}.{member.Name} holds a {referenced.Name}",
             "each aggregate is loaded, changed and saved as a unit, and a navigation into another one lets a single "
                 + "save change both. Hold the other aggregate's id instead, and have the handler load it.");
@@ -120,11 +120,7 @@ public class DomainModelTests
     [Fact]
     public void Domain_events_are_immutable() =>
         AssertNone(
-            SolutionAssemblies.FeatureAssemblies
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => type is { IsInterface: false, IsAbstract: false }
-                    && typeof(IDomainEvent).IsAssignableFrom(type))
-                .SelectMany(MutableMembers),
+            DomainEvents().SelectMany(MutableMembers),
             "a domain event records something that already happened, and every handler receives the same instance, "
                 + "so one handler changing it would change what the others see. Declare it as a positional record.");
 
@@ -145,16 +141,22 @@ public class DomainModelTests
         ];
     }
 
+    private static Type[] DomainEvents() =>
+    [
+        .. SolutionAssemblies.FeatureTypes.Where(type => type is { IsInterface: false, IsAbstract: false }
+            && typeof(IDomainEvent).IsAssignableFrom(type)),
+    ];
+
     private static Type[] Entities() =>
-        [.. DomainTypes().Where(type => type.IsClass && (InNamespace(type, "Entities") || IsAggregateRoot(type)))];
+        [.. DomainTypes().Where(type => type.IsClass && (IsInDomainNamespace(type, "Entities") || IsAggregateRoot(type)))];
 
     private static Type[] ValueObjects() =>
-        [.. DomainTypes().Where(type => InNamespace(type, "ValueObjects"))];
+        [.. DomainTypes().Where(type => IsInDomainNamespace(type, "ValueObjects"))];
 
     private static bool IsAggregateRoot(Type type) => typeof(AggregateRoot).IsAssignableFrom(type);
 
     /// <summary>Whether the type sits in the feature Domain namespace ending in <paramref name="folder"/>, or below it.</summary>
-    private static bool InNamespace(Type type, string folder)
+    private static bool IsInDomainNamespace(Type type, string folder)
     {
         var segment = ".Domain." + folder;
         var ns = type.Namespace ?? string.Empty;
@@ -164,14 +166,22 @@ public class DomainModelTests
     }
 
     /// <summary>The members holding an entity's state: its properties, and fields the author declared.</summary>
-    private static IEnumerable<(string Name, Type Type)> StateMembers(Type type) =>
-        type.GetProperties(DeclaredInstance).Select(property => (property.Name, property.PropertyType))
-            .Concat(type.GetFields(DeclaredInstance)
-                .Where(field => !field.Name.StartsWith('<'))
-                .Select(field => (field.Name, field.FieldType)));
+    private static IEnumerable<(string Name, Type Type)> StateMembers(Type type)
+    {
+        foreach (var property in type.GetProperties(DeclaredInstance))
+        {
+            yield return (property.Name, property.PropertyType);
+        }
+
+        // Compiler-generated backing fields are named <Property>k__BackingField.
+        foreach (var field in type.GetFields(DeclaredInstance).Where(field => !field.Name.StartsWith('<')))
+        {
+            yield return (field.Name, field.FieldType);
+        }
+    }
 
     /// <summary>The non-root entities reachable from <paramref name="root"/> through its members: its aggregate.</summary>
-    private static HashSet<Type> HeldBy(Type root, Type[] entities)
+    private static HashSet<Type> EntitiesInsideAggregate(Type root, Type[] entities)
     {
         var children = entities.Where(entity => !IsAggregateRoot(entity)).ToHashSet();
         var held = new HashSet<Type>();
@@ -179,7 +189,7 @@ public class DomainModelTests
 
         while (pending.TryDequeue(out var current))
         {
-            foreach (var child in StateMembers(current).SelectMany(member => NamedTypes(member.Type)))
+            foreach (var child in StateMembers(current).SelectMany(member => TypeAndItsTypeArguments(member.Type)))
             {
                 if (children.Contains(child) && held.Add(child))
                 {
@@ -221,7 +231,7 @@ public class DomainModelTests
 
             if (property.GetMethod is { IsPublic: true } && IsMutableCollection(property.PropertyType))
             {
-                yield return $"{type.Name}.{property.Name} is a mutable {Describe(property.PropertyType)}";
+                yield return $"{type.Name}.{property.Name} is a mutable {ReadableTypeName(property.PropertyType)}";
             }
         }
 
@@ -235,21 +245,21 @@ public class DomainModelTests
     }
 
     /// <summary>The type and, recursively, its array element and generic arguments.</summary>
-    private static IEnumerable<Type> NamedTypes(Type type)
+    private static IEnumerable<Type> TypeAndItsTypeArguments(Type type)
     {
         yield return type;
 
         var inner = type.IsArray ? [type.GetElementType()!] : type.GetGenericArguments();
-        foreach (var named in inner.SelectMany(NamedTypes))
+        foreach (var named in inner.SelectMany(TypeAndItsTypeArguments))
         {
             yield return named;
         }
     }
 
     /// <summary>A readable type name: <c>List&lt;OrderLine&gt;</c> rather than <c>List`1</c>.</summary>
-    private static string Describe(Type type) =>
+    private static string ReadableTypeName(Type type) =>
         type.IsGenericType
-            ? $"{type.Name[..type.Name.IndexOf('`', StringComparison.Ordinal)]}<{string.Join(", ", type.GetGenericArguments().Select(Describe))}>"
+            ? $"{type.Name[..type.Name.IndexOf('`', StringComparison.Ordinal)]}<{string.Join(", ", type.GetGenericArguments().Select(ReadableTypeName))}>"
             : type.Name;
 
     /// <summary>Fails with every violation listed, then the reason the rule exists.</summary>

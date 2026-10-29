@@ -26,7 +26,7 @@ internal sealed class SaveRecorder : SaveChangesInterceptor
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData, InterceptionResult<int> result)
     {
-        Record(eventData);
+        RecordPendingChanges(eventData);
         return base.SavingChanges(eventData, result);
     }
 
@@ -36,11 +36,11 @@ internal sealed class SaveRecorder : SaveChangesInterceptor
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        Record(eventData);
+        RecordPendingChanges(eventData);
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private void Record(DbContextEventData eventData)
+    private void RecordPendingChanges(DbContextEventData eventData)
     {
         if (eventData.Context is { } context)
         {

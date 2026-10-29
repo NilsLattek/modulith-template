@@ -71,13 +71,13 @@ public class IntegrationEventTests
     [Fact]
     public void Every_integration_event_has_an_outbox_handler()
     {
-        var handled = Implementations(typeof(IOutboxMessageHandler<>))
+        var handledEventNames = ClosedInterfacesImplementedByFeatureTypes(typeof(IOutboxMessageHandler<>))
             .Select(contract => contract.GetGenericArguments()[0].FullName)
             .ToHashSet(StringComparer.Ordinal);
 
-        var undelivered = FeatureTypes()
+        var undelivered = SolutionAssemblies.FeatureTypes
             .Where(type => !type.IsAbstract && typeof(IIntegrationEvent).IsAssignableFrom(type))
-            .Where(type => !handled.Contains(type.FullName))
+            .Where(type => !handledEventNames.Contains(type.FullName))
             .Select(type => type.FullName)
             .ToArray();
 
@@ -92,14 +92,11 @@ public class IntegrationEventTests
     [Fact]
     public void Plain_notification_handlers_of_integration_events_live_in_Infrastructure()
     {
-        var misplaced = FeatureTypes()
-            .Where(type => type is { IsAbstract: false, IsClass: true })
-            .Where(type => !IsInboxHandler(type))
-            .Where(type => type.GetInterfaces().Any(contract =>
-                contract.IsGenericType
-                && contract.GetGenericTypeDefinition() == typeof(INotificationHandler<>)
-                && typeof(IIntegrationEvent).IsAssignableFrom(contract.GetGenericArguments()[0])))
-            .Where(type => !type.Assembly.GetName().Name!.EndsWith(".Infrastructure", StringComparison.Ordinal))
+        var misplaced = SolutionAssemblies.FeatureTypes
+            .Where(type => type is { IsAbstract: false, IsClass: true }
+                && !IsInboxHandler(type)
+                && HandlesIntegrationEventAsPlainNotification(type)
+                && !type.Assembly.GetName().Name!.EndsWith(".Infrastructure", StringComparison.Ordinal))
             .Select(type => type.FullName)
             .ToArray();
 
@@ -113,6 +110,12 @@ public class IntegrationEventTests
         static bool IsInboxHandler(Type type) =>
             type.GetInterfaces().Any(contract =>
                 contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(IInboxMessageHandler<>));
+
+        static bool HandlesIntegrationEventAsPlainNotification(Type type) =>
+            type.GetInterfaces().Any(contract =>
+                contract.IsGenericType
+                && contract.GetGenericTypeDefinition() == typeof(INotificationHandler<>)
+                && typeof(IIntegrationEvent).IsAssignableFrom(contract.GetGenericArguments()[0]));
     }
 
     [Fact]
@@ -121,8 +124,8 @@ public class IntegrationEventTests
         // An inbox row stores its envelope's type name, which embeds each type argument's assembly
         // version: a feature releasing under another one orphans every row still pending.
         var pinned = new Version(1, 0, 0, 0);
-        var drifted = SolutionAssemblies.FeatureAssemblies
-            .Select(assembly => assembly.GetName())
+        var assemblyNames = SolutionAssemblies.FeatureAssemblies.Select(assembly => assembly.GetName());
+        var drifted = assemblyNames
             .Where(name => name.Version != pinned)
             .Select(name => $"{name.Name} ({name.Version})")
             .ToArray();
@@ -133,12 +136,9 @@ public class IntegrationEventTests
                 + "Version releases through Version, FileVersion or InformationalVersion instead.");
     }
 
-    private static Type[] FeatureTypes() =>
-        [.. SolutionAssemblies.FeatureAssemblies.SelectMany(assembly => assembly.GetTypes())];
-
     /// <summary>The closed forms of a generic interface that concrete feature types implement.</summary>
-    private static IEnumerable<Type> Implementations(Type definition) =>
-        FeatureTypes()
+    private static IEnumerable<Type> ClosedInterfacesImplementedByFeatureTypes(Type definition) =>
+        SolutionAssemblies.FeatureTypes
             .Where(type => type is { IsAbstract: false, IsClass: true })
             .SelectMany(type => type.GetInterfaces())
             .Where(contract => contract.IsGenericType && contract.GetGenericTypeDefinition() == definition);

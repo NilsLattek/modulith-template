@@ -99,13 +99,13 @@ public class DomainEventDispatchInterceptorTests
         })
         .Build();
 
-    private static string[] Dispatched(CallbackPublisher publisher) =>
+    private static string[] WhatWasDispatched(CallbackPublisher publisher) =>
         [.. publisher.Published.Cast<ThingHappenedDomainEvent>().Select(domainEvent => domainEvent.What)];
 
-    private static DomainEventDispatchInterceptor<FirstFeatureContext> Interceptor(IPublisher publisher) =>
+    private static DomainEventDispatchInterceptor<FirstFeatureContext> CreateInterceptor(IPublisher publisher) =>
         new(new DomainEventDispatcher(publisher, NullLogger<DomainEventDispatcher>.Instance));
 
-    private static FirstFeatureContext Context() =>
+    private static FirstFeatureContext CreateFirstFeatureContext() =>
         new(new DbContextOptionsBuilder<FirstFeatureContext>().UseNpgsql(ConnectionString).Options);
 
     [Fact]
@@ -143,7 +143,7 @@ public class DomainEventDispatchInterceptorTests
             .SavingChangesAsync(SavingChanges(first), default, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(["first-feature", "second-feature"], Dispatched(publisher), StringComparer.Ordinal);
+        Assert.Equal(["first-feature", "second-feature"], WhatWasDispatched(publisher), StringComparer.Ordinal);
         Assert.Empty(secondAggregate.DomainEvents);
     }
 
@@ -154,8 +154,8 @@ public class DomainEventDispatchInterceptorTests
         // A handler that saves the very context under dispatch must not start a competing dispatch:
         // the outer loop re-reads the change tracker each round and picks the new event up itself.
         var publisher = new CallbackPublisher();
-        var interceptor = Interceptor(publisher);
-        using var context = Context();
+        var interceptor = CreateInterceptor(publisher);
+        using var context = CreateFirstFeatureContext();
         var aggregate = Raised(context, id: 1, what: "first");
         var publishedDuringNestedSave = -1;
         publisher.OnPublish = async published =>
@@ -175,7 +175,7 @@ public class DomainEventDispatchInterceptorTests
 
         // Assert
         Assert.Equal(1, publishedDuringNestedSave);
-        Assert.Equal(["first", "nested"], Dispatched(publisher), StringComparer.Ordinal);
+        Assert.Equal(["first", "nested"], WhatWasDispatched(publisher), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -184,8 +184,8 @@ public class DomainEventDispatchInterceptorTests
         // Arrange
         // The guard is released when dispatch finishes, so it suppresses nested saves only.
         var publisher = new CallbackPublisher();
-        var interceptor = Interceptor(publisher);
-        using var context = Context();
+        var interceptor = CreateInterceptor(publisher);
+        using var context = CreateFirstFeatureContext();
         var aggregate = Raised(context, id: 1, what: "first");
 
         // Act
@@ -196,7 +196,7 @@ public class DomainEventDispatchInterceptorTests
             SavingChanges(context), default, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(["first", "second"], Dispatched(publisher), StringComparer.Ordinal);
+        Assert.Equal(["first", "second"], WhatWasDispatched(publisher), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public class DomainEventDispatchInterceptorTests
         // The interceptor is only ever attached to its own context, but the type check is what makes
         // the instance-level guard safe — it can never be flipped by a foreign context.
         var publisher = new CallbackPublisher();
-        var interceptor = Interceptor(publisher);
+        var interceptor = CreateInterceptor(publisher);
         var options = new DbContextOptionsBuilder<SecondFeatureContext>().UseNpgsql(ConnectionString).Options;
         using var foreign = new SecondFeatureContext(options);
         Raised(foreign, id: 1, what: "elsewhere");

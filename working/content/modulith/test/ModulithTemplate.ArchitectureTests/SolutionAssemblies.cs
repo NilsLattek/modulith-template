@@ -4,6 +4,7 @@ using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using ArchUnitNET.Loader;
 
 using Assembly = System.Reflection.Assembly;
+using Type = System.Type;
 
 namespace ModulithTemplate.ArchitectureTests;
 
@@ -23,10 +24,14 @@ internal static class SolutionAssemblies
     private const string FeaturesKeyword = ".Features.";
 
     private static readonly Lazy<Assembly[]> LazyFeatureAssemblies = new(LoadFeatureAssemblies);
+    private static readonly Lazy<Type[]> LazyFeatureTypes = new(LoadFeatureTypes);
     private static readonly Lazy<Architecture> LazyArchitecture = new(BuildArchitecture);
 
     /// <summary>The compiled feature-layer assemblies discovered in this project's output directory.</summary>
     public static Assembly[] FeatureAssemblies => LazyFeatureAssemblies.Value;
+
+    /// <summary>Every type declared in <see cref="FeatureAssemblies"/>.</summary>
+    public static Type[] FeatureTypes => LazyFeatureTypes.Value;
 
     /// <summary>The ArchUnitNET architecture built from <see cref="FeatureAssemblies"/>.</summary>
     public static Architecture Architecture => LazyArchitecture.Value;
@@ -102,6 +107,9 @@ internal static class SolutionAssemblies
             return [];
         }
     }
+
+    private static Type[] LoadFeatureTypes() =>
+        [.. FeatureAssemblies.SelectMany(assembly => assembly.GetTypes())];
 
     private static Architecture BuildArchitecture() =>
         new ArchLoader().LoadAssemblies(FeatureAssemblies).Build();

@@ -58,7 +58,7 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
 
         if (response is IResultBase { IsFailed: true } failed)
         {
-            var errors = string.Join("; ", failed.Errors.Select(Describe));
+            var errors = string.Join("; ", failed.Errors.Select(FormatErrorForLog));
             BehaviourLog.Failed(logger, messageType, elapsedMilliseconds, errors);
             activity?.SetStatus(ActivityStatusCode.Error, errors);
         }
@@ -72,6 +72,6 @@ public sealed class LoggingBehaviour<TMessage, TResponse>(
     }
 
     // A business error's code is what a translation, and a search of the logs, keys on.
-    private static string Describe(IError error) =>
+    private static string FormatErrorForLog(IError error) =>
         error is BusinessError business ? $"{business.Code}: {business.Message}" : error.Message;
 }

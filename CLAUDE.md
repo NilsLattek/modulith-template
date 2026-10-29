@@ -75,7 +75,7 @@ These are recommendations, not hard rules. When an exception looks justified and
 the user.
 
 **Prefer names that say what the code does.** A method usually starts with a verb and names its
-subject — `FindProjectByName` over `Lookup`, `CreateCombinedId` over `CombinedId` — so a caller
+subject — `FindProjectByName` over `Lookup` — so a caller
 understands it without opening the type; a type names what it is. A longer name is fine when it is
 clearer. Names a framework dictates (`OnModelCreating`, `Handle`) and the `To*`/`With*` conventions are
 natural exceptions. This follows the .NET [naming guidelines](https://learn.microsoft.com/dotnet/standard/design-guidelines/naming-guidelines).

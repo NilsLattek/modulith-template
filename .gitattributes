@@ -3,8 +3,9 @@
 ##
 ## Get latest from `dotnet new gitattributes`
 
-# Auto detect text files and perform LF normalization
-* text=auto
+# Auto detect text files and check them out with LF on every OS. .editorconfig requires LF and
+# IDE0055 fails the build on CRLF, which Git for Windows (core.autocrlf=true) would otherwise produce.
+* text=auto eol=lf
 
 #
 # The above will handle all files NOT found below

@@ -1,2 +1,3 @@
-# Bash scripts must keep LF endings even when Git converts to CRLF on Windows checkout.
-*.sh text eol=lf
+# Check text files out with LF on every OS. .editorconfig requires LF and IDE0055 fails the build
+# on CRLF, which Git for Windows (core.autocrlf=true) would otherwise produce.
+* text=auto eol=lf

@@ -48,6 +48,11 @@ CRUD table.** New work goes in an existing feature unless a new one is justified
 Signals a rule sits in the wrong place: a handler decides whether something is *valid* rather than
 reacting to the domain's answer; the same rule is written on both the create and the update path.
 
+The folders named here are each kind's **root, not a flat bucket**: once one fills up, group by
+concept beneath it (`Domain/ValueObjects/Shipping/`, `Web/Components/Checkout/`). Never above it:
+the architecture tests recognise value objects and entities by namespace, so
+`Domain/Shipping/ValueObjects/` silently escapes their checks.
+
 ### Writing entities
 
 Entities are rich, not data bags: private setters, named methods that say what happened (`Confirm`),

@@ -17,6 +17,10 @@ Web/Components/
 
 The form and its model are named after **what is typed**; each consumer after **its command**.
 
+Once `Components/` fills up, group by concept in subfolders (`Components/OrderDetails/`). A
+subfolder is a sub-namespace: a component outside it needs `@using …Web.Components.OrderDetails`,
+or add the line to `Components/_Imports.razor`.
+
 Every component renders in interactive server mode, so the form model is validated on the server — a
 client cannot skip it. Load the `dotnet-blazor` skill `collect-user-input` for input and `EditForm`
 mechanics, but skip its static-SSR patterns (`[SupplyParameterFromForm]`, `FormName`, `Enhance`):

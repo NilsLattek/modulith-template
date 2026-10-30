@@ -46,6 +46,9 @@ Application/
   Mappers/                         <Entity>Mapper: entity → DTO (below)
 ```
 
+A feature with many operations can group them by concept beneath these roots
+(`Commands/Shipping/ChangeShippingAddress/`, `Dtos/Shipping/`); the conventions still hold below them.
+
 The validator lives **in the message's own folder**, not a `Validators/` directory. Each feature's
 `ConfigureXxxApplication` picks it up via `AddValidatorsFromAssembly`.
 

@@ -102,7 +102,10 @@ circuit it is null, silently. A page that needs it, or must render without a cir
 
 ## Conventions
 
-- **Tests**: **NSubstitute** for substitutes, **bUnit** for Blazor component tests.
+- **Tests**: **NSubstitute** for substitutes, **bUnit** for Blazor component tests. Each test
+  follows Arrange / Act / Assert, each step headed by a `// Arrange`, `// Act` or `// Assert` comment.
+  Use `// Act & Assert` when one call is both (an `Assert.Throws`, an ArchUnit `rule.Check`), and
+  leave out a step that has nothing in it.
 - **Readability recommendations** — not hard rules; when an exception looks justified and you are
   unsure, ask the user:
   - **Prefer names that say what the code does.** A method usually starts with a verb and names its

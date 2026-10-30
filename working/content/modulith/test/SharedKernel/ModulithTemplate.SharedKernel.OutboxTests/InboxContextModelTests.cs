@@ -30,18 +30,27 @@ public class InboxContextModelTests
     [Fact]
     public void InboxMessage_is_mapped_into_the_schema_the_search_path_names()
     {
-        Assert.Equal(OutboxSchema.Name, FindMessageEntity().GetSchema());
+        // Act
+        var entity = FindMessageEntity();
+
+        // Assert
+        Assert.Equal(OutboxSchema.Name, entity.GetSchema());
     }
 
     [Fact]
     public void InboxMessage_is_mapped_to_the_table_the_claim_sql_names()
     {
-        Assert.Equal("inbox", FindMessageEntity().GetTableName());
+        // Act
+        var entity = FindMessageEntity();
+
+        // Assert
+        Assert.Equal("inbox", entity.GetTableName());
     }
 
     [Fact]
     public void Registration_throws_when_the_shared_schema_is_not_on_the_search_path()
     {
+        // Arrange
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
@@ -49,9 +58,11 @@ public class InboxContextModelTests
             })
             .Build();
 
+        // Act
         var error = Assert.Throws<InvalidOperationException>(
             () => new ServiceCollection().AddInboxDbContext(configuration));
 
+        // Assert
         Assert.Contains("Search Path", error.Message, StringComparison.Ordinal);
     }
 }

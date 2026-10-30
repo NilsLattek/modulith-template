@@ -32,12 +32,20 @@ public class OutboxContextModelTests
     [Fact]
     public void OutboxMessage_is_mapped_into_the_schema_the_search_path_names()
     {
-        Assert.Equal(OutboxSchema.Name, FindMessageEntity().GetSchema());
+        // Act
+        var entity = FindMessageEntity();
+
+        // Assert
+        Assert.Equal(OutboxSchema.Name, entity.GetSchema());
     }
 
     [Fact]
     public void OutboxMessage_is_mapped_to_the_table_the_claim_sql_names()
     {
-        Assert.Equal("outbox", FindMessageEntity().GetTableName());
+        // Act
+        var entity = FindMessageEntity();
+
+        // Assert
+        Assert.Equal("outbox", entity.GetTableName());
     }
 }

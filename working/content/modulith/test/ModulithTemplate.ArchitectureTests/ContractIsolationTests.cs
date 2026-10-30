@@ -32,6 +32,7 @@ public class ContractIsolationTests
     [Fact]
     public void Contracts_do_not_depend_on_any_feature_internal_layer()
     {
+        // Arrange
         AssertLayerDiscovered(ContractsLayer, "contract purity");
 
         IArchRule rule = SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern(ContractsLayer))
@@ -42,12 +43,14 @@ public class ContractIsolationTests
                 + "to the owning feature's internals.")
             .WithoutRequiringPositiveResults();
 
+        // Act & Assert
         rule.Check(SolutionAssemblies.Architecture);
     }
 
     [Fact]
     public void Only_Application_and_Infrastructure_depend_on_Contracts()
     {
+        // Arrange
         AssertLayerDiscovered(ContractsLayer, "contract consumption");
         foreach (var layer in NonConsumingLayers)
         {
@@ -62,6 +65,7 @@ public class ContractIsolationTests
                 + $"Infrastructure's handlers. A {string.Join("/", NonConsumingLayers)} layer reaching for one is a "
                 + "cross-feature dependency FeatureModuleTests cannot see.");
 
+        // Act & Assert
         rule.Check(SolutionAssemblies.Architecture);
     }
 

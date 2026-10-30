@@ -44,7 +44,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
     [Fact]
     public async Task A_change_from_a_stale_copy_is_refused_and_keeps_the_newer_change()
     {
-        // Arrange: two tabs read the same version; the first one's change lands.
+        // Arrange — two tabs read the same version; the first one's change lands.
         var cancellationToken = TestContext.Current.CancellationToken;
         var (id, stale) = await AddAsync(new VersionedNote("draft"), cancellationToken);
         await RenameAsync(id, stale, "first", cancellationToken);
@@ -84,7 +84,7 @@ public sealed class OptimisticConcurrencyTests : IDisposable
     [Fact]
     public async Task An_entity_that_does_not_opt_in_is_last_write_wins()
     {
-        // Arrange: two copies read before either saves.
+        // Arrange — two copies read before either saves.
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var adding = CreateContext();
         var note = new PlainNote("draft");

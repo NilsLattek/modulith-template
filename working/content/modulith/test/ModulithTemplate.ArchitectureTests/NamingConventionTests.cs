@@ -97,6 +97,7 @@ public class NamingConventionTests
     [MemberData(nameof(PlacementNames))]
     public void Types_carrying_a_convention_suffix_reside_in_a_home_namespace(string ruleName)
     {
+        // Arrange
         var rule = Placements.Single(candidate => string.Equals(candidate.Name, ruleName, StringComparison.Ordinal));
 
         IArchRule archRule = Types().That()
@@ -107,6 +108,7 @@ public class NamingConventionTests
             .Because($"a {rule.Name} must live in its feature's {string.Join(" or ", rule.HomeNamespaces)} namespace.")
             .WithoutRequiringPositiveResults();
 
+        // Act & Assert
         archRule.Check(SolutionAssemblies.Architecture);
     }
 
@@ -116,6 +118,7 @@ public class NamingConventionTests
     [MemberData(nameof(ContentNamespaces))]
     public void Types_in_a_convention_namespace_carry_one_of_its_suffixes(string namespaceSuffix)
     {
+        // Arrange
         var rule = Contents.Single(candidate => string.Equals(candidate.Namespace, namespaceSuffix, StringComparison.Ordinal));
 
         IArchRule archRule = Types().That()
@@ -126,6 +129,7 @@ public class NamingConventionTests
             .Because($"every type in a feature's {rule.Namespace} namespace must be named {string.Join(" or ", rule.AllowedSuffixes.Select(suffix => "*" + suffix))}.")
             .WithoutRequiringPositiveResults();
 
+        // Act & Assert
         archRule.Check(SolutionAssemblies.Architecture);
     }
 

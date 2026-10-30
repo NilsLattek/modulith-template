@@ -84,6 +84,10 @@ natural exceptions. This follows the .NET [naming guidelines](https://learn.micr
 reshape (`.Select().SelectMany().Select()`) usually reads better split into named locals, a named
 method, or a `foreach`.
 
+**Tests follow Arrange / Act / Assert**, each step headed by a `// Arrange`, `// Act` or `// Assert`
+comment. Use `// Act & Assert` when one call is both (`Assert.Throws`, an ArchUnit `rule.Check`), and
+leave out a step that has nothing in it. The generated project's `CLAUDE.md` carries the same rule.
+
 ## Writing comments
 
 **Keep them short.** An XML `<summary>` is a line or two. A `<remarks>` or an inline comment earns

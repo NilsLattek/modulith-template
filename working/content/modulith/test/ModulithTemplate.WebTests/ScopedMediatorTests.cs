@@ -30,7 +30,7 @@ public class ScopedMediatorTests
     [Fact]
     public async Task Send_handles_each_message_in_its_own_scope_and_disposes_it()
     {
-        // Arrange: one probe per scope, captured as the mediator is resolved from that scope.
+        // Arrange — one probe per scope, captured as the mediator is resolved from that scope.
         var probes = new List<ScopeProbe>();
         var services = new ServiceCollection();
         services.AddScoped<ScopeProbe>();

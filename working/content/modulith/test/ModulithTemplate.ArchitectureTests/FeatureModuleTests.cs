@@ -10,6 +10,7 @@ public class FeatureModuleTests
     [Fact]
     public void ModulesCannotDependOnEachOther()
     {
+        // Arrange
         const string modulesKeyword = ".Features.";
 
         // Contracts types are excluded from the slice assignment entirely — depending on a feature's
@@ -50,6 +51,7 @@ public class FeatureModuleTests
         ruleCreator.SetSliceAssignment(moduleSlice);
         IArchRule noCrossFeatureReference = new GivenSlices(ruleCreator).Should().NotDependOnEachOther();
 
+        // Act & Assert
         noCrossFeatureReference.Check(architecture);
     }
 }

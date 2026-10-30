@@ -23,7 +23,7 @@ public class AggregateRootTests
         // Arrange
         var aggregate = new TestAggregate();
 
-        // Act / Assert
+        // Act & Assert
         Assert.Empty(aggregate.DomainEvents);
     }
 

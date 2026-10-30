@@ -18,6 +18,7 @@ public class DomainEventHandlerRegistrationTests
     [Fact]
     public void Host_mediator_registers_every_feature_domain_event_handler()
     {
+        // Arrange
         var handlers = LoadFeatureAssemblies()
             .SelectMany(assembly => assembly.GetTypes())
             .Where(type => type is { IsClass: true, IsAbstract: false }
@@ -25,11 +26,13 @@ public class DomainEventHandlerRegistrationTests
             .ToList();
         Assert.NotEmpty(handlers);
 
+        // Act
         // The host's generated AddMediator: this project references the host, not the generator.
         // The lifetime must match Program.cs, or it throws.
         var services = new ServiceCollection();
         services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 
+        // Assert
         Assert.All(handlers, handler => Assert.True(
             services.Any(descriptor => descriptor.ServiceType == handler),
             $"{handler.FullName} is not registered by the host's mediator; its domain event would be dropped."));

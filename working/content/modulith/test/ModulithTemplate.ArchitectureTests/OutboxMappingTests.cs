@@ -25,7 +25,11 @@ public class OutboxMappingTests
     [Fact]
     public void Every_feature_context_stages_into_the_one_shared_table()
     {
-        foreach (var (_, entity) in FindOutboxEntityOfEachFeatureContext())
+        // Act
+        var outboxEntities = FindOutboxEntityOfEachFeatureContext();
+
+        // Assert
+        foreach (var (_, entity) in outboxEntities)
         {
             Assert.Equal(OutboxSchema.Name, entity.GetSchema(), StringComparer.Ordinal);
             Assert.Equal(OutboxSchema.TableName, entity.GetTableName(), StringComparer.Ordinal);
@@ -35,7 +39,11 @@ public class OutboxMappingTests
     [Fact]
     public void No_feature_migrates_the_shared_table()
     {
-        foreach (var (context, entity) in FindOutboxEntityOfEachFeatureContext())
+        // Act
+        var outboxEntities = FindOutboxEntityOfEachFeatureContext();
+
+        // Assert
+        foreach (var (context, entity) in outboxEntities)
         {
             Assert.True(
                 entity.IsTableExcludedFromMigrations(),

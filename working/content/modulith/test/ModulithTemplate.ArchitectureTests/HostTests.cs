@@ -21,6 +21,7 @@ public class HostTests
     [Fact]
     public void Host_does_not_depend_on_any_feature_Domain()
     {
+        // Arrange
         Assert.True(SolutionAssemblies.HasFeatureLayer("Domain"),
             "No feature Domain assembly was found; the rule would pass vacuously.");
 
@@ -30,6 +31,7 @@ public class HostTests
             .Should().NotDependOnAny(SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern("Domain")))
             .Because("the host references each Domain only for the mediator generator; entities stay behind the feature's Application layer.");
 
+        // Act & Assert
         rule.Check(HostArchitecture.Value);
     }
 }

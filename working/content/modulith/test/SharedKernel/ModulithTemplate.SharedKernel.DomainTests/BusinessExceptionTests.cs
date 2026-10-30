@@ -22,14 +22,14 @@ public class BusinessExceptionTests
     [InlineData(" ")]
     public void Constructor_with_a_blank_code_throws(string code)
     {
-        // Act / Assert
+        // Act & Assert
         Assert.Throws<ArgumentException>(() => new BusinessException(code, "Refused."));
     }
 
     [Fact]
     public void Constructor_with_a_blank_message_throws()
     {
-        // Act / Assert
+        // Act & Assert
         Assert.Throws<ArgumentException>(() => new BusinessException("Orders:Refused", " "));
     }
 

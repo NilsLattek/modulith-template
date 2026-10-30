@@ -1,4 +1,4 @@
-using ArchUnitNET.Fluent;
+using ArchUnitNET.Fluent.Syntax.Elements.Types;
 using ArchUnitNET.xUnitV3;
 
 namespace ModulithTemplate.ArchitectureTests;
@@ -22,21 +22,50 @@ public class FeatureLayerTests
     ];
 
     [Fact]
-    public void Domain_depends_on_no_other_layer() => AssertLayerRule("Domain");
+    public void Domain_depends_on_no_other_layer()
+    {
+        // Arrange
+        var rule = BuildLayerRule("Domain");
+
+        // Act & Assert
+        rule.Check(SolutionAssemblies.Architecture);
+    }
 
     [Fact]
-    public void Application_depends_only_on_Domain() => AssertLayerRule("Application");
+    public void Application_depends_only_on_Domain()
+    {
+        // Arrange
+        var rule = BuildLayerRule("Application");
+
+        // Act & Assert
+        rule.Check(SolutionAssemblies.Architecture);
+    }
 
     // Infrastructure may name Application: the publisher marker is an Application port, and an
     // adapter implementing an inward port is what the dependency rule is for. Only the reverse
     // direction, Application reaching Infrastructure, is the one that has to stay closed.
     [Fact]
-    public void Infrastructure_does_not_depend_on_Web() => AssertLayerRule("Infrastructure");
+    public void Infrastructure_does_not_depend_on_Web()
+    {
+        // Arrange
+        var rule = BuildLayerRule("Infrastructure");
+
+        // Act & Assert
+        rule.Check(SolutionAssemblies.Architecture);
+    }
 
     [Fact]
-    public void Web_does_not_access_Domain_directly() => AssertLayerRule("Web");
+    public void Web_does_not_access_Domain_directly()
+    {
+        // Arrange
+        var rule = BuildLayerRule("Web");
 
-    private static void AssertLayerRule(string layerName)
+        // Act & Assert
+        rule.Check(SolutionAssemblies.Architecture);
+    }
+
+    /// <summary>Builds the layer's dependency rule, failing first if its assembly was never discovered.</summary>
+    private static TypesShouldConjunctionWithDescription BuildLayerRule(string layerName)
     {
         var rule = Rules.Single(r => string.Equals(r.Name, layerName, StringComparison.Ordinal));
 
@@ -45,11 +74,9 @@ public class FeatureLayerTests
         Assert.True(SolutionAssemblies.HasFeatureLayer(rule.Suffix),
             $"No assembly for the '{rule.Name}' feature layer was found; the layering rule would pass vacuously.");
 
-        IArchRule layerRule = SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern(rule.Suffix))
+        return SolutionAssemblies.SelectFeatureLayerTypes(SolutionAssemblies.BuildFeatureLayerPattern(rule.Suffix))
             .Should().NotDependOnAny(SolutionAssemblies.SelectFeatureLayerTypes(
                 SolutionAssemblies.BuildFeatureLayerPattern(SolutionAssemblies.BuildRegexAlternation(rule.Forbidden))))
             .Because($"a feature's {rule.Name} layer must not depend on its {string.Join("/", rule.Forbidden)} layer(s).");
-
-        layerRule.Check(SolutionAssemblies.Architecture);
     }
 }

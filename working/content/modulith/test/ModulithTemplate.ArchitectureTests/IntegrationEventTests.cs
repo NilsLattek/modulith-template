@@ -30,6 +30,7 @@ public class IntegrationEventTests
     [Fact]
     public void Integration_events_are_declared_in_a_Contracts_project()
     {
+        // Arrange
         IArchRule rule = SelectIntegrationEvents()
             .Should().ResideInAssemblyMatching(SolutionAssemblies.BuildFeatureLayerPattern(ContractsLayer))
             .Because("an Integration Event is the publishing feature's announcement to its siblings, so it must "
@@ -38,24 +39,28 @@ public class IntegrationEventTests
                 + "rules cannot catch that, because they exempt Contracts types by design.")
             .WithoutRequiringPositiveResults();
 
+        // Act & Assert
         rule.Check(SolutionAssemblies.Architecture);
     }
 
     [Fact]
     public void Integration_events_are_named_for_what_they_are()
     {
+        // Arrange
         IArchRule rule = SelectIntegrationEvents()
             .Should().HaveNameMatching(IntegrationEventNamePattern)
             .Because("an Integration Event is read by features that never see the code publishing it, so its name "
                 + "must say what it is at the reference site.")
             .WithoutRequiringPositiveResults();
 
+        // Act & Assert
         rule.Check(SolutionAssemblies.Architecture);
     }
 
     [Fact]
     public void Types_named_as_integration_events_implement_the_contract()
     {
+        // Arrange
         IArchRule rule = Types().That()
             .ResideInAssemblyMatching(SolutionAssemblies.AnyFeatureLayerPattern)
             .And().HaveNameMatching(IntegrationEventNamePattern)
@@ -65,22 +70,26 @@ public class IntegrationEventTests
                 + "its siblings — and the rules above would never look at it.")
             .WithoutRequiringPositiveResults();
 
+        // Act & Assert
         rule.Check(SolutionAssemblies.Architecture);
     }
 
     [Fact]
     public void Every_integration_event_has_an_outbox_handler()
     {
+        // Arrange
         var handledEventNames = FindClosedInterfacesImplementedByFeatureTypes(typeof(IOutboxMessageHandler<>))
             .Select(contract => contract.GetGenericArguments()[0].FullName)
             .ToHashSet(StringComparer.Ordinal);
 
+        // Act
         var undelivered = SolutionAssemblies.FeatureTypes
             .Where(type => !type.IsAbstract && typeof(IIntegrationEvent).IsAssignableFrom(type))
             .Where(type => !handledEventNames.Contains(type.FullName))
             .Select(type => type.FullName)
             .ToArray();
 
+        // Assert
         // The mediator's MSG0005 catches an event with no Consumer at all, but not one whose outbox row
         // nothing claims: that one is published, saved, and never delivered.
         Assert.True(
@@ -92,6 +101,7 @@ public class IntegrationEventTests
     [Fact]
     public void Plain_notification_handlers_of_integration_events_live_in_Infrastructure()
     {
+        // Act
         var misplaced = SolutionAssemblies.FeatureTypes
             .Where(type => type is { IsAbstract: false, IsClass: true }
                 && !IsInboxHandler(type)
@@ -100,6 +110,7 @@ public class IntegrationEventTests
             .Select(type => type.FullName)
             .ToArray();
 
+        // Assert
         // A plain handler runs at least once, beside every Consumer's staging; it is for forwarding the
         // event outside the process. Written in Application, it is a Consumer that skipped its inbox.
         Assert.True(
@@ -121,15 +132,19 @@ public class IntegrationEventTests
     [Fact]
     public void No_feature_assembly_overrides_the_pinned_AssemblyVersion()
     {
+        // Arrange
         // An inbox row stores its envelope's type name, which embeds each type argument's assembly
         // version: a feature releasing under another one orphans every row still pending.
         var pinned = new Version(1, 0, 0, 0);
         var assemblyNames = SolutionAssemblies.FeatureAssemblies.Select(assembly => assembly.GetName());
+
+        // Act
         var drifted = assemblyNames
             .Where(name => name.Version != pinned)
             .Select(name => $"{name.Name} ({name.Version})")
             .ToArray();
 
+        // Assert
         Assert.True(
             drifted.Length == 0,
             $"{string.Join(", ", drifted)} override AssemblyVersion, which Directory.Build.props pins to {pinned}. "

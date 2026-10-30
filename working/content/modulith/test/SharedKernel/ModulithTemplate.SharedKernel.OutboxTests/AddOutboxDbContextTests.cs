@@ -33,8 +33,10 @@ public class AddOutboxDbContextTests
     [InlineData("Host=h;Database=d;Search Path=public, shared")]
     public void Registers_the_context_when_the_outbox_schema_is_on_the_search_path(string connectionString)
     {
+        // Act
         var provider = Register(connectionString).BuildServiceProvider();
 
+        // Assert
         Assert.NotNull(provider.GetRequiredService<OutboxContext>());
     }
 
@@ -45,16 +47,20 @@ public class AddOutboxDbContextTests
     [InlineData("Host=h;Database=d;Search Path=shared_events")]
     public void Throws_when_the_outbox_schema_is_not_on_the_search_path(string connectionString)
     {
+        // Act
         var error = Assert.Throws<InvalidOperationException>(() => Register(connectionString));
 
+        // Assert
         Assert.Contains("Search Path", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Throws_when_no_connection_string_is_configured()
     {
+        // Act
         var error = Assert.Throws<InvalidOperationException>(() => Register(connectionString: null));
 
+        // Assert
         Assert.Contains("PostgresConnection", error.Message, StringComparison.Ordinal);
     }
 }

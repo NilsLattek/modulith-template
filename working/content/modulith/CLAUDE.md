@@ -48,6 +48,9 @@ CRUD table.** New work goes in an existing feature unless a new one is justified
 Signals a rule sits in the wrong place: a handler decides whether something is *valid* rather than
 reacting to the domain's answer; the same rule is written on both the create and the update path.
 
+The folders named here are each kind's **root, not a flat bucket**: once one fills up, group by
+concept beneath it (`Domain/ValueObjects/Shipping/`, `Web/Components/Checkout/`). 
+
 ### Writing entities
 
 Entities are rich, not data bags: private setters, named methods that say what happened (`Confirm`),
@@ -90,8 +93,7 @@ sections below only add this project's specifics.
 
 Scoped services live for the whole SignalR circuit, so an injected `IMediator` shares one long-lived,
 non-thread-safe `DbContext` for the user's session. **Never `@inject` `IMediator` for database work**:
-inject `IScopedMediator`, which gives each message a scope of its own. That scope is gone before the
-component renders, so handlers return DTOs, never entities.
+inject `IScopedMediator`, which gives each message a scope of its own.
 
 ### Render mode
 
